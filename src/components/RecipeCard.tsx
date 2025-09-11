@@ -1,0 +1,96 @@
+import { Clock, Users, Star } from "lucide-react"
+
+interface RecipeCardProps {
+  id: string
+  title: string
+  description: string
+  image: string
+  rating: number
+  difficulty: "Easy" | "Medium" | "Hard"
+  cookTime: string
+  servings: number
+  cuisine: string
+  ingredients: string[]
+  moreIngredients?: number
+  reviews: number
+}
+
+export function RecipeCard({
+  title,
+  description,
+  image,
+  rating,
+  difficulty,
+  cookTime,
+  servings,
+  cuisine,
+  ingredients,
+  moreIngredients,
+  reviews,
+}: RecipeCardProps) {
+  const difficultyColors = {
+    Easy: "bg-green-100 text-green-800",
+    Medium: "bg-yellow-100 text-yellow-800",
+    Hard: "bg-red-100 text-red-800",
+  }
+
+  return (
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow group">
+      {/* Image */}
+      <div className="relative">
+        <img src={image || "/placeholder.svg"} alt={title} className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105" />
+        <div className="absolute top-3 left-3 flex items-center gap-1 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full">
+          <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+          <span className="text-sm font-medium">{rating}</span>
+        </div>
+        <div
+          className={`absolute top-3 right-3 px-2 py-1 rounded-full text-xs font-medium ${difficultyColors[difficulty]}`}
+        >
+          {difficulty}
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="p-4">
+        <h3 className="font-bold text-lg mb-2 text-gray-900 group-hover:text-orange-600 transition-colors duration-200">
+          {title}
+        </h3>
+        <p className="text-gray-600 text-sm mb-4 line-clamp-2">{description}</p>
+
+        {/* Meta Info */}
+        <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
+          <div className="flex items-center gap-1">
+            <Clock className="w-4 h-4" />
+            <span>{cookTime}</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <Users className="w-4 h-4" />
+            <span>{servings} người ăn</span>
+          </div>
+          <span className="text-gray-400">•</span>
+          <span>{cuisine}</span>
+        </div>
+
+        {/* Ingredients */}
+        <div className="mb-4">
+          <div className="flex flex-wrap gap-1">
+            {ingredients.slice(0, 3).map((ingredient) => (
+              <span key={ingredient} className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-md">
+                {ingredient}
+              </span>
+            ))}
+            {moreIngredients && (
+              <span className="px-2 py-1 bg-gray-100 text-gray-500 text-xs rounded-md">+{moreIngredients} more</span>
+            )}
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-gray-500">{reviews} đánh giá</span>
+          <button type="button" className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg">View Recipe</button>
+        </div>
+      </div>
+    </div>
+  )
+}
