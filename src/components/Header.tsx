@@ -1,4 +1,5 @@
 import { Search, Heart, User, ChefHat } from "lucide-react"
+import { Link } from "react-router-dom";
 
 export default function Header() {
   return (
@@ -36,10 +37,10 @@ export default function Header() {
           <button type="button" className="text-gray-600 hover:text-orange-500 transition-colors duration-200">
             <Heart className="w-5 h-5" />
           </button>
-          <button type="button" className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 transition-all duration-200 text-white px-4 py-2 rounded-lg flex items-center">
+          <Link to="/login" className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 transition-all duration-200 text-white px-4 py-2 rounded-lg flex items-center">
             <User className="w-4 h-4 mr-2" />
             Sign In
-          </button>
+          </Link>
         </div>
       </div>
     </header>
