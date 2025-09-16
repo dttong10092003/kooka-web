@@ -1,15 +1,19 @@
 import { X, CheckSquare, Square } from "lucide-react"
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, useMemo } from "react"
+
+import { useDispatch, useSelector } from "react-redux"
+import type { AppDispatch, RootState } from "../redux/store"
+import { fetchIngredientTypes } from "../redux/slices/recipeSlice"
 
 // Define ingredient categories for organization
-const INGREDIENT_CATEGORIES = {
-    "Rau củ": ["cà rốt", "cà chua", "hành tây", "khoai tây", "bắp cải", "bông cải", "cải thìa", "rau muống", "rau dền"],
-    "Thịt": ["thịt heo", "thịt bò", "thịt gà", "thịt vịt", "thịt cừu", "thịt nai"],
-    "Hải sản": ["cá", "tôm", "mực", "cua", "sò", "hàu", "nghêu"],
-    "Gia vị": ["muối", "tiêu", "đường", "bột ngọt", "nước mắm", "tương ớt", "tương cà", "dầu hào"],
-    "Ngũ cốc": ["gạo", "bột mì", "bột năng", "ngô", "kê"],
-    "Khác": ["trứng", "đậu phụ", "nấm", "sữa", "phô mai", "bơ"]
-};
+// const INGREDIENT_CATEGORIES = {
+//     "Rau củ": ["cà rốt", "cà chua", "hành tây", "khoai tây", "bắp cải", "bông cải", "cải thìa", "rau muống", "rau dền"],
+//     "Thịt": ["thịt heo", "thịt bò", "thịt gà", "thịt vịt", "thịt cừu", "thịt nai"],
+//     "Hải sản": ["cá", "tôm", "mực", "cua", "sò", "hàu", "nghêu"],
+//     "Gia vị": ["muối", "tiêu", "đường", "bột ngọt", "nước mắm", "tương ớt", "tương cà", "dầu hào"],
+//     "Ngũ cốc": ["gạo", "bột mì", "bột năng", "ngô", "kê"],
+//     "Khác": ["trứng", "đậu phụ", "nấm", "sữa", "phô mai", "bơ"]
+// };
 
 interface IngredientSelectorModalProps {
     isOpen: boolean;
@@ -24,6 +28,11 @@ export default function IngredientSelectorModal({
     onSelect,
     selectedIngredients = []
 }: IngredientSelectorModalProps) {
+    const dispatch = useDispatch<AppDispatch>();
+    const { ingredients, ingredientTypes } = useSelector(
+        (state: RootState) => state.recipes
+    );
+
     const [localSelectedIngredients, setLocalSelectedIngredients] = useState<string[]>(selectedIngredients);
     const [searchTerm, setSearchTerm] = useState("");
     const [activeCategory, setActiveCategory] = useState<string | null>(null);
@@ -31,12 +40,12 @@ export default function IngredientSelectorModal({
     // Reference to modal content for click outside detection
     const modalRef = useRef<HTMLDivElement>(null);
 
-    // Initialize with the first category
+    // Load dữ liệu từ API khi mở modal
     useEffect(() => {
-        if (Object.keys(INGREDIENT_CATEGORIES).length > 0 && !activeCategory) {
-            setActiveCategory(Object.keys(INGREDIENT_CATEGORIES)[0]);
+        if (isOpen) {
+            dispatch(fetchIngredientTypes());
         }
-    }, [activeCategory]);
+    }, [isOpen, dispatch]);
 
     // Reset local state when modal opens
     useEffect(() => {
@@ -44,6 +53,13 @@ export default function IngredientSelectorModal({
             setLocalSelectedIngredients([...selectedIngredients]);
         }
     }, [isOpen, selectedIngredients]);
+
+    // Auto chọn category đầu tiên
+    useEffect(() => {
+        if (ingredientTypes.length > 0 && !activeCategory) {
+            setActiveCategory(ingredientTypes[0]._id);
+        }
+    }, [ingredientTypes, activeCategory]);
 
     // Effect for clicking outside to close
     useEffect(() => {
@@ -93,11 +109,21 @@ export default function IngredientSelectorModal({
         return /[áàảãạăắằẳẵặâấầẩẫậéèẻẽẹêếềểễệíìỉĩịóòỏõọôốồổỗộơớờởỡợúùủũụưứừửữựýỳỷỹỵđ]/i.test(str);
     };
 
-    // Filter ingredients based on search term
+    // Nhóm ingredients theo type
+    const groupedIngredients = useMemo(() => {
+        const groups: Record<string, string[]> = {};
+        ingredientTypes.forEach((type) => {
+            groups[type._id] = ingredients
+                .filter((ing) => ing.typeId === type._id)
+                .map((ing) => ing.name);
+        });
+        return groups;
+    }, [ingredients, ingredientTypes]);
+
+    // Filter ingredient theo search
     const getFilteredIngredients = () => {
         if (!searchTerm.trim()) {
-            // If no search, return ingredients from active category
-            return activeCategory ? INGREDIENT_CATEGORIES[activeCategory as keyof typeof INGREDIENT_CATEGORIES] : [];
+            return activeCategory ? groupedIngredients[activeCategory] || [] : [];
         }
 
         // If searching, show matches from all categories
@@ -106,33 +132,24 @@ export default function IngredientSelectorModal({
         const accentFreeSearch = removeAccents(lowercaseSearch);
         const results: string[] = [];
 
-        Object.values(INGREDIENT_CATEGORIES).forEach(categoryIngredients => {
-            categoryIngredients.forEach(ingredient => {
-                // If search term has accents, only do accent-sensitive search
+        Object.values(groupedIngredients).forEach((categoryIngredients) => {
+            categoryIngredients.forEach((ingredient) => {
                 if (searchHasAccents) {
-                    const ingredientWords = ingredient.toLowerCase().split(/\s+/);
-
-                    // Check if any word in the ingredient starts with the search term
-                    const matchesWithAccents = ingredientWords.some(word => word.startsWith(lowercaseSearch));
-
-                    // Also check if the entire ingredient starts with the search term
-                    const wholeIngredientMatchesWithAccents = ingredient.toLowerCase().startsWith(lowercaseSearch);
-
-                    if ((matchesWithAccents || wholeIngredientMatchesWithAccents)) {
+                    const words = ingredient.toLowerCase().split(/\s+/);
+                    if (
+                        words.some((w) => w.startsWith(lowercaseSearch)) ||
+                        ingredient.toLowerCase().startsWith(lowercaseSearch)
+                    ) {
                         results.push(ingredient);
                     }
-                }
-                // If search term has no accents, do accent-insensitive search
-                else {
-                    const accentFreeWords = removeAccents(ingredient.toLowerCase()).split(/\s+/);
-
-                    // Check if any word in the ingredient starts with the search term
-                    const matchesWithoutAccents = accentFreeWords.some(word => word.startsWith(accentFreeSearch));
-
-                    // Also check if the entire ingredient starts with the search term
-                    const wholeIngredientMatchesWithoutAccents = removeAccents(ingredient.toLowerCase()).startsWith(accentFreeSearch);
-
-                    if ((matchesWithoutAccents || wholeIngredientMatchesWithoutAccents)) {
+                } else {
+                    const accentFreeWords = removeAccents(
+                        ingredient.toLowerCase()
+                    ).split(/\s+/);
+                    if (
+                        accentFreeWords.some((w) => w.startsWith(accentFreeSearch)) ||
+                        removeAccents(ingredient.toLowerCase()).startsWith(accentFreeSearch)
+                    ) {
                         results.push(ingredient);
                     }
                 }
@@ -172,16 +189,16 @@ export default function IngredientSelectorModal({
                     {/* Category sidebar - hidden when searching */}
                     {!searchTerm && (
                         <div className="w-1/3 border-r border-gray-200 pr-4 overflow-y-auto h-full">
-                            {Object.keys(INGREDIENT_CATEGORIES).map(category => (
+                            {ingredientTypes.map((type) => (
                                 <button
-                                    key={category}
-                                    className={`block w-full text-left px-3 py-2 rounded-lg mb-1 ${activeCategory === category
-                                            ? 'bg-orange-100 text-orange-800'
-                                            : 'hover:bg-gray-100'
+                                    key={type._id}
+                                    className={`block w-full text-left px-3 py-2 rounded-lg mb-1 ${activeCategory === type._id
+                                        ? 'bg-orange-100 text-orange-800'
+                                        : 'hover:bg-gray-100'
                                         }`}
-                                    onClick={() => setActiveCategory(category)}
+                                    onClick={() => setActiveCategory(type._id)}
                                 >
-                                    {category}
+                                    {type.name}
                                 </button>
                             ))}
                         </div>
@@ -222,8 +239,8 @@ export default function IngredientSelectorModal({
                             onClick={handleClear}
                             disabled={localSelectedIngredients.length === 0}
                             className={`px-4 py-2 border rounded-lg ${localSelectedIngredients.length === 0
-                                    ? 'border-gray-200 text-gray-400 cursor-not-allowed'
-                                    : 'border-gray-300 text-gray-700 hover:bg-gray-100'
+                                ? 'border-gray-200 text-gray-400 cursor-not-allowed'
+                                : 'border-gray-300 text-gray-700 hover:bg-gray-100'
                                 }`}
                         >
                             Xóa tất cả

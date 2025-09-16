@@ -1,19 +1,34 @@
 import { Plus, Filter, Search, X } from "lucide-react"
 import { useState, useRef, useEffect } from "react"
+import { useDispatch, useSelector } from "react-redux"
+import type { AppDispatch, RootState } from "../redux/store"
+import { fetchIngredients, type Ingredient } from "../redux/slices/recipeSlice"
+
 import FilterModal, { type FilterData } from "./FilterModal"
 import IngredientSelectorModal from "./IngredientSelectorModal"
 
 export default function HeroSection() {
-    const popularIngredients = ["trứng", "gạo", "cà chua", "hành tây", "tỏi", "mì ống", "phô mai", "thịt gà"]
+    const dispatch = useDispatch<AppDispatch>()
+
+    const ingredients = useSelector((state: RootState) => state.recipes.ingredients)
+
+    useEffect(() => {
+        dispatch(fetchIngredients())
+    }, [dispatch])
+
+console.log("Ingredients from redux:", ingredients)
+
+
+    // const popularIngredients = ["trứng", "gạo", "cà chua", "hành tây", "thịt gà", "thịt bò", "cá", "tôm"]
 
     // Các nguyên liệu gợi ý khi tìm kiếm
-    const allIngredients = [
-        "bột mì", "trứng", "sữa", "đường", "muối",
-        "thịt gà", "thịt heo", "thịt bò", "cá", "tôm",
-        "cà chua", "hành tây", "tỏi", "ớt", "cà rốt",
-        "rau cải", "bắp cải", "khoai tây", "đậu phụ",
-        "gạo", "mì ống", "phô mai", "bơ", "dầu ăn"
-    ]
+    // const allIngredients = [
+    //     "bột mì", "trứng", "sữa", "đường", "muối",
+    //     "thịt gà", "thịt heo", "thịt bò", "cá", "tôm",
+    //     "cà chua", "hành tây", "tỏi", "ớt", "cà rốt",
+    //     "rau cải", "bắp cải", "khoai tây", "đậu phụ",
+    //     "gạo", "mì ống", "phô mai", "bơ", "dầu ăn"
+    // ]
 
     // State quản lý nguyên liệu đã chọn
     const [selectedIngredients, setSelectedIngredients] = useState<string[]>([])
@@ -87,7 +102,8 @@ export default function HeroSection() {
         const accentFreeSearch = removeAccents(lowercaseSearch);
         const searchHasAccents = hasAccents(lowercaseSearch);
 
-        return allIngredients
+        return ingredients
+            .map((i: Ingredient) => i.name)
             .filter(ingredient => {
                 // If search term has accents, only do accent-sensitive search
                 if (searchHasAccents) {
@@ -144,10 +160,6 @@ export default function HeroSection() {
 
     // Xử lý filter
     const handleApply = (filters: FilterData) => {
-        console.log("Category:", filters.selectedCategory)
-        console.log("Tags:", filters.selectedTags)
-        console.log("Cuisine:", filters.selectedCuisine)
-
         // Update local state with filter values
         setSelectedCategory(filters.selectedCategory)
         setSelectedTags(filters.selectedTags)
@@ -193,14 +205,13 @@ export default function HeroSection() {
                                 onKeyDown={handleSearchKeyDown}
                                 onFocus={() => setShowSuggestions(true)}
                                 placeholder="Nhập nguyên liệu (trứng, cà chua, thịt bò...)"
-                                className={`w-full h-12 pl-10 pr-4 text-base border ${
-                                    showNoMatch 
-                                      ? 'border-red-500 focus:ring-2 focus:ring-red-500' 
-                                      : 'border-gray-300 focus:ring-2 focus:ring-orange-500'
-                                } focus:border-transparent outline-none text-gray-700 placeholder-gray-400 rounded-lg`}
+                                className={`w-full h-12 pl-10 pr-4 text-base border ${showNoMatch
+                                    ? 'border-red-500 focus:ring-2 focus:ring-red-500'
+                                    : 'border-gray-300 focus:ring-2 focus:ring-orange-500'
+                                    } focus:border-transparent outline-none text-gray-700 placeholder-gray-400 rounded-lg`}
                             />
                             <Search className="w-5 h-5 text-gray-400 absolute left-3 top-3.5" />
-                            
+
                             {/* No match message */}
                             {showNoMatch && (
                                 <div className="absolute -bottom-8 left-0 text-sm text-red-500">
@@ -286,13 +297,13 @@ export default function HeroSection() {
                         <div>
                             <p className="text-gray-700 font-medium mb-4">Nguyên liệu phổ biến:</p>
                             <div className="flex flex-wrap justify-center gap-2">
-                                {popularIngredients.map((ingredient) => (
+                                {ingredients.slice(0, 8).map((ingredient) => (
                                     <div
-                                        key={ingredient}
+                                        key={ingredient._id}
                                         className="bg-gray-100 text-gray-700 px-4 py-1 rounded-full text-sm cursor-pointer hover:bg-gray-200 transition-colors"
-                                        onClick={() => handleAddIngredient(ingredient)}
+                                        onClick={() => handleAddIngredient(ingredient.name)}
                                     >
-                                        {ingredient}
+                                        {ingredient.name}
                                     </div>
                                 ))}
                             </div>
