@@ -1,9 +1,12 @@
 import type React from "react"
 import { useState } from "react"
 import { ArrowLeft, Mail, Lock, CheckCircle, AlertCircle } from "lucide-react"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import FormInput from "../components/FormInput"
 import { useLanguage } from "../contexts/LanguageContext"
+import { useDispatch, useSelector } from "react-redux"
+import type { AppDispatch, RootState } from "../redux/store"
+import { login } from "../redux/slices/authSlice"
 interface LoginPageProps {
   onBack?: () => void
 }
@@ -14,8 +17,11 @@ const LoginPage: React.FC<LoginPageProps> = ({ onBack }) => {
     email: "",
     password: "",
   })
-  const [isLoading, setIsLoading] = useState(false)
-  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null)
+  // const [isLoading, setIsLoading] = useState(false)
+  // const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null)
+  const dispatch = useDispatch<AppDispatch>()
+  const navigate = useNavigate()
+  const { loading: isLoading, error, token } = useSelector((state: RootState) => state.auth)
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -27,15 +33,15 @@ const LoginPage: React.FC<LoginPageProps> = ({ onBack }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setIsLoading(true)
-    setMessage(null)
-
-    // Simulate API call
-    setTimeout(() => {
-      setMessage({ type: "success", text: "Login successful! Welcome back!" })
-      setIsLoading(false)
-    }, 2000)
+    const result = await dispatch(login({
+      username: formData.email, // nếu backend xài username thì map từ email
+      password: formData.password
+    }))
+    if (login.fulfilled.match(result)) {
+      navigate("/") // Đăng nhập thành công thì về Home
+    }
   }
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-red-50 py-4 lg:py-8 flex items-center">
@@ -63,31 +69,27 @@ const LoginPage: React.FC<LoginPageProps> = ({ onBack }) => {
           </div>
 
           {/* Message */}
-          {message && (
-            <div
-              className={`mb-3 lg:mb-4 p-2.5 lg:p-3 rounded-lg flex items-center space-x-2 text-xs lg:text-sm ${
-                message.type === "success"
-                  ? "bg-green-50 border border-green-200 text-green-800"
-                  : "bg-red-50 border border-red-200 text-red-800"
-              }`}
-            >
-              <div className="flex-shrink-0">
-                {message.type === "success" ? (
-                  <CheckCircle className="h-3.5 w-3.5 lg:h-4 lg:w-4" />
-                ) : (
-                  <AlertCircle className="h-3.5 w-3.5 lg:h-4 lg:w-4" />
-                )}
-              </div>
-              <span>{message.text}</span>
+          {error && (
+            <div className="mb-3 lg:mb-4 p-2.5 lg:p-3 rounded-lg flex items-center space-x-2 text-xs lg:text-sm bg-red-50 border border-red-200 text-red-800">
+              <AlertCircle className="h-3.5 w-3.5 lg:h-4 lg:w-4" />
+              <span>{error}</span>
             </div>
           )}
+
+          {token && (
+            <div className="mb-3 lg:mb-4 p-2.5 lg:p-3 rounded-lg flex items-center space-x-2 text-xs lg:text-sm bg-green-50 border border-green-200 text-green-800">
+              <CheckCircle className="h-3.5 w-3.5 lg:h-4 lg:w-4" />
+              <span>{t("auth.loginSuccess")}</span>
+            </div>
+          )}
+
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Email */}
             <FormInput
               label={t("auth.email")}
-              type="email"
+              type="text" // dua vao text thử
               name="email"
               value={formData.email}
               onChange={handleInputChange}
@@ -112,11 +114,10 @@ const LoginPage: React.FC<LoginPageProps> = ({ onBack }) => {
             <button
               type="submit"
               disabled={isLoading}
-              className={`w-full py-2.5 px-4 rounded-lg font-medium text-white text-sm transition-all duration-200 ${
-                isLoading
+              className={`w-full py-2.5 px-4 rounded-lg font-medium text-white text-sm transition-all duration-200 cursor-pointer ${isLoading
                   ? "bg-gray-400 cursor-not-allowed"
                   : "bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 shadow-lg hover:shadow-xl"
-              }`}
+                }`}
             >
               {isLoading ? (
                 <div className="flex items-center justify-center space-x-2">
@@ -127,6 +128,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onBack }) => {
                 t("auth.signin")
               )}
             </button>
+
           </form>
 
           {/* Footer Links */}
