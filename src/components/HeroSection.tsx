@@ -7,7 +7,16 @@ import { fetchIngredients, type Ingredient } from "../redux/slices/recipeSlice"
 import FilterModal, { type FilterData } from "./FilterModal"
 import IngredientSelectorModal from "./IngredientSelectorModal"
 
-export default function HeroSection() {
+interface HeroSectionProps {
+    onSearch: (params: {
+        ingredients: string[]
+        cuisine?: string
+        category?: string
+        tags?: string[]
+    }) => void
+}
+
+export default function HeroSection({ onSearch }: HeroSectionProps) {
     const dispatch = useDispatch<AppDispatch>()
 
     const ingredients = useSelector((state: RootState) => state.recipes.ingredients)
@@ -15,20 +24,6 @@ export default function HeroSection() {
     useEffect(() => {
         dispatch(fetchIngredients())
     }, [dispatch])
-
-console.log("Ingredients from redux:", ingredients)
-
-
-    // const popularIngredients = ["trứng", "gạo", "cà chua", "hành tây", "thịt gà", "thịt bò", "cá", "tôm"]
-
-    // Các nguyên liệu gợi ý khi tìm kiếm
-    // const allIngredients = [
-    //     "bột mì", "trứng", "sữa", "đường", "muối",
-    //     "thịt gà", "thịt heo", "thịt bò", "cá", "tôm",
-    //     "cà chua", "hành tây", "tỏi", "ớt", "cà rốt",
-    //     "rau cải", "bắp cải", "khoai tây", "đậu phụ",
-    //     "gạo", "mì ống", "phô mai", "bơ", "dầu ăn"
-    // ]
 
     // State quản lý nguyên liệu đã chọn
     const [selectedIngredients, setSelectedIngredients] = useState<string[]>([])
@@ -169,6 +164,17 @@ console.log("Ingredients from redux:", ingredients)
     // Calculate total active filters
     const getActiveFilterCount = () => {
         return (selectedCategory ? 1 : 0) + selectedTags.length + (selectedCuisine ? 1 : 0)
+    }
+
+    const handleSearchRecipes = () => {
+        if (selectedIngredients.length > 0) {
+            onSearch({
+                ingredients: selectedIngredients,
+                cuisine: selectedCuisine,
+                category: selectedCategory,
+                tags: selectedTags,
+            })
+        }
     }
 
     return (
@@ -315,6 +321,7 @@ console.log("Ingredients from redux:", ingredients)
                 {selectedIngredients.length > 0 && (
                     <div className="mt-6">
                         <button
+                            onClick={handleSearchRecipes}
                             className="bg-gradient-to-r from-green-500 to-teal-500 text-white px-8 py-4 rounded-xl hover:from-green-600 hover:to-teal-600 transition-all duration-200 flex items-center justify-center space-x-2 font-medium text-lg shadow-lg hover:shadow-xl mx-auto"
                         >
                             <Search className="w-5 h-5" />

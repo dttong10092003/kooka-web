@@ -6,7 +6,7 @@ interface RecipeCardProps {
   description: string
   image: string
   rating: number
-  difficulty: "Easy" | "Medium" | "Hard"
+  difficulty: string
   cookTime: string
   servings: number
   cuisine: string
@@ -28,10 +28,10 @@ export function RecipeCard({
   moreIngredients,
   reviews,
 }: RecipeCardProps) {
-  const difficultyColors = {
-    Easy: "bg-green-100 text-green-800",
-    Medium: "bg-yellow-100 text-yellow-800",
-    Hard: "bg-red-100 text-red-800",
+  const difficultyColors: Record<"Dễ" | "Trung bình" | "Khó", string> = {
+    "Dễ": "bg-green-100 text-green-800",
+    "Trung bình": "bg-yellow-100 text-yellow-800",
+    "Khó": "bg-red-100 text-red-800",
   }
 
   return (
@@ -44,7 +44,8 @@ export function RecipeCard({
           <span className="text-sm font-medium">{rating}</span>
         </div>
         <div
-          className={`absolute top-3 right-3 px-2 py-1 rounded-full text-xs font-medium ${difficultyColors[difficulty]}`}
+          className={`absolute top-3 right-3 px-2 py-1 rounded-full text-xs font-medium ${difficultyColors[difficulty as "Dễ" | "Trung bình" | "Khó"]
+            }`}
         >
           {difficulty}
         </div>
@@ -79,7 +80,7 @@ export function RecipeCard({
                 {ingredient}
               </span>
             ))}
-            {moreIngredients && (
+            {(moreIngredients ?? 0) > 0 && (
               <span className="px-2 py-1 bg-gray-100 text-gray-500 text-xs rounded-md">+{moreIngredients} more</span>
             )}
           </div>

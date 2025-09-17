@@ -39,6 +39,24 @@ export interface Recipe {
     numberOfRate: number;
 }
 
+// --- Search Recipes ---
+interface SearchPayload {
+    ingredients?: string[];
+    tags?: string[];
+    cuisine?: string;
+    category?: string;
+    top_k?: number;
+}
+
+// --- Search Recipes by Keyword ---
+interface KeywordSearchPayload {
+    keywords: string;
+    tags?: string[];
+    cuisine?: string;
+    category?: string;
+    top_k?: number;
+}
+
 // ==== State ====
 interface RecipeState {
     recipes: Recipe[];
@@ -60,6 +78,28 @@ const initialState: RecipeState = {
 const API_URL = "http://localhost:3000/api";
 
 // ==== Async Thunks ====
+export const searchRecipes = createAsyncThunk(
+    "recipes/search",
+    async (payload: SearchPayload) => {
+        const res = await axios.post("http://127.0.0.1:8000/search", payload, {
+            headers: { "Content-Type": "application/json" },
+        });
+        // Backend trả về { query: string, hits: [...] }
+        return res.data.hits as Recipe[];
+    }
+);
+
+export const searchRecipesByKeyword = createAsyncThunk(
+    "recipes/searchByKeyword",
+    async (payload: KeywordSearchPayload) => {
+        const res = await axios.post("http://127.0.0.1:8000/search-by-keyword", payload, {
+            headers: { "Content-Type": "application/json" },
+        });
+        // Backend trả về { query: string, hits: [...] }
+        return res.data.hits as Recipe[];
+    }
+);
+
 // --- Recipes ---
 export const fetchRecipes = createAsyncThunk("recipes/fetchAll", async () => {
     const res = await axios.get(`${API_URL}/recipes`);
@@ -164,6 +204,14 @@ const recipeSlice = createSlice({
         // Recipes
         builder
             .addCase(fetchRecipes.fulfilled, (state, action: PayloadAction<Recipe[]>) => {
+                state.recipes = action.payload;
+                state.loading = false;
+            })
+            .addCase(searchRecipes.fulfilled, (state, action: PayloadAction<Recipe[]>) => {
+                state.recipes = action.payload;
+                state.loading = false;
+            })
+            .addCase(searchRecipesByKeyword.fulfilled, (state, action: PayloadAction<Recipe[]>) => {
                 state.recipes = action.payload;
                 state.loading = false;
             })
