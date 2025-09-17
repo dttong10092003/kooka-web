@@ -17,11 +17,11 @@ const LoginPage: React.FC<LoginPageProps> = ({ onBack }) => {
     email: "",
     password: "",
   })
-  // const [isLoading, setIsLoading] = useState(false)
-  // const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null)
+
   const dispatch = useDispatch<AppDispatch>()
   const navigate = useNavigate()
-  const { loading: isLoading, error, token } = useSelector((state: RootState) => state.auth)
+  const { error, token } = useSelector((state: RootState) => state.auth)
+  const [buttonLoading, setButtonLoading] = useState(false); // thêm state này
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -32,15 +32,28 @@ const LoginPage: React.FC<LoginPageProps> = ({ onBack }) => {
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    const result = await dispatch(login({
-      username: formData.email, // nếu backend xài username thì map từ email
-      password: formData.password
-    }))
+    e.preventDefault();
+    setButtonLoading(true); // bật loading cho nút ngay khi submit
+
+    const result = await dispatch(
+      login({
+        usernameOrEmail: formData.email,
+        password: formData.password,
+      })
+    );
+
     if (login.fulfilled.match(result)) {
-      navigate("/") // Đăng nhập thành công thì về Home
+      // delay 1s rồi chuyển trang
+      setTimeout(() => {
+        navigate("/");
+        setButtonLoading(false); // tắt loading khi xong
+      }, 1000);
+    } else {
+      setButtonLoading(false); // nếu login fail thì tắt loading luôn
     }
-  }
+  };
+
+
 
 
   return (
@@ -72,7 +85,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onBack }) => {
           {error && (
             <div className="mb-3 lg:mb-4 p-2.5 lg:p-3 rounded-lg flex items-center space-x-2 text-xs lg:text-sm bg-red-50 border border-red-200 text-red-800">
               <AlertCircle className="h-3.5 w-3.5 lg:h-4 lg:w-4" />
-              <span>{error}</span>
+              <span>{t(error)}</span>
             </div>
           )}
 
@@ -113,13 +126,13 @@ const LoginPage: React.FC<LoginPageProps> = ({ onBack }) => {
             {/* Submit Button */}
             <button
               type="submit"
-              disabled={isLoading}
-              className={`w-full py-2.5 px-4 rounded-lg font-medium text-white text-sm transition-all duration-200 cursor-pointer ${isLoading
+              disabled={buttonLoading}
+              className={`w-full py-2.5 px-4 rounded-lg font-medium text-white text-sm transition-all duration-200 cursor-pointer ${buttonLoading
                   ? "bg-gray-400 cursor-not-allowed"
                   : "bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 shadow-lg hover:shadow-xl"
                 }`}
             >
-              {isLoading ? (
+              {buttonLoading ? (
                 <div className="flex items-center justify-center space-x-2">
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                   <span>{t("auth.signingIn")}</span>
@@ -128,6 +141,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onBack }) => {
                 t("auth.signin")
               )}
             </button>
+
 
           </form>
 

@@ -4,19 +4,30 @@ import axios from "axios";
 // Gọi API login
 export const login = createAsyncThunk(
   "auth/login",
-  async ({ username, password }: { username: string; password: string }, { rejectWithValue }) => {
+  async (
+    { usernameOrEmail, password }: { usernameOrEmail: string; password: string },
+    { rejectWithValue }
+  ) => {
     try {
-      const res = await axios.post("http://localhost:5001/auth/login", { username, password });
-      return res.data; // { message, token }
+      const res = await axios.post("http://localhost:5001/auth/login", {
+        usernameOrEmail,
+        password,
+      });
+      return res.data; // { message, token, user }
     } catch (err: any) {
-      return rejectWithValue(err.response?.data?.message || "Login failed");
+      // lấy code từ backend hoặc map thành key i18n
+      const code =
+        err.response?.data?.code || "auth.loginFailed";
+
+      return rejectWithValue(code);
     }
   }
 );
 
+
 interface AuthState {
   token: string | null;
-  user: { username: string } | null;
+  user: { username: string; email?: string; isAdmin?: boolean } | null;
   loading: boolean;
   error: string | null;
 }
@@ -50,7 +61,7 @@ const authSlice = createSlice({
       .addCase(login.fulfilled, (state, action) => {
         state.loading = false;
         state.token = action.payload.token;
-        state.user = { username: action.meta.arg.username };
+        state.user = action.payload.user; // lấy user từ backend
         localStorage.setItem("token", action.payload.token);
       })
       .addCase(login.rejected, (state, action) => {

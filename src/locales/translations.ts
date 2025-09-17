@@ -7,6 +7,12 @@ export const translations = {
             categories: "Danh Mục",
             about: "Giới Thiệu",
             signin: "Đăng Nhập",
+            authProfile: "Hồ Sơ Cá Nhân",
+            authFavorites: "Công Thức Yêu Thích",
+            authReviews: "Đánh Giá Của Tôi",
+            authAdmin: "Quản Trị Viên",
+            authSettings: "Cài Đặt",
+            authLogout: "Đăng Xuất",
         },
         footer: {
             description:
@@ -58,6 +64,8 @@ export const translations = {
             alreadyHaveAccount: "Đã có tài khoản?",
             johnComunity: "Tham gia cộng đồng Kooka ngay hôm nay!",
             confirmPassword: "Xác nhận mật khẩu",
+            loginSuccess: "Đăng nhập thành công!",
+            loginFailed: "Sai tài khoản hoặc mật khẩu. Vui lòng thử lại.",
 
         },
 
@@ -71,6 +79,12 @@ export const translations = {
             categories: "Categories",
             about: "About",
             signin: "Sign In",
+            authProfile: "Profile",
+            authFavorites: "My Favorites",
+            authReviews: "My Reviews",
+            authAdmin: "Admin Dashboard",
+            authSettings: "Settings",
+            authLogout: "Logout",
         },
         footer: {
             description:
@@ -122,6 +136,8 @@ export const translations = {
             alreadyHaveAccount: "Already have an account?",
             johnComunity: "Join the Kooka community today!",
             confirmPassword: "Confirm Password",
+            loginSuccess: "Login successful!",
+            loginFailed: "Incorrect username or password. Please try again.",
 
         },
 
