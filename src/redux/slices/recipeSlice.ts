@@ -81,7 +81,7 @@ const API_URL = "http://localhost:3000/api";
 export const searchRecipes = createAsyncThunk(
     "recipes/search",
     async (payload: SearchPayload) => {
-        const res = await axios.post("http://127.0.0.1:8000/search", payload, {
+        const res = await axios.post("http://127.0.0.1:8000/api/search", payload, {
             headers: { "Content-Type": "application/json" },
         });
         // Backend trả về { query: string, hits: [...] }
@@ -92,7 +92,7 @@ export const searchRecipes = createAsyncThunk(
 export const searchRecipesByKeyword = createAsyncThunk(
     "recipes/searchByKeyword",
     async (payload: KeywordSearchPayload) => {
-        const res = await axios.post("http://127.0.0.1:8000/search-by-keyword", payload, {
+        const res = await axios.post("http://127.0.0.1:8000/api/search-by-keyword", payload, {
             headers: { "Content-Type": "application/json" },
         });
         // Backend trả về { query: string, hits: [...] }
