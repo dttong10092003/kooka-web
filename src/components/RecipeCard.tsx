@@ -28,11 +28,14 @@ export function RecipeCard({
   moreIngredients,
   reviews,
 }: RecipeCardProps) {
-  const difficultyColors: Record<"Dễ" | "Trung bình" | "Khó", string> = {
+  const difficultyColors: Record<string, string> = {
     "Dễ": "bg-green-100 text-green-800",
     "Trung bình": "bg-yellow-100 text-yellow-800",
     "Khó": "bg-red-100 text-red-800",
   }
+
+  const difficultyClass =
+    difficultyColors[difficulty] || "bg-gray-100 text-gray-800"
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow group">
@@ -44,8 +47,7 @@ export function RecipeCard({
           <span className="text-sm font-medium">{rating}</span>
         </div>
         <div
-          className={`absolute top-3 right-3 px-2 py-1 rounded-full text-xs font-medium ${difficultyColors[difficulty as "Dễ" | "Trung bình" | "Khó"]
-            }`}
+          className={`absolute top-3 right-3 px-2 py-1 rounded-full text-xs font-medium ${difficultyClass}`}
         >
           {difficulty}
         </div>

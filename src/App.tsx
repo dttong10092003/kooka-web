@@ -6,6 +6,7 @@ import RegisterPage from "./pages/RegisterPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import AdminDashboard from "./pages/AdminDashboard";
 import Footer from "./components/Footer";
+import Recipes from "./pages/Recipes";
 
 // USer
 import ProfilePage from "./pages/ProfilePage";
@@ -13,6 +14,7 @@ import MyReviews from "./pages/MyReviews";
 import ProfileLayout from "./layout/ProfileLayout";
 import Settings from "./pages/Settings";
 import MyFavourite from "./pages/MyFavourite";
+
 
 function App() {
   const location = useLocation();
@@ -24,6 +26,7 @@ function App() {
       {!hideHeader && <Header />}
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/recipes" element={<Recipes />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />

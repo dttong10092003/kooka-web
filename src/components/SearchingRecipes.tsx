@@ -2,13 +2,22 @@ import { useEffect } from "react"
 import { RecipeCard } from "./RecipeCard"
 import { useDispatch, useSelector } from "react-redux"
 import type { AppDispatch, RootState } from "../redux/store"
-import { searchRecipes } from "../redux/slices/recipeSlice"
+import { searchRecipes, searchRecipesByKeyword } from "../redux/slices/recipeSlice"
 
 interface SearchingRecipesProps {
-    ingredients: string[] // danh sách nguyên liệu truyền từ HeroSection
+    // trường hợp tìm theo ingredients
+    ingredients?: string[]
     cuisine?: string
     category?: string
     tags?: string[]
+
+    // trường hợp tìm theo keyword
+    searchParams?: {
+        keyword: string
+        cuisine?: string
+        category?: string
+        tags?: string[]
+    }
 }
 
 export default function SearchingRecipes({
@@ -16,12 +25,28 @@ export default function SearchingRecipes({
     cuisine,
     category,
     tags,
+    searchParams,
 }: SearchingRecipesProps) {
     const dispatch = useDispatch<AppDispatch>()
     const { recipes, loading, error } = useSelector((state: RootState) => state.recipes)
 
     useEffect(() => {
-        if (ingredients.length > 0 || cuisine || category || (tags && tags.length > 0)) {
+        if (searchParams?.keyword) {
+            // tìm theo keyword
+            dispatch(
+                searchRecipesByKeyword({
+                    keywords: searchParams.keyword,
+                    cuisine: searchParams.cuisine,
+                    category: searchParams.category,
+                    tags: searchParams.tags,
+                    top_k: 10,
+                })
+            )
+        } else if (
+            ingredients &&
+            (ingredients.length > 0 || cuisine || category || (tags && tags.length > 0))
+        ) {
+            // tìm theo ingredients
             dispatch(
                 searchRecipes({
                     ingredients,
@@ -32,7 +57,7 @@ export default function SearchingRecipes({
                 })
             )
         }
-    }, [ingredients, cuisine, category, tags, dispatch])
+    }, [ingredients, cuisine, category, tags, searchParams, dispatch])
 
     return (
         <section className="py-16 px-4 bg-gray-50">
@@ -43,7 +68,7 @@ export default function SearchingRecipes({
                         Kết quả tìm kiếm công thức
                     </h2>
                     <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                        Các công thức gợi ý dựa trên nguyên liệu và lựa chọn của bạn
+                        Các công thức gợi ý dựa trên lựa chọn của bạn
                     </p>
                 </div>
 

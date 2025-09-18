@@ -88,37 +88,14 @@ export default function FilterModal({ isOpen, onClose, onApply, initialFilters }
 
                 <h2 className="text-xl font-bold mb-4">Bộ lọc tìm kiếm</h2>
 
-                {/* Category */}
-                <div className="mb-4 text-left">
-                    <p className="font-semibold mb-2">Category</p>
-                    <div className="flex flex-wrap gap-2">
-                        {categories.map((cat) => (
-                            <button
-                                key={cat}
-                                className={`px-4 py-2 rounded-full border transition-colors ${selectedCategory === cat
-                                        ? "bg-orange-500 text-white border-orange-500"
-                                        : "bg-white text-gray-700 border-gray-300 hover:border-orange-500 hover:text-orange-500"
-                                    }`}
-                                onClick={() =>
-                                    setSelectedCategory(
-                                        selectedCategory === cat ? "" : cat
-                                    )
-                                }
-                            >
-                                {cat}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Tags */}
+                {/* Tags - Moved to the top */}
                 <div className="mb-4 text-left">
                     <p className="font-semibold mb-2">Tags</p>
                     <div className="flex flex-wrap gap-2">
                         {tags.map((tag) => (
                             <button
                                 key={tag}
-                                className={`px-4 py-2 rounded-full border transition-colors ${selectedTags.includes(tag)
+                                className={`px-4 py-2 rounded-md border transition-colors ${selectedTags.includes(tag)
                                         ? "bg-orange-500 text-white border-orange-500"
                                         : "bg-white text-gray-700 border-gray-300 hover:border-orange-500 hover:text-orange-500"
                                     }`}
@@ -130,26 +107,51 @@ export default function FilterModal({ isOpen, onClose, onApply, initialFilters }
                     </div>
                 </div>
 
-                {/* Cuisine */}
+                {/* Category - Changed to stylish select/combobox */}
+                <div className="mb-4 text-left">
+                    <p className="font-semibold mb-2">Category</p>
+                    <div className="relative">
+                        <select 
+                            value={selectedCategory}
+                            onChange={(e) => setSelectedCategory(e.target.value)}
+                            className="w-full px-4 py-3 bg-white border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-700 cursor-pointer shadow-sm"
+                        >
+                            <option value="">All Categories</option>
+                            {categories.map((cat) => (
+                                <option key={cat} value={cat}>
+                                    {cat}
+                                </option>
+                            ))}
+                        </select>
+                        <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                            <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Cuisine - Changed to stylish select/combobox */}
                 <div className="mb-4 text-left">
                     <p className="font-semibold mb-2">Cuisine</p>
-                    <div className="flex flex-wrap gap-2">
-                        {cuisines.map((cuisine) => (
-                            <button
-                                key={cuisine}
-                                className={`px-4 py-2 rounded-full border transition-colors ${selectedCuisine === cuisine
-                                        ? "bg-orange-500 text-white border-orange-500"
-                                        : "bg-white text-gray-700 border-gray-300 hover:border-orange-500 hover:text-orange-500"
-                                    }`}
-                                onClick={() =>
-                                    setSelectedCuisine(
-                                        selectedCuisine === cuisine ? "" : cuisine
-                                    )
-                                }
-                            >
-                                {cuisine}
-                            </button>
-                        ))}
+                    <div className="relative">
+                        <select 
+                            value={selectedCuisine}
+                            onChange={(e) => setSelectedCuisine(e.target.value)}
+                            className="w-full px-4 py-3 bg-white border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-700 cursor-pointer shadow-sm"
+                        >
+                            <option value="">All Cuisines</option>
+                            {cuisines.map((cuisine) => (
+                                <option key={cuisine} value={cuisine}>
+                                    {cuisine}
+                                </option>
+                            ))}
+                        </select>
+                        <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                            <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </div>
                     </div>
                 </div>
 

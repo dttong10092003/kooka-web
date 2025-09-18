@@ -56,15 +56,15 @@ export default function Header() {
           <Link to="/" className="text-orange-500 font-medium">
             {t("header.home")}
           </Link>
-          <a href="#" className="text-gray-600 hover:text-gray-900">
+          <Link to="/recipes" className="text-gray-600 hover:text-gray-900">
             {t("header.recipes")}
-          </a>
-          <a href="#" className="text-gray-600 hover:text-gray-900">
+          </Link>
+          <Link to="/categories" className="text-gray-600 hover:text-gray-900">
             {t("header.categories")}
-          </a>
-          <a href="#" className="text-gray-600 hover:text-gray-900">
+          </Link>
+          <Link to="/about" className="text-gray-600 hover:text-gray-900">
             {t("header.about")}
-          </a>
+          </Link>
         </nav>
 
         {/* Actions */}
