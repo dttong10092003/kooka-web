@@ -116,14 +116,14 @@ export default function Header() {
 
                   {/* Menu items */}
                   <Link
-                    to="/profile"
+                    to="/my-profile"
                     onClick={() => setShowUserDropdown(false)}
                     className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-50"
                   >
                     <User className="h-4 w-4" /> {t("header.authProfile")}
                   </Link>
                   <Link
-                    to="/favorites"
+                    to="/my-favorites"
                     onClick={() => setShowUserDropdown(false)}
                     className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-50"
                   >
@@ -151,7 +151,7 @@ export default function Header() {
 
                   <div className="border-t border-gray-100 my-1" />
                   <Link
-                    to="/settings"
+                    to="/my-settings"
                     onClick={() => setShowUserDropdown(false)}
                     className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-50"
                   >
