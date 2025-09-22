@@ -1,15 +1,25 @@
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { ArrowLeft, Mail, Lock, User, CheckCircle, AlertCircle } from "lucide-react"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import FormInput from "../components/FormInput"
 import { useLanguage } from "../contexts/LanguageContext"
+
+// Redux
+import { useDispatch, useSelector } from "react-redux"
+import type { AppDispatch, RootState } from "../redux/store"
+import { registerUser } from "../redux/slices/authSlice"
+
 interface RegisterPageProps {
   onBack?: () => void
 }
 
 const RegisterPage: React.FC<RegisterPageProps> = ({ onBack }) => {
   const { t } = useLanguage()
+  const navigate = useNavigate()
+  const dispatch = useDispatch<AppDispatch>()
+  const { loading, error, user, token } = useSelector((state: RootState) => state.auth)
+
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -19,7 +29,6 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onBack }) => {
     agreeToTerms: false,
   })
 
-  const [isLoading, setIsLoading] = useState(false)
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null)
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -32,15 +41,39 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onBack }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setIsLoading(true)
     setMessage(null)
 
-    // Simulate API call
-    setTimeout(() => {
-      setMessage({ type: "success", text: "Account created successfully! Please check your email." })
-      setIsLoading(false)
-    }, 2000)
+    dispatch(
+      registerUser({
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        password: formData.password,
+        confirmPassword: formData.confirmPassword,
+      })
+    )
   }
+
+  // Khi đăng ký thành công
+  useEffect(() => {
+    if (user && token) {
+      setMessage({ type: "success", text: "auth.registerSuccess" })
+      setTimeout(() => {
+        navigate("/") // hoặc "/dashboard"
+      }, 1500)
+    }
+  }, [user, token, navigate])
+
+
+  // Khi có lỗi
+  useEffect(() => {
+    if (error) {
+      setMessage({ type: "error", text: error }) // error cũng là key (vd: auth.passwordNotMatch)
+    }
+  }, [error])
+
+
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-red-50 py-4 lg:py-6 flex items-center">
@@ -71,8 +104,8 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onBack }) => {
           {message && (
             <div
               className={`mb-3 lg:mb-4 p-2.5 lg:p-3 rounded-lg flex items-center space-x-2 text-xs lg:text-sm ${message.type === "success"
-                  ? "bg-green-50 border border-green-200 text-green-800"
-                  : "bg-red-50 border border-red-200 text-red-800"
+                ? "bg-green-50 border border-green-200 text-green-800"
+                : "bg-red-50 border border-red-200 text-red-800"
                 }`}
             >
               <div className="flex-shrink-0">
@@ -82,9 +115,10 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onBack }) => {
                   <AlertCircle className="h-3.5 w-3.5 lg:h-4 lg:w-4" />
                 )}
               </div>
-              <span>{message.text}</span>
+              <span>{t(message.text)}</span>
             </div>
           )}
+
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -170,13 +204,13 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onBack }) => {
             {/* Submit Button */}
             <button
               type="submit"
-              disabled={isLoading}
-              className={`w-full py-2.5 px-4 rounded-lg font-medium text-white text-sm transition-all duration-200 cursor-pointer ${isLoading
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 shadow-lg hover:shadow-xl"
+              disabled={loading}
+              className={`w-full py-2.5 px-4 rounded-lg font-medium text-white text-sm transition-all duration-200 cursor-pointer ${loading
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 shadow-lg hover:shadow-xl"
                 }`}
             >
-              {isLoading ? (
+              {loading ? (
                 <div className="flex items-center justify-center space-x-2">
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                   <span>{t("auth.createIn")}</span>
@@ -199,6 +233,7 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onBack }) => {
               </Link>
             </div>
           </div>
+
           {/* Social Login */}
           <div className="mt-4 lg:mt-5">
             <div className="relative">
@@ -241,7 +276,6 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onBack }) => {
               </button>
             </div>
           </div>
-
         </div>
       </div>
     </div>

@@ -37,7 +37,7 @@ export const translations = {
             back: "Quay lại Trang Chủ",
             welcome: "Chào mừng trở lại",
             signinToAccount: "Đăng nhập vào tài khoản của bạn",
-            email: "Địa chỉ Email",
+            email: "Địa chỉ Email / Username",
             password: "Mật khẩu",
             signin: "Đăng Nhập",
             signingIn: "Đang đăng nhập...",
@@ -66,6 +66,11 @@ export const translations = {
             confirmPassword: "Xác nhận mật khẩu",
             loginSuccess: "Đăng nhập thành công!",
             loginFailed: "Sai tài khoản hoặc mật khẩu. Vui lòng thử lại.",
+            registerSuccess: "Đăng ký thành công!",
+            passwordNotMatch: "Mật khẩu xác nhận không khớp",
+            emailExist: "Email đã tồn tại",
+            invalidCredentials: "Email hoặc mật khẩu không hợp lệ",
+            googleAuthFailed: "Xác thực Google thất bại. Vui lòng thử lại.",
 
         },
 
@@ -109,7 +114,7 @@ export const translations = {
             back: "Back to Home",
             welcome: "Welcome Back",
             signinToAccount: "Sign in to your account",
-            email: "Email Address",
+            email: "Email Address / Username",
             password: "Password",
             signin: "Sign In",
             signingIn: "Signing In...",
@@ -138,6 +143,11 @@ export const translations = {
             confirmPassword: "Confirm Password",
             loginSuccess: "Login successful!",
             loginFailed: "Incorrect username or password. Please try again.",
+            registerSuccess: "Registration successful!",
+            passwordNotMatch: "Confirm password does not match",
+            emailExist: "Email already exists",
+            invalidCredentials: "Invalid email or password",
+            googleAuthFailed: "Google authentication failed. Please try again.",
 
         },
 
