@@ -1,4 +1,5 @@
 import { Clock, Users, Star } from "lucide-react"
+import { useNavigate } from "react-router-dom"
 
 interface RecipeCardProps {
   id: string
@@ -16,6 +17,7 @@ interface RecipeCardProps {
 }
 
 export function RecipeCard({
+  id,
   title,
   description,
   image,
@@ -28,6 +30,7 @@ export function RecipeCard({
   moreIngredients,
   reviews,
 }: RecipeCardProps) {
+  const navigate = useNavigate()
   const difficultyColors: Record<string, string> = {
     "Dễ": "bg-green-100 text-green-800",
     "Trung bình": "bg-yellow-100 text-yellow-800",
@@ -38,7 +41,9 @@ export function RecipeCard({
     difficultyColors[difficulty] || "bg-gray-100 text-gray-800"
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow group">
+    <div
+      onClick={() => navigate(`/recipe/${id}`)}
+      className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow group">
       {/* Image */}
       <div className="relative">
         <img src={image || "/placeholder.svg"} alt={title} className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105" />
@@ -91,7 +96,11 @@ export function RecipeCard({
         {/* Footer */}
         <div className="flex items-center justify-between">
           <span className="text-sm text-gray-500">{reviews} đánh giá</span>
-          <button type="button" className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg">View Recipe</button>
+          <button type="button"
+            onClick={() => {
+              navigate(`/recipes/${id}`)
+            }}
+            className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg">View Recipe</button>
         </div>
       </div>
     </div>
