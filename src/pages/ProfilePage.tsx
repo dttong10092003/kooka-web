@@ -1,27 +1,42 @@
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useDispatch, useSelector } from "react-redux"
 import { Calendar, MapPin, Edit, Save, X, Camera } from "lucide-react"
+import type { RootState, AppDispatch } from "../redux/store"
+import { fetchProfile, updateProfile } from "../redux/slices/userSlice"
 
 const ProfilePage: React.FC = () => {
-  const [isEditing, setIsEditing] = useState(false)
+  const dispatch = useDispatch<AppDispatch>()
 
-  const [profileData, setProfileData] = useState({
-    firstName: "Nguyen",
-    lastName: "An",
-    email: "an.nguyen@example.com",
-    phone: "+84 123 456 789",
-    location: "Ho Chi Minh City, Vietnam",
-    bio: "Passionate home cook who loves experimenting with new recipes.",
-    joinDate: "2024-01-15",
-    birthDate: "1990-05-15",
-    website: "https://mycookingblog.com",
-  })
+  // Lấy từ Redux
+  const { user } = useSelector((state: RootState) => state.auth)   // user cơ bản (id, email)
+  const { profile, loading } = useSelector((state: RootState) => state.user) // profile chi tiết
+
+  const [isEditing, setIsEditing] = useState(false)
+  const [formData, setFormData] = useState(profile || null)
+
+  // Lấy profile khi user login xong
+  useEffect(() => {
+    if (user?.id) {
+      dispatch(fetchProfile(user.id))
+    }
+  }, [user, dispatch])
+
+  // Sync formData khi profile thay đổi
+  useEffect(() => {
+    if (profile) {
+      setFormData(profile)
+    }
+  }, [profile])
 
   const handleInputChange = (field: string, value: string) => {
-    setProfileData((prev) => ({ ...prev, [field]: value }))
+    setFormData((prev: any) => (prev ? { ...prev, [field]: value } : prev))
   }
 
   const handleSave = () => {
+    if (user?.id && formData) {
+      dispatch(updateProfile({ userId: user.id, data: formData }))
+    }
     setIsEditing(false)
   }
 
@@ -32,6 +47,14 @@ const ProfilePage: React.FC = () => {
       .join("")
       .toUpperCase()
 
+  if (loading && !profile) {
+    return <div className="p-8">Loading profile...</div>
+  }
+
+  if (!formData) {
+    return <div className="p-8">No profile data available</div>
+  }
+
   return (
     <div className="bg-white rounded-2xl shadow-sm">
       {/* Header */}
@@ -40,24 +63,30 @@ const ProfilePage: React.FC = () => {
           <div className="flex items-center space-x-4">
             <div className="relative">
               <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white text-2xl font-bold">
-                {getUserInitials("Nguyen An")}
+                {getUserInitials(`${formData.firstName} ${formData.lastName}`)}
               </div>
               <button className="absolute bottom-0 right-0 bg-white text-gray-700 p-1.5 rounded-full hover:bg-gray-100 transition-colors duration-200">
                 <Camera className="h-3 w-3" />
               </button>
             </div>
             <div className="text-white">
-              <h1 className="text-2xl font-bold mb-1">Nguyen Van An</h1>
-              <p className="text-white/90 mb-2">an.nguyen@example.com</p>
+              <h1 className="text-2xl font-bold mb-1">
+                {formData.firstName} {formData.lastName}
+              </h1>
+              <p className="text-white/90 mb-2">{user?.email}</p>
               <div className="flex items-center space-x-4 text-sm text-white/80">
-                <div className="flex items-center space-x-1">
-                  <Calendar className="h-4 w-4" />
-                  <span>Joined {profileData.joinDate}</span>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <MapPin className="h-4 w-4" />
-                  <span>{profileData.location}</span>
-                </div>
+                {formData.createdAt && (
+                  <div className="flex items-center space-x-1">
+                    <Calendar className="h-4 w-4" />
+                    <span>Joined {formData.createdAt.split("T")[0]}</span>
+                  </div>
+                )}
+                {formData.location && (
+                  <div className="flex items-center space-x-1">
+                    <MapPin className="h-4 w-4" />
+                    <span>{formData.location}</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -91,7 +120,7 @@ const ProfilePage: React.FC = () => {
             <label className="block text-sm font-medium text-gray-700 mb-2">First Name</label>
             <input
               type="text"
-              value={profileData.firstName}
+              value={formData.firstName || ""}
               onChange={(e) => handleInputChange("firstName", e.target.value)}
               disabled={!isEditing}
               className={`w-full px-4 py-3 border border-gray-200 rounded-lg ${
@@ -104,7 +133,7 @@ const ProfilePage: React.FC = () => {
             <label className="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
             <input
               type="text"
-              value={profileData.lastName}
+              value={formData.lastName || ""}
               onChange={(e) => handleInputChange("lastName", e.target.value)}
               disabled={!isEditing}
               className={`w-full px-4 py-3 border border-gray-200 rounded-lg ${
@@ -117,12 +146,9 @@ const ProfilePage: React.FC = () => {
             <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
             <input
               type="email"
-              value={profileData.email}
-              onChange={(e) => handleInputChange("email", e.target.value)}
-              disabled={!isEditing}
-              className={`w-full px-4 py-3 border border-gray-200 rounded-lg ${
-                !isEditing ? "bg-gray-50 text-gray-600" : ""
-              }`}
+              value={user?.email || ""}
+              disabled
+              className="w-full px-4 py-3 border border-gray-200 rounded-lg bg-gray-50 text-gray-600"
             />
           </div>
 
@@ -130,7 +156,7 @@ const ProfilePage: React.FC = () => {
             <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
             <input
               type="text"
-              value={profileData.phone}
+              value={formData.phone || ""}
               onChange={(e) => handleInputChange("phone", e.target.value)}
               disabled={!isEditing}
               className={`w-full px-4 py-3 border border-gray-200 rounded-lg ${
@@ -143,7 +169,7 @@ const ProfilePage: React.FC = () => {
         <div className="mt-6">
           <label className="block text-sm font-medium text-gray-700 mb-2">Bio</label>
           <textarea
-            value={profileData.bio}
+            value={formData.bio || ""}
             onChange={(e) => handleInputChange("bio", e.target.value)}
             disabled={!isEditing}
             rows={4}

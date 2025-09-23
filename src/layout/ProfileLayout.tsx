@@ -1,10 +1,13 @@
 import type React from "react"
 import { ArrowLeft, User, Heart, Star, Settings as SettingsIcon } from "lucide-react"
 import { useNavigate, Outlet, useLocation } from "react-router-dom"
+import { useSelector } from "react-redux"
+import type { RootState } from "../redux/store"
 
 const ProfileLayout: React.FC = () => {
   const navigate = useNavigate()
   const location = useLocation()
+  const { profile } = useSelector((state: RootState) => state.user)
 
   const sidebarItems = [
     { id: "profile", label: "Profile", icon: User, path: "/my-profile" },
@@ -13,8 +16,15 @@ const ProfileLayout: React.FC = () => {
     { id: "settings", label: "Settings", icon: SettingsIcon, path: "/my-settings" },
   ]
 
-  const getUserInitials = (name: string) =>
-    name.split(" ").map((n) => n[0]).join("").toUpperCase()
+  const getUserInitials = (firstName?: string, lastName?: string) => {
+    const name = `${firstName || ""} ${lastName || ""}`.trim()
+    if (!name) return "U" // User default
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
@@ -32,11 +42,24 @@ const ProfileLayout: React.FC = () => {
 
         <div className="p-4 border-b border-gray-200">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
-              {getUserInitials("Nguyen An")}
-            </div>
+            {profile?.avatar ? (
+              <img
+                src={profile.avatar}
+                alt="User Avatar"
+                className="w-10 h-10 rounded-full object-cover"
+              />
+            ) : (
+              <div className="w-10 h-10 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
+                {getUserInitials(profile?.firstName, profile?.lastName)}
+              </div>
+            )}
+
             <div>
-              <p className="font-medium text-gray-900 text-sm">Nguyen Van An</p>
+              <p className="font-medium text-gray-900 text-sm">
+                {profile
+                  ? `${profile.firstName || ""} ${profile.lastName || ""}`.trim()
+                  : "Guest User"}
+              </p>
             </div>
           </div>
         </div>
@@ -50,7 +73,7 @@ const ProfileLayout: React.FC = () => {
                 <li key={item.id}>
                   <button
                     onClick={() => navigate(item.path)}
-                    className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg ${
+                    className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg cursor-pointer ${
                       isActive
                         ? "bg-orange-50 text-orange-600 border border-orange-200"
                         : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"

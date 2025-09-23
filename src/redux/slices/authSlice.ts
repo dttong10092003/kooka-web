@@ -2,49 +2,19 @@ import { createSlice, createAsyncThunk, type PayloadAction } from "@reduxjs/tool
 import axios from "axios"
 
 // =====================
-// API CALLS
-// =====================
-
-// Login
-export const login = createAsyncThunk<
-  { token: string; user: { username: string; email?: string; isAdmin?: boolean } },
-  { usernameOrEmail: string; password: string },
-  { rejectValue: string }
->("auth/login", async ({ usernameOrEmail, password }, { rejectWithValue }) => {
-  try {
-    const res = await axios.post("http://localhost:5001/auth/login", {
-      usernameOrEmail,
-      password,
-    })
-    return res.data // { message, token, user }
-  } catch (err: any) {
-    const code = err.response?.data?.code || "auth.loginFailed"
-    return rejectWithValue(code)
-  }
-})
-
-// Register
-export const registerUser = createAsyncThunk<
-  { token: string; user: { username: string; email?: string; isAdmin?: boolean } },
-  { firstName: string; lastName: string; email: string; password: string; confirmPassword: string },
-  { rejectValue: string }
->("auth/register", async (formData, { rejectWithValue }) => {
-  try {
-    const res = await axios.post("http://localhost:5001/auth/register", formData)
-    return res.data // { message, token, user }
-  } catch (err: any) {
-    return rejectWithValue(err.response?.data?.code || "auth.registerFailed")
-  }
-})
-
-// =====================
-// STATE
+// TYPES
 // =====================
 
 interface AuthUser {
+  id: string
   username: string
   email?: string
   isAdmin?: boolean
+}
+
+interface AuthResponse {
+  token: string
+  user: AuthUser
 }
 
 interface AuthState {
@@ -54,12 +24,58 @@ interface AuthState {
   error: string | null // lưu code từ backend (vd: "auth.passwordNotMatch")
 }
 
+// =====================
+// INITIAL STATE
+// =====================
+
 const initialState: AuthState = {
   token: localStorage.getItem("token") || null,
   user: null,
   loading: false,
   error: null,
 }
+
+// =====================
+// API CALLS
+// =====================
+
+// Login
+export const login = createAsyncThunk<
+  AuthResponse,
+  { usernameOrEmail: string; password: string },
+  { rejectValue: string }
+>("auth/login", async ({ usernameOrEmail, password }, { rejectWithValue }) => {
+  try {
+    const res = await axios.post("http://localhost:5001/auth/login", {
+      usernameOrEmail,
+      password,
+    })
+    return res.data as AuthResponse
+  } catch (err: any) {
+    const code = err.response?.data?.code || "auth.loginFailed"
+    return rejectWithValue(code)
+  }
+})
+
+// Register
+export const registerUser = createAsyncThunk<
+  AuthResponse,
+  {
+    firstName: string
+    lastName: string
+    email: string
+    password: string
+    confirmPassword: string
+  },
+  { rejectValue: string }
+>("auth/register", async (formData, { rejectWithValue }) => {
+  try {
+    const res = await axios.post("http://localhost:5001/auth/register", formData)
+    return res.data as AuthResponse
+  } catch (err: any) {
+    return rejectWithValue(err.response?.data?.code || "auth.registerFailed")
+  }
+})
 
 // =====================
 // SLICE
