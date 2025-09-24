@@ -6,8 +6,8 @@ import axios from "axios"
 // =====================
 
 interface AuthUser {
-  id: string
-  username: string
+  _id: string
+  username?: string
   email?: string
   isAdmin?: boolean
 }
@@ -21,7 +21,7 @@ interface AuthState {
   token: string | null
   user: AuthUser | null
   loading: boolean
-  error: string | null // lưu code từ backend (vd: "auth.passwordNotMatch")
+  error: string | null
 }
 
 // =====================

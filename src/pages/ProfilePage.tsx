@@ -9,16 +9,16 @@ const ProfilePage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>()
 
   // Lấy từ Redux
-  const { user } = useSelector((state: RootState) => state.auth)   // user cơ bản (id, email)
-  const { profile, loading } = useSelector((state: RootState) => state.user) // profile chi tiết
+  const { user } = useSelector((state: RootState) => state.auth)
+  const { profile, loading } = useSelector((state: RootState) => state.user)
 
   const [isEditing, setIsEditing] = useState(false)
   const [formData, setFormData] = useState(profile || null)
 
   // Lấy profile khi user login xong
   useEffect(() => {
-    if (user?.id) {
-      dispatch(fetchProfile(user.id))
+    if (user?._id) {
+      dispatch(fetchProfile(user._id))
     }
   }, [user, dispatch])
 
@@ -34,8 +34,8 @@ const ProfilePage: React.FC = () => {
   }
 
   const handleSave = () => {
-    if (user?.id && formData) {
-      dispatch(updateProfile({ userId: user.id, data: formData }))
+    if (user?._id && formData) {
+      dispatch(updateProfile({ userId: user._id, data: formData }))
     }
     setIsEditing(false)
   }

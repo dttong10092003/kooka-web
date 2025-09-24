@@ -29,12 +29,15 @@ export default function Header() {
     setShowUserDropdown(false);
   };
 
-  const getUserInitials = (name: string) =>
-    name
+  const getUserInitials = (name?: string) =>
+    (name ?? "")
       .split(" ")
       .map((n) => n[0])
       .join("")
       .toUpperCase();
+
+  // 👉 Nếu đang ở trang Register, luôn hiển thị trạng thái chưa login
+  const forceGuest = location.pathname === "/register";
 
   return (
     <header className="bg-white border-b border-gray-200 px-4 py-3">
@@ -83,7 +86,7 @@ export default function Header() {
           </button>
 
           {/* User state */}
-          {token && user && location.pathname !== "/login" ? (
+          {!forceGuest && token && user && location.pathname !== "/login" ? (
             <div className="relative">
               <button
                 onClick={() => setShowUserDropdown(!showUserDropdown)}
@@ -99,7 +102,6 @@ export default function Header() {
               {/* Dropdown */}
               {showUserDropdown && (
                 <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-100 py-2 z-50">
-                  {/* Header user info */}
                   <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-100">
                     <div className="w-10 h-10 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center text-white font-semibold">
                       {getUserInitials(user.username)}
@@ -107,14 +109,11 @@ export default function Header() {
                     <div>
                       <p className="font-medium text-gray-900">{user.username}</p>
                       {user.email && (
-                        <p className="text-sm text-gray-500 truncate">
-                          {user.email}
-                        </p>
+                        <p className="text-sm text-gray-500 truncate">{user.email}</p>
                       )}
                     </div>
                   </div>
 
-                  {/* Menu items */}
                   <Link
                     to="/my-profile"
                     onClick={() => setShowUserDropdown(false)}
@@ -129,7 +128,6 @@ export default function Header() {
                   >
                     <Heart className="h-4 w-4" /> {t("header.authFavorites")}
                   </Link>
-
                   <Link
                     to="/my-reviews"
                     onClick={() => setShowUserDropdown(false)}
@@ -138,7 +136,6 @@ export default function Header() {
                     <Star className="h-4 w-4" /> {t("header.authReviews")}
                   </Link>
 
-                  {/* Admin menu */}
                   {user.isAdmin && (
                     <Link
                       to="/admin"
@@ -157,12 +154,13 @@ export default function Header() {
                   >
                     <Settings className="h-4 w-4" /> {t("header.authSettings")}
                   </Link>
-                  <button
+                  <Link
+                    to="/"
                     onClick={handleLogout}
                     className="flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 w-full text-left cursor-pointer"
                   >
                     <LogOut className="h-4 w-4" /> {t("header.authLogout")}
-                  </button>
+                  </Link>
                 </div>
               )}
             </div>
