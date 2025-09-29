@@ -33,7 +33,7 @@ export const fetchProfile = createAsyncThunk<Profile, string, { rejectValue: str
   "user/fetchProfile",
   async (userId, { rejectWithValue }) => {
     try {
-      const res = await axios.get(`http://localhost:5002/profiles/${userId}`)
+      const res = await axios.get(`http://localhost:3000/api/user/profile/${userId}`)
       return res.data
     } catch (err: any) {
       return rejectWithValue(err.response?.data?.message || "Failed to fetch profile")
@@ -48,7 +48,7 @@ export const updateProfile = createAsyncThunk<
   { rejectValue: string }
 >("user/updateProfile", async ({ userId, data }, { rejectWithValue }) => {
   try {
-    const res = await axios.put(`http://localhost:5002/profiles/${userId}`, data)
+    const res = await axios.put(`http://localhost:3000/api/user/profile/${userId}`, data)
     return res.data
   } catch (err: any) {
     return rejectWithValue(err.response?.data?.message || "Failed to update profile")

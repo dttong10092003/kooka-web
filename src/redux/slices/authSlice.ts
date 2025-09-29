@@ -46,7 +46,7 @@ export const login = createAsyncThunk<
   { rejectValue: string }
 >("auth/login", async ({ usernameOrEmail, password }, { rejectWithValue }) => {
   try {
-    const res = await axios.post("http://localhost:5001/auth/login", {
+    const res = await axios.post("http://localhost:3000/api/auth/login", {
       usernameOrEmail,
       password,
     })
@@ -70,7 +70,7 @@ export const registerUser = createAsyncThunk<
   { rejectValue: string }
 >("auth/register", async (formData, { rejectWithValue }) => {
   try {
-    const res = await axios.post("http://localhost:5001/auth/register", formData)
+    const res = await axios.post("http://localhost:3000/api/auth/register", formData)
     return res.data as AuthResponse
   } catch (err: any) {
     return rejectWithValue(err.response?.data?.code || "auth.registerFailed")

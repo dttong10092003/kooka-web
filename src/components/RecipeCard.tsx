@@ -43,7 +43,7 @@ export function RecipeCard({
   return (
     <div
       onClick={() => navigate(`/recipe/${id}`)}
-      className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow group">
+      className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow group h-full flex flex-col">
       {/* Image */}
       <div className="relative">
         <img src={image || "/placeholder.svg"} alt={title} className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105" />
@@ -59,14 +59,14 @@ export function RecipeCard({
       </div>
 
       {/* Content */}
-      <div className="p-4">
+      <div className="p-4 flex-1 flex flex-col">
         <h3 className="font-bold text-lg mb-2 text-gray-900 group-hover:text-orange-600 transition-colors duration-200">
           {title}
         </h3>
-        <p className="text-gray-600 text-sm mb-4 line-clamp-2">{description}</p>
+        <p className="text-gray-600 text-sm mb-4 line-clamp-2 flex-shrink-0">{description}</p>
 
         {/* Meta Info */}
-        <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
+        <div className="flex items-center gap-4 text-sm text-gray-500 mb-4 flex-shrink-0">
           <div className="flex items-center gap-1">
             <Clock className="w-4 h-4" />
             <span>{cookTime}</span>
@@ -80,7 +80,7 @@ export function RecipeCard({
         </div>
 
         {/* Ingredients */}
-        <div className="mb-4">
+        <div className="mb-4 flex-grow">
           <div className="flex flex-wrap gap-1">
             {ingredients.slice(0, 3).map((ingredient) => (
               <span key={ingredient} className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-md">
@@ -94,7 +94,7 @@ export function RecipeCard({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mt-auto">
           <span className="text-sm text-gray-500">{reviews} đánh giá</span>
           <button type="button"
             onClick={() => {
