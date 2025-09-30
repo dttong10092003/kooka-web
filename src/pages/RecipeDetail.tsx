@@ -64,7 +64,7 @@ export default function RecipeDetail() {
                                 {recipe.difficulty}
                             </span>
                             <span className="bg-orange-500/80 px-4 py-1 rounded-full text-sm font-medium">
-                                {recipe.cuisine}
+                                {recipe.cuisine.name}
                             </span>
                         </div>
                         <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-2">
@@ -144,17 +144,17 @@ export default function RecipeDetail() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                             {recipe.ingredients.map((ingredient, index) => {
                                 // Determine if this is a heading or regular ingredient
-                                const isHeading = ingredient.includes(':') && !ingredient.includes(',');
+                                // const isHeading = ingredient.includes(':') && !ingredient.includes(',');
 
-                                if (isHeading) {
-                                    return (
-                                        <div key={index} className="col-span-1 md:col-span-2 mt-2 first:mt-0">
-                                            <h3 className="text-sm sm:text-base font-semibold text-orange-600 pb-1 border-b border-orange-200">
-                                                {ingredient.replace(':', '')}
-                                            </h3>
-                                        </div>
-                                    );
-                                }
+                                // if (isHeading) {
+                                //     return (
+                                //         <div key={index} className="col-span-1 md:col-span-2 mt-2 first:mt-0">
+                                //             <h3 className="text-sm sm:text-base font-semibold text-orange-600 pb-1 border-b border-orange-200">
+                                //                 {ingredient.replace(':', '')}
+                                //             </h3>
+                                //         </div>
+                                //     );
+                                // }
 
                                 return (
                                     <div key={index} className="flex items-center gap-3 py-1.5 sm:py-2 bg-orange-50/50 px-3 rounded-lg hover:bg-orange-50 transition-colors">
@@ -169,7 +169,7 @@ export default function RecipeDetail() {
                                             htmlFor={`ingredient-${index}`}
                                             className="text-sm sm:text-base text-gray-700 cursor-pointer hover:text-gray-900"
                                         >
-                                            {ingredient}
+                                            {ingredient.name}
                                         </label>
                                     </div>
                                 );

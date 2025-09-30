@@ -59,6 +59,8 @@ export default function SearchingRecipes({
         }
     }, [ingredients, cuisine, category, tags, searchParams, dispatch])
 
+    console.log("SearchingRecipes - recipes:", recipes)
+
     return (
         <section className="py-16 px-4 bg-gray-50">
             <div className="max-w-7xl mx-auto">
@@ -90,8 +92,12 @@ export default function SearchingRecipes({
                                 difficulty={recipe.difficulty}
                                 cookTime={`${recipe.time}m`}
                                 servings={recipe.size}
-                                cuisine={recipe.cuisine}
-                                ingredients={Array.isArray(recipe.ingredients) ? recipe.ingredients.slice(0, 3) : []}
+                                cuisine={recipe.cuisine.name}
+                                ingredients={
+                                    Array.isArray(recipe.ingredients)
+                                        ? recipe.ingredients.slice(0, 3).map((ing) => ing.name)
+                                        : []
+                                }
                                 moreIngredients={
                                     Array.isArray(recipe.ingredients) && recipe.ingredients.length > 3
                                         ? recipe.ingredients.length - 3

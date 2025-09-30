@@ -100,6 +100,8 @@ export default function PopularRecipes() {
         dispatch(fetchRecipes())
     }, [dispatch])
 
+    console.log("PopularRecipes - recipes:", recipes)
+
     return (
         <section className="py-16 px-4 bg-white">
             <div className="max-w-7xl mx-auto">
@@ -128,8 +130,12 @@ export default function PopularRecipes() {
                             difficulty={recipe.difficulty}
                             cookTime={`${recipe.time}m`}
                             servings={recipe.size}
-                            cuisine={recipe.cuisine}
-                            ingredients={Array.isArray(recipe.ingredients) ? recipe.ingredients.slice(0, 3) : []}
+                            cuisine={recipe.cuisine.name}
+                            ingredients={
+                                    Array.isArray(recipe.ingredients)
+                                        ? recipe.ingredients.slice(0, 3).map((ing) => ing.name)
+                                        : []
+                                }
                             moreIngredients={
                                 Array.isArray(recipe.ingredients) && recipe.ingredients.length > 3
                                     ? recipe.ingredients.length - 3

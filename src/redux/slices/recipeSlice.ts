@@ -14,6 +14,21 @@ export interface Ingredient {
     typeId: string;
 }
 
+export interface Tag {
+    _id: string;
+    name: string;
+}
+
+export interface Cuisine {
+    _id: string;
+    name: string;
+}
+
+export interface Category {
+    _id: string;
+    name: string;
+}
+
 export interface Instruction {
     title: string;
     image: string;
@@ -23,8 +38,8 @@ export interface Instruction {
 export interface Recipe {
     _id: string;
     name: string;
-    ingredients: string[];
-    tags: string[];
+    ingredients: Ingredient[];
+    tags: Tag[];
     short: string;
     instructions: Instruction[];
     image: string;
@@ -33,8 +48,8 @@ export interface Recipe {
     time: number;
     size: number;
     difficulty: string;
-    cuisine: string;
-    category: string;
+    cuisine: Cuisine;
+    category: Category;
     rate: number;
     numberOfRate: number;
 }
@@ -62,6 +77,9 @@ interface RecipeState {
     recipes: Recipe[];
     ingredients: Ingredient[];
     ingredientTypes: IngredientType[];
+    tags: Tag[];
+    cuisines: Cuisine[];
+    categories: Category[];
     loading: boolean;
     error: string | null;
 }
@@ -70,12 +88,15 @@ const initialState: RecipeState = {
     recipes: [],
     ingredients: [],
     ingredientTypes: [],
+    tags: [],
+    cuisines: [],
+    categories: [],
     loading: false,
     error: null,
 };
 
 // ==== API base ====
-const API_URL = "http://localhost:3000/api";
+const API_URL = "http://localhost:5000/api";
 
 // ==== Async Thunks ====
 export const searchRecipes = createAsyncThunk(
@@ -92,7 +113,7 @@ export const searchRecipes = createAsyncThunk(
 export const searchRecipesByKeyword = createAsyncThunk(
     "recipes/searchByKeyword",
     async (payload: KeywordSearchPayload) => {
-        const res = await axios.post("http://127.0.0.1:8000/api/search-by-keyword", payload, {
+        const res = await axios.post("http://127.0.0.1:8000/api/search/search-by-keyword", payload, {
             headers: { "Content-Type": "application/json" },
         });
         // Backend trả về { query: string, hits: [...] }
@@ -195,6 +216,85 @@ export const deleteIngredientType = createAsyncThunk("ingredientTypes/delete", a
     return id;
 });
 
+// --- Tags ---
+export const fetchTags = createAsyncThunk("tags/fetchAll", async () => {
+    const res = await axios.get(`${API_URL}/tags`);
+    return res.data as Tag[];
+});
+
+export const getTagById = createAsyncThunk("tags/fetchById", async (id: string) => {
+    const res = await axios.get(`${API_URL}/tags/${id}`);
+    return res.data as Tag;
+});
+
+export const addTag = createAsyncThunk("tags/add", async (name: string) => {
+    const res = await axios.post(`${API_URL}/tags`, { name });
+    return res.data as Tag;
+});
+
+export const deleteTag = createAsyncThunk("tags/delete", async (id: string) => {
+    await axios.delete(`${API_URL}/tags/${id}`);
+    return id;
+});
+
+export const updateTag = createAsyncThunk("tags/update", async ({ id, tag }: { id: string; tag: Partial<Tag> }) => {
+    const res = await axios.put(`${API_URL}/tags/${id}`, tag);
+    return res.data as Tag;
+}
+);
+
+// --- Cuisines ---
+export const fetchCuisines = createAsyncThunk("cuisines/fetchAll", async () => {
+    const res = await axios.get(`${API_URL}/cuisines`);
+    return res.data as Cuisine[];
+});
+
+export const getCuisineById = createAsyncThunk("cuisines/fetchById", async (id: string) => {
+    const res = await axios.get(`${API_URL}/cuisines/${id}`);
+    return res.data as Cuisine;
+});
+
+export const addCuisine = createAsyncThunk("cuisines/add", async (name: string) => {
+    const res = await axios.post(`${API_URL}/cuisines`, { name });
+    return res.data as Cuisine;
+});
+
+export const deleteCuisine = createAsyncThunk("cuisines/delete", async (id: string) => {
+    await axios.delete(`${API_URL}/cuisines/${id}`);
+    return id;
+});
+
+export const updateCuisine = createAsyncThunk("cuisines/update", async ({ id, cuisine }: { id: string; cuisine: Partial<Cuisine> }) => {
+    const res = await axios.put(`${API_URL}/cuisines/${id}`, cuisine);
+    return res.data as Cuisine;
+});
+
+// --- Categories ---
+export const fetchCategories = createAsyncThunk("categories/fetchAll", async () => {
+    const res = await axios.get(`${API_URL}/categories`);
+    return res.data as Category[];
+});
+
+export const getCategoryById = createAsyncThunk("categories/fetchById", async (id: string) => {
+    const res = await axios.get(`${API_URL}/categories/${id}`);
+    return res.data as Category;
+});
+
+export const addCategory = createAsyncThunk("categories/add", async (name: string) => {
+    const res = await axios.post(`${API_URL}/categories`, { name });
+    return res.data as Category;
+});
+
+export const deleteCategory = createAsyncThunk("categories/delete", async (id: string) => {
+    await axios.delete(`${API_URL}/categories/${id}`);
+    return id;
+});
+
+export const updateCategory = createAsyncThunk("categories/update", async ({ id, category }: { id: string; category: Partial<Category> }) => {
+    const res = await axios.put(`${API_URL}/categories/${id}`, category);
+    return res.data as Category;
+});
+
 // ==== Slice ====
 const recipeSlice = createSlice({
     name: "recipes",
@@ -271,6 +371,66 @@ const recipeSlice = createSlice({
             })
             .addCase(deleteIngredientType.fulfilled, (state, action: PayloadAction<string>) => {
                 state.ingredientTypes = state.ingredientTypes.filter((t) => t._id !== action.payload);
+            });
+
+        // Tags
+        builder
+            .addCase(fetchTags.fulfilled, (state, action: PayloadAction<Tag[]>) => {
+                state.tags = action.payload;
+            })
+            .addCase(getTagById.fulfilled, (state, action: PayloadAction<Tag>) => {
+                const existing = state.tags.find((t) => t._id === action.payload._id);
+                if (!existing) state.tags.push(action.payload);
+            })
+            .addCase(addTag.fulfilled, (state, action: PayloadAction<Tag>) => {
+                state.tags.push(action.payload);
+            })
+            .addCase(updateTag.fulfilled, (state, action: PayloadAction<Tag>) => {
+                const index = state.tags.findIndex((t) => t._id === action.payload._id);
+                if (index !== -1) state.tags[index] = action.payload;
+            })
+            .addCase(deleteTag.fulfilled, (state, action: PayloadAction<string>) => {
+                state.tags = state.tags.filter((t) => t._id !== action.payload);
+            });
+
+        // Cuisines
+        builder
+            .addCase(fetchCuisines.fulfilled, (state, action: PayloadAction<Cuisine[]>) => {
+                state.cuisines = action.payload;
+            })
+            .addCase(getCuisineById.fulfilled, (state, action: PayloadAction<Cuisine>) => {
+                const existing = state.cuisines.find((c) => c._id === action.payload._id);
+                if (!existing) state.cuisines.push(action.payload);
+            })
+            .addCase(addCuisine.fulfilled, (state, action: PayloadAction<Cuisine>) => {
+                state.cuisines.push(action.payload);
+            })
+            .addCase(updateCuisine.fulfilled, (state, action: PayloadAction<Cuisine>) => {
+                const index = state.cuisines.findIndex((c) => c._id === action.payload._id);
+                if (index !== -1) state.cuisines[index] = action.payload;
+            })
+            .addCase(deleteCuisine.fulfilled, (state, action: PayloadAction<string>) => {
+                state.cuisines = state.cuisines.filter((c) => c._id !== action.payload);
+            });
+
+        // Categories
+        builder
+            .addCase(fetchCategories.fulfilled, (state, action: PayloadAction<Category[]>) => {
+                state.categories = action.payload;
+            })
+            .addCase(getCategoryById.fulfilled, (state, action: PayloadAction<Category>) => {
+                const existing = state.categories.find((c) => c._id === action.payload._id);
+                if (!existing) state.categories.push(action.payload);
+            })
+            .addCase(addCategory.fulfilled, (state, action: PayloadAction<Category>) => {
+                state.categories.push(action.payload);
+            })
+            .addCase(updateCategory.fulfilled, (state, action: PayloadAction<Category>) => {
+                const index = state.categories.findIndex((c) => c._id === action.payload._id);
+                if (index !== -1) state.categories[index] = action.payload;
+            })
+            .addCase(deleteCategory.fulfilled, (state, action: PayloadAction<string>) => {
+                state.categories = state.categories.filter((c) => c._id !== action.payload);
             });
 
         // Generic pending/rejected
