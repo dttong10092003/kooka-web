@@ -15,6 +15,7 @@ import MyReviews from "./pages/MyReviews";
 import ProfileLayout from "./layout/ProfileLayout";
 import Settings from "./pages/Settings";
 import MyFavourite from "./pages/MyFavourite";
+import GoogleCallback from "./pages/GoogleCallback";
 
 
 function App() {
@@ -32,6 +33,7 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/auth/google/callback" element={<GoogleCallback />} />
         <Route path="/admin" element={<AdminDashboard />} />
 
         {/* Group user pages dưới ProfileLayout */}

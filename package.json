@@ -10,9 +10,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@google-cloud/local-auth": "^3.0.1",
     "@reduxjs/toolkit": "^2.9.0",
     "@tailwindcss/vite": "^4.1.11",
     "axios": "^1.12.2",
+    "google-auth-library": "^10.4.0",
     "lucide-react": "^0.544.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
