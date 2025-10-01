@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit"
-import axios from "axios"
+import { apiClient } from "./authSlice"
 
 interface Profile {
   userId: string
@@ -28,12 +28,12 @@ const initialState: UserState = {
 
 // ==================== ASYNC THUNKS ==================== //
 
-// Lấy profile
+// Lấy profile theo userId
 export const fetchProfile = createAsyncThunk<Profile, string, { rejectValue: string }>(
   "user/fetchProfile",
   async (userId, { rejectWithValue }) => {
     try {
-      const res = await axios.get(`http://localhost:3000/api/user/profile/${userId}`)
+      const res = await apiClient.get(`/user/profile/${userId}`)
       return res.data
     } catch (err: any) {
       return rejectWithValue(err.response?.data?.message || "Failed to fetch profile")
@@ -48,12 +48,25 @@ export const updateProfile = createAsyncThunk<
   { rejectValue: string }
 >("user/updateProfile", async ({ userId, data }, { rejectWithValue }) => {
   try {
-    const res = await axios.put(`http://localhost:3000/api/user/profile/${userId}`, data)
+    const res = await apiClient.put(`/user/profile/${userId}`, data)
     return res.data
   } catch (err: any) {
     return rejectWithValue(err.response?.data?.message || "Failed to update profile")
   }
 })
+
+// Lấy profile của user hiện tại (từ token)
+export const fetchCurrentProfile = createAsyncThunk<Profile, void, { rejectValue: string }>(
+  "user/fetchCurrentProfile",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await apiClient.get("/user/profile")
+      return res.data
+    } catch (err: any) {
+      return rejectWithValue(err.response?.data?.message || "Failed to fetch current profile")
+    }
+  }
+)
 
 // ==================== SLICE ==================== //
 const userSlice = createSlice({
@@ -62,6 +75,9 @@ const userSlice = createSlice({
   reducers: {
     clearProfile: (state) => {
       state.profile = null
+      state.error = null
+    },
+    clearError: (state) => {
       state.error = null
     },
   },
@@ -94,8 +110,22 @@ const userSlice = createSlice({
         state.loading = false
         state.error = action.payload || "Error updating profile"
       })
+
+      // fetchCurrentProfile
+      .addCase(fetchCurrentProfile.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(fetchCurrentProfile.fulfilled, (state, action) => {
+        state.loading = false
+        state.profile = action.payload
+      })
+      .addCase(fetchCurrentProfile.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload || "Error fetching current profile"
+      })
   },
 })
 
-export const { clearProfile } = userSlice.actions
+export const { clearProfile, clearError } = userSlice.actions
 export default userSlice.reducer

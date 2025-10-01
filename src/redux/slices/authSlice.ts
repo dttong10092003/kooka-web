@@ -1,6 +1,43 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from "@reduxjs/toolkit"
 import axios from "axios"
 
+// Tạo axios instance với interceptor
+const createAxiosWithAuth = () => {
+  const axiosInstance = axios.create({
+    baseURL: "http://localhost:3000/api",
+    timeout: 10000,
+  })
+
+  // Request interceptor - tự động thêm token
+  axiosInstance.interceptors.request.use(
+    (config) => {
+      const token = localStorage.getItem("token")
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`
+      }
+      return config
+    },
+    (error) => Promise.reject(error)
+  )
+
+  // Response interceptor - xử lý lỗi middleware
+  axiosInstance.interceptors.response.use(
+    (response) => response,
+    (error) => {
+      if (error.response?.status === 401) {
+        // Token không hợp lệ - clear localStorage
+        localStorage.removeItem("token")
+        window.location.href = "/login"
+      }
+      return Promise.reject(error)
+    }
+  )
+
+  return axiosInstance
+}
+
+const apiClient = createAxiosWithAuth()
+
 // =====================
 // TYPES
 // =====================
@@ -77,6 +114,34 @@ export const registerUser = createAsyncThunk<
   }
 })
 
+// Load user từ token (khi app khởi động)
+export const loadUser = createAsyncThunk<
+  AuthUser,
+  void,
+  { rejectValue: string }
+>("auth/loadUser", async (_, { rejectWithValue }) => {
+  try {
+    const res = await apiClient.get("/auth/me")
+    return res.data.user as AuthUser
+  } catch (err: any) {
+    return rejectWithValue(err.response?.data?.message || "Failed to load user")
+  }
+})
+
+// Verify token
+export const verifyToken = createAsyncThunk<
+  boolean,
+  void,
+  { rejectValue: string }
+>("auth/verifyToken", async (_, { rejectWithValue }) => {
+  try {
+    await apiClient.get("/auth/verify")
+    return true
+  } catch (err: any) {
+    return rejectWithValue("Token invalid")
+  }
+})
+
 // =====================
 // SLICE
 // =====================
@@ -88,11 +153,16 @@ const authSlice = createSlice({
     logout: (state) => {
       state.token = null
       state.user = null
+      state.loading = false
+      state.error = null
       localStorage.removeItem("token")
     },
     setToken: (state, action: PayloadAction<string>) => {
       state.token = action.payload
       localStorage.setItem("token", action.payload)
+    },
+    clearError: (state) => {
+      state.error = null
     },
   },
   extraReducers: (builder) => {
@@ -128,8 +198,43 @@ const authSlice = createSlice({
         state.loading = false
         state.error = action.payload || "auth.registerFailed"
       })
+
+      // LOAD USER
+      .addCase(loadUser.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(loadUser.fulfilled, (state, action) => {
+        state.loading = false
+        state.user = action.payload
+      })
+      .addCase(loadUser.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload || "Failed to load user"
+        // Clear token nếu không load được user
+        state.token = null
+        localStorage.removeItem("token")
+      })
+
+      // VERIFY TOKEN
+      .addCase(verifyToken.pending, (state) => {
+        state.loading = true
+      })
+      .addCase(verifyToken.fulfilled, (state) => {
+        state.loading = false
+      })
+      .addCase(verifyToken.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload || "Token invalid"
+        state.token = null
+        state.user = null
+        localStorage.removeItem("token")
+      })
   },
 })
 
-export const { logout, setToken } = authSlice.actions
+export const { logout, setToken, clearError } = authSlice.actions
 export default authSlice.reducer
+
+// Export apiClient để sử dụng ở các slice khác
+export { apiClient }
