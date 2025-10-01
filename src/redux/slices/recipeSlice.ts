@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
 import axios from "axios";
+import { normalizeRecipeFromPython } from "../../utils/adapters";
 
 // ==== Types ====
 export interface IngredientType {
@@ -106,7 +107,8 @@ export const searchRecipes = createAsyncThunk(
             headers: { "Content-Type": "application/json" },
         });
         // Backend trả về { query: string, hits: [...] }
-        return res.data.hits as Recipe[];
+        // return res.data.hits as Recipe[];
+        return res.data.hits.map(normalizeRecipeFromPython);
     }
 );
 
@@ -117,7 +119,8 @@ export const searchRecipesByKeyword = createAsyncThunk(
             headers: { "Content-Type": "application/json" },
         });
         // Backend trả về { query: string, hits: [...] }
-        return res.data.hits as Recipe[];
+        // return res.data.hits as Recipe[];
+        return res.data.hits.map(normalizeRecipeFromPython);
     }
 );
 
