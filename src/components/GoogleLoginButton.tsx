@@ -11,8 +11,10 @@ interface GoogleLoginButtonProps {
   onSuccess?: () => void
 }
 
+// 🔄 Universal Google Auth Button - Handles both Login & Register automatically
+// 📝 Backend determines if user exists (login) or needs to be created (register)
 const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({ 
-  text = "signin_with", 
+  text = "continue_with", // Default to universal "Continue with Google"
   onSuccess 
 }) => {
   const { t } = useLanguage()
@@ -23,7 +25,10 @@ const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
   const handleGoogleLogin = () => {
     setIsLoading(true)
     
-    // Mở popup window để đăng nhập Google
+    // 🚀 Universal Google Auth Flow:
+    // 1️⃣ If user exists → Auto Login  
+    // 2️⃣ If user doesn't exist → Auto Register + Login
+    // 3️⃣ Backend handles both cases seamlessly
     const popup = window.open(
       "http://localhost:3000/api/auth/google", 
       "googleLogin",
@@ -46,8 +51,9 @@ const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
         
         console.log("🎯 Google Auth Success - Token:", token)
         console.log("🎯 Google Auth Success - User:", user)
+        console.log("🔄 Universal Google Auth: Auto Login/Register completed")
         
-        // Dispatch Redux action thay vì localStorage
+        // Dispatch Redux action - Works for both new & existing users
         dispatch(setAuthData({ token, user }))
         
         // Đóng popup

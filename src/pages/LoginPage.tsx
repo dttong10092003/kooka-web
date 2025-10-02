@@ -178,9 +178,9 @@ const LoginPage: React.FC<LoginPageProps> = ({ onBack }) => {
 
             <div className="mt-3 lg:mt-4">
               <GoogleLoginButton 
-                text="signin_with" 
+                text="continue_with" 
                 onSuccess={() => {
-                  // Chuyển về trang chủ sau khi đăng nhập thành công
+                  // Chuyển về trang chủ sau khi xác thực Google thành công
                   navigate("/")
                 }} 
               />

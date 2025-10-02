@@ -237,10 +237,10 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onBack }) => {
 
               <div className="mt-3 lg:mt-4">
                 <GoogleLoginButton 
-                  text="signup_with" 
+                  text="continue_with" 
                   onSuccess={() => {
-                    // Chuyển về trang chủ sau khi đăng ký thành công
-                    window.location.href = "/"
+                    // Chuyển về trang chủ sau khi xác thực Google thành công
+                    navigate("/")
                   }} 
                 />
               </div>
