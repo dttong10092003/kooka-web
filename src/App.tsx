@@ -1,4 +1,9 @@
 import { Routes, Route, useLocation } from "react-router-dom";
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import type { AppDispatch, RootState } from "./redux/store";
+import { loadUser } from "./redux/slices/authSlice";
+import { fetchProfile } from "./redux/slices/userSlice";
 import Home from "./pages/Home";
 import Header from "./components/Header";
 import LoginPage from "./pages/LoginPage";
@@ -20,6 +25,23 @@ import GoogleCallback from "./pages/GoogleCallback";
 
 function App() {
   const location = useLocation();
+  const dispatch = useDispatch<AppDispatch>();
+  const { token, user } = useSelector((state: RootState) => state.auth);
+  const { profile } = useSelector((state: RootState) => state.user);
+
+  // Auto-load user data khi có token nhưng chưa có user
+  useEffect(() => {
+    if (token && !user) {
+      dispatch(loadUser());
+    }
+  }, [dispatch, token, user]);
+
+  // Auto-load profile data when user is available but profile is not
+  useEffect(() => {
+    if (user?._id && !profile) {
+      dispatch(fetchProfile(user._id));
+    }
+  }, [dispatch, user, profile]);
 
   // Ẩn header khi ở /admin
   const hideHeader = location.pathname.startsWith("/admin");

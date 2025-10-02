@@ -7,7 +7,26 @@ import type { RootState } from "../redux/store"
 const ProfileLayout: React.FC = () => {
   const navigate = useNavigate()
   const location = useLocation()
+  const { user } = useSelector((state: RootState) => state.auth)
   const { profile } = useSelector((state: RootState) => state.user)
+  
+
+  
+  // Prefer auth user avatar first, then profile avatar
+  let displayAvatar = user?.avatar || profile?.avatar
+  
+  // Fix Google avatar URL format
+  if (displayAvatar && displayAvatar.includes('googleusercontent.com')) {
+    // Ensure Google avatar has proper size parameter
+    if (!displayAvatar.includes('=s')) {
+      displayAvatar = displayAvatar + '=s200-c';
+    }
+  }
+  
+  const displayName = profile ? 
+    `${profile.firstName || ""} ${profile.lastName || ""}`.trim() || user?.username || "Guest User" :
+    user?.username || "Guest User"
+    
 
   const sidebarItems = [
     { id: "profile", label: "Profile", icon: User, path: "/my-profile" },
@@ -42,23 +61,38 @@ const ProfileLayout: React.FC = () => {
 
         <div className="p-4 border-b border-gray-200">
           <div className="flex items-center space-x-3">
-            {profile?.avatar ? (
-              <img
-                src={profile.avatar}
-                alt="User Avatar"
-                className="w-10 h-10 rounded-full object-cover"
-              />
-            ) : (
-              <div className="w-10 h-10 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
+            <div className="w-10 h-10 relative">
+              {displayAvatar ? (
+                <img
+                  src={displayAvatar}
+                  alt="User Avatar"
+                  className="w-full h-full rounded-full object-cover"
+                  referrerPolicy="no-referrer"
+                  crossOrigin="anonymous"
+                  onError={(e) => {
+                    console.log("❌ Avatar failed to load:", displayAvatar);
+                    e.currentTarget.style.display = 'none';
+                    const fallbackDiv = e.currentTarget.nextElementSibling as HTMLElement;
+                    if (fallbackDiv) {
+                      fallbackDiv.style.display = 'flex';
+                    }
+                  }}
+               
+                />
+              ) : null}
+              <div 
+                className={`w-full h-full bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center text-white text-sm font-bold ${
+                  displayAvatar ? 'hidden' : 'flex'
+                }`}
+                style={{ display: displayAvatar ? 'none' : 'flex' }}
+              >
                 {getUserInitials(profile?.firstName, profile?.lastName)}
               </div>
-            )}
+            </div>
 
             <div>
               <p className="font-medium text-gray-900 text-sm">
-                {profile
-                  ? `${profile.firstName || ""} ${profile.lastName || ""}`.trim()
-                  : "Guest User"}
+                {displayName}
               </p>
             </div>
           </div>

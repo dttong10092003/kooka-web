@@ -1,5 +1,9 @@
 import type React from "react"
 import { useState } from "react"
+import { useDispatch } from "react-redux"
+import { useNavigate } from "react-router-dom"
+import type { AppDispatch } from "../redux/store"
+import { setAuthData } from "../redux/slices/authSlice"
 import { useLanguage } from "../contexts/LanguageContext"
 
 interface GoogleLoginButtonProps {
@@ -12,6 +16,8 @@ const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
   onSuccess 
 }) => {
   const { t } = useLanguage()
+  const dispatch = useDispatch<AppDispatch>()
+  const navigate = useNavigate()
   const [isLoading, setIsLoading] = useState(false)
 
   const handleGoogleLogin = () => {
@@ -26,14 +32,23 @@ const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
 
     // Lắng nghe message từ popup
     const handleMessage = (event: MessageEvent) => {
-      if (event.origin !== window.location.origin) return
+      console.log("🔔 Message received:", event.data)
+      
+      // Allow messages from backend (localhost:3000) and frontend (localhost:5173)
+      const allowedOrigins = ['http://localhost:3000', 'http://localhost:5173']
+      if (!allowedOrigins.includes(event.origin)) {
+        console.log("❌ Origin not allowed:", event.origin)
+        return
+      }
 
       if (event.data.type === "GOOGLE_AUTH_SUCCESS") {
         const { token, user } = event.data.payload
         
-        // Lưu token và user vào localStorage
-        localStorage.setItem("token", token)
-        localStorage.setItem("user", JSON.stringify(user))
+        console.log("🎯 Google Auth Success - Token:", token)
+        console.log("🎯 Google Auth Success - User:", user)
+        
+        // Dispatch Redux action thay vì localStorage
+        dispatch(setAuthData({ token, user }))
         
         // Đóng popup
         popup?.close()
@@ -41,8 +56,8 @@ const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
         // Callback success
         onSuccess?.()
         
-        // Reload page để update auth state
-        window.location.reload()
+        // Navigate về home page
+        navigate('/')
       } else if (event.data.type === "GOOGLE_AUTH_ERROR") {
         console.error("Google auth failed:", event.data.error)
         popup?.close()

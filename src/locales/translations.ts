@@ -71,6 +71,10 @@ export const translations = {
             emailExist: "Email đã tồn tại",
             invalidCredentials: "Email hoặc mật khẩu không hợp lệ",
             googleAuthFailed: "Xác thực Google thất bại. Vui lòng thử lại.",
+            signinWithGoogle: "Đăng nhập với Google",
+            signupWithGoogle: "Đăng ký với Google",
+            continueWithGoogle: "Tiếp tục với Google",
+            googleLogin: "Google"
 
         },
 
@@ -148,6 +152,10 @@ export const translations = {
             emailExist: "Email already exists",
             invalidCredentials: "Invalid email or password",
             googleAuthFailed: "Google authentication failed. Please try again.",
+            signinWithGoogle: "Sign in with Google",
+            signupWithGoogle: "Sign up with Google",
+            continueWithGoogle: "Continue with Google",
+            googleLogin: "Google",
 
         },
 

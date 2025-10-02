@@ -47,6 +47,7 @@ interface AuthUser {
   username?: string
   email?: string
   isAdmin?: boolean
+  avatar?: string
 }
 
 interface AuthResponse {
@@ -161,6 +162,11 @@ const authSlice = createSlice({
       state.token = action.payload
       localStorage.setItem("token", action.payload)
     },
+    setAuthData: (state, action: PayloadAction<{ token: string; user: AuthUser }>) => {
+      state.token = action.payload.token
+      state.user = action.payload.user
+      localStorage.setItem("token", action.payload.token)
+    },
     clearError: (state) => {
       state.error = null
     },
@@ -233,7 +239,7 @@ const authSlice = createSlice({
   },
 })
 
-export const { logout, setToken, clearError } = authSlice.actions
+export const { logout, setToken, setAuthData, clearError } = authSlice.actions
 export default authSlice.reducer
 
 // Export apiClient để sử dụng ở các slice khác

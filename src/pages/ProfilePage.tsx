@@ -12,6 +12,8 @@ const ProfilePage: React.FC = () => {
   const { user } = useSelector((state: RootState) => state.auth)
   const { profile, loading } = useSelector((state: RootState) => state.user)
 
+  
+
   const [isEditing, setIsEditing] = useState(false)
   const [formData, setFormData] = useState(profile || null)
 
@@ -62,8 +64,25 @@ const ProfilePage: React.FC = () => {
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-4">
             <div className="relative">
-              <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white text-2xl font-bold">
-                {getUserInitials(`${formData.firstName} ${formData.lastName}`)}
+              <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white text-2xl font-bold overflow-hidden">
+                {(user?.avatar || profile?.avatar || formData?.avatar) ? (
+                  <img 
+                    src={user?.avatar || profile?.avatar || formData?.avatar} 
+                    alt="Avatar" 
+                    className="w-full h-full object-cover rounded-full"
+                    referrerPolicy="no-referrer"
+                    crossOrigin="anonymous"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none'
+                    }}
+                   
+                  />
+                ) : null}
+                <div className={`w-full h-full flex items-center justify-center ${
+                  (user?.avatar || profile?.avatar || formData?.avatar) ? 'hidden' : ''
+                }`}>
+                  {getUserInitials(`${formData.firstName} ${formData.lastName}`)}
+                </div>
               </div>
               <button className="absolute bottom-0 right-0 bg-white text-gray-700 p-1.5 rounded-full hover:bg-gray-100 transition-colors duration-200">
                 <Camera className="h-3 w-3" />

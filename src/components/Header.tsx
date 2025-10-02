@@ -22,7 +22,20 @@ export default function Header() {
   const location = useLocation();
 
   const { token, user } = useSelector((state: RootState) => state.auth);
+  const { profile } = useSelector((state: RootState) => state.user);
   const [showUserDropdown, setShowUserDropdown] = React.useState(false);
+
+  // Get avatar from either user or profile
+  let avatarUrl = user?.avatar || profile?.avatar;
+
+  
+  // Fix Google avatar URL format and add size parameter
+  if (avatarUrl && avatarUrl.includes('googleusercontent.com')) {
+    // Ensure Google avatar has proper size parameter
+    if (!avatarUrl.includes('=s')) {
+      avatarUrl = avatarUrl + '=s200-c';
+    }
+  }
 
   const handleLogout = () => {
     dispatch(logout());
@@ -92,8 +105,30 @@ export default function Header() {
                 onClick={() => setShowUserDropdown(!showUserDropdown)}
                 className="flex items-center gap-2 bg-gradient-to-r from-orange-500 to-red-500 text-white px-3 py-2 rounded-lg hover:from-orange-600 hover:to-red-600 transition-all duration-200 cursor-pointer"
               >
-                <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
-                  {getUserInitials(user.username)}
+                <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center overflow-hidden relative">
+                  {avatarUrl ? (
+                    <img 
+                      src={avatarUrl} 
+                      alt="Avatar" 
+                      className="w-full h-full object-cover rounded-full"
+                      referrerPolicy="no-referrer"
+                      crossOrigin="anonymous"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none'
+                        const fallbackDiv = e.currentTarget.nextElementSibling as HTMLElement;
+                        if (fallbackDiv) {
+                          fallbackDiv.style.display = 'flex';
+                        }
+                      }}
+                      
+                    />
+                  ) : null}
+                  <div 
+                    className="w-full h-full flex items-center justify-center text-white font-semibold"
+                    style={{ display: avatarUrl ? 'none' : 'flex' }}
+                  >
+                    {getUserInitials(user.username)}
+                  </div>
                 </div>
                 <span className="hidden sm:inline">{user.username}</span>
                 <ChevronDown className="h-4 w-4" />
@@ -103,8 +138,29 @@ export default function Header() {
               {showUserDropdown && (
                 <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-100 py-2 z-50">
                   <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-100">
-                    <div className="w-10 h-10 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center text-white font-semibold">
-                      {getUserInitials(user.username)}
+                    <div className="w-10 h-10 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center text-white font-semibold overflow-hidden relative">
+                      {avatarUrl ? (
+                        <img 
+                          src={avatarUrl} 
+                          alt="Avatar" 
+                          className="w-full h-full object-cover rounded-full"
+                          referrerPolicy="no-referrer"
+                          crossOrigin="anonymous"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none'
+                            const fallbackDiv = e.currentTarget.nextElementSibling as HTMLElement;
+                            if (fallbackDiv) {
+                              fallbackDiv.style.display = 'flex';
+                            }
+                          }}
+                        />
+                      ) : null}
+                      <div 
+                        className="w-full h-full flex items-center justify-center"
+                        style={{ display: avatarUrl ? 'none' : 'flex' }}
+                      >
+                        {getUserInitials(user.username)}
+                      </div>
                     </div>
                     <div>
                       <p className="font-medium text-gray-900">{user.username}</p>
