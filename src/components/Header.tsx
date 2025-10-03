@@ -15,6 +15,7 @@ import { useLanguage } from "../contexts/LanguageContext";
 import { useSelector, useDispatch } from "react-redux";
 import type { RootState, AppDispatch } from "../redux/store";
 import { logout } from "../redux/slices/authSlice";
+import { clearProfile } from "../redux/slices/userSlice";
 
 export default function Header() {
   const { t } = useLanguage();
@@ -39,6 +40,7 @@ export default function Header() {
 
   const handleLogout = () => {
     dispatch(logout());
+    dispatch(clearProfile());
     setShowUserDropdown(false);
   };
 

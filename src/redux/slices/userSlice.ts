@@ -76,6 +76,7 @@ const userSlice = createSlice({
     clearProfile: (state) => {
       state.profile = null
       state.error = null
+      state.loading = false
     },
     clearError: (state) => {
       state.error = null

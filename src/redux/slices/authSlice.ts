@@ -157,6 +157,8 @@ const authSlice = createSlice({
       state.loading = false
       state.error = null
       localStorage.removeItem("token")
+      // Xóa toàn bộ persisted state khi logout
+      localStorage.removeItem("persist:root")
     },
     setToken: (state, action: PayloadAction<string>) => {
       state.token = action.payload

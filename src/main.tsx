@@ -5,15 +5,19 @@ import './index.css'
 import App from './App.tsx'
 import { LanguageProvider } from './contexts/LanguageContext.tsx';
 import { Provider } from "react-redux";
-import { store } from "./redux/store";
+import { PersistGate } from "redux-persist/integration/react";
+import { store, persistor } from "./redux/store";
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <Provider store={store}>
-      <BrowserRouter>
-        <LanguageProvider>
-          <App />
-        </LanguageProvider>
-      </BrowserRouter>
+      <PersistGate loading={null} persistor={persistor}>
+        <BrowserRouter>
+          <LanguageProvider>
+            <App />
+          </LanguageProvider>
+        </BrowserRouter>
+      </PersistGate>
     </Provider>
   </StrictMode>,
 )
