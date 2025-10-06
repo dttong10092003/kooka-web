@@ -74,7 +74,30 @@ export const translations = {
             signinWithGoogle: "Đăng nhập với Google",
             signupWithGoogle: "Đăng ký với Google",
             continueWithGoogle: "Tiếp tục với Google",
-            googleLogin: "Google"
+            googleLogin: "Google",
+            // Forgot Password
+            resetPassword: "Đặt Lại Mật Khẩu",
+            resetPasswordTitle: "Quên mật khẩu?",
+            resetPasswordDesc: "Nhập email của bạn để nhận link đặt lại mật khẩu",
+            resetPasswordFormDesc: "Nhập mật khẩu mới của bạn",
+            sendResetLink: "Gửi Link Đặt Lại",
+            sending: "Đang gửi...",
+            resetLinkSent: "Link đặt lại mật khẩu đã được gửi đến email của bạn!",
+            resetLinkError: "Có lỗi xảy ra. Vui lòng thử lại.",
+            checkSpam: "Nếu bạn không nhận được email trong vài phút, hãy kiểm tra thư mục spam hoặc liên hệ hỗ trợ.",
+            contactSupport: "Liên Hệ Hỗ Trợ",
+            rememberPassword: "Nhớ lại mật khẩu?",
+            needHelp: "Cần trợ giúp?",
+            // Reset Password Form
+            newPassword: "Mật khẩu mới",
+            confirmNewPassword: "Xác nhận mật khẩu mới",
+            resetPasswordButton: "Đặt Lại Mật Khẩu",
+            resetting: "Đang đặt lại...",
+            resetPasswordSuccess: "Đặt lại mật khẩu thành công! Bạn có thể đăng nhập ngay bây giờ.",
+            resetPasswordError: "Link đã hết hạn hoặc không hợp lệ. Vui lòng yêu cầu link mới.",
+            passwordTooShort: "Mật khẩu phải có ít nhất 6 ký tự",
+            backToLogin: "Quay lại Đăng Nhập",
+            emailNotFound: "Email không tồn tại trong hệ thống"
 
         },
 
@@ -156,6 +179,29 @@ export const translations = {
             signupWithGoogle: "Sign up with Google",
             continueWithGoogle: "Continue with Google",
             googleLogin: "Google",
+            // Forgot Password
+            resetPassword: "Reset Password",
+            resetPasswordTitle: "Forgot Password?",
+            resetPasswordDesc: "Enter your email to receive a password reset link",
+            resetPasswordFormDesc: "Enter your new password",
+            sendResetLink: "Send Reset Link",
+            sending: "Sending...",
+            resetLinkSent: "Password reset link has been sent to your email!",
+            resetLinkError: "An error occurred. Please try again.",
+            checkSpam: "If you don't receive an email within a few minutes, check your spam folder or contact support.",
+            contactSupport: "Contact Support",
+            rememberPassword: "Remember your password?",
+            needHelp: "Need help?",
+            // Reset Password Form
+            newPassword: "New Password",
+            confirmNewPassword: "Confirm New Password",
+            resetPasswordButton: "Reset Password",
+            resetting: "Resetting...",
+            resetPasswordSuccess: "Password reset successfully! You can now login.",
+            resetPasswordError: "Link expired or invalid. Please request a new one.",
+            passwordTooShort: "Password must be at least 6 characters",
+            backToLogin: "Back to Login",
+            emailNotFound: "Email not found in the system"
 
         },
 

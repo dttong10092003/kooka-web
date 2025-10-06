@@ -143,6 +143,36 @@ export const verifyToken = createAsyncThunk<
   }
 })
 
+// Forgot Password - Gửi email reset
+export const forgotPassword = createAsyncThunk<
+  { message: string },
+  { email: string },
+  { rejectValue: string }
+>("auth/forgotPassword", async ({ email }, { rejectWithValue }) => {
+  try {
+    const res = await axios.post("http://localhost:3000/api/auth/forgot-password", { email })
+    return res.data as { message: string }
+  } catch (err: any) {
+    return rejectWithValue(err.response?.data?.code || "auth.resetLinkError")
+  }
+})
+
+// Reset Password - Đặt lại mật khẩu với token từ email
+export const resetPassword = createAsyncThunk<
+  { message: string },
+  { token: string; newPassword: string },
+  { rejectValue: string }
+>("auth/resetPassword", async ({ token, newPassword }, { rejectWithValue }) => {
+  try {
+    const res = await axios.post(`http://localhost:3000/api/auth/reset-password/${token}`, { 
+      newPassword 
+    })
+    return res.data as { message: string }
+  } catch (err: any) {
+    return rejectWithValue(err.response?.data?.code || "auth.resetPasswordError")
+  }
+})
+
 // =====================
 // SLICE
 // =====================
@@ -237,6 +267,34 @@ const authSlice = createSlice({
         state.token = null
         state.user = null
         localStorage.removeItem("token")
+      })
+
+      // FORGOT PASSWORD
+      .addCase(forgotPassword.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(forgotPassword.fulfilled, (state) => {
+        state.loading = false
+        state.error = null
+      })
+      .addCase(forgotPassword.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload || "auth.resetLinkError"
+      })
+
+      // RESET PASSWORD
+      .addCase(resetPassword.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(resetPassword.fulfilled, (state) => {
+        state.loading = false
+        state.error = null
+      })
+      .addCase(resetPassword.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload || "auth.resetPasswordError"
       })
   },
 })
