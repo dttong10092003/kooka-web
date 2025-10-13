@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
-import axios from "axios";
 import { normalizeRecipeFromPython } from "../../utils/adapters";
+import axiosInstance from "../../utils/axiosInstance";
 
 // ==== Types ====
 export interface IngredientType {
@@ -96,14 +96,11 @@ const initialState: RecipeState = {
     error: null,
 };
 
-// ==== API base ====
-const API_URL = "http://localhost:5000/api";
-
 // ==== Async Thunks ====
 export const searchRecipes = createAsyncThunk(
     "recipes/search",
     async (payload: SearchPayload) => {
-        const res = await axios.post("http://127.0.0.1:8000/api/search", payload, {
+        const res = await axiosInstance.post("/search", payload, {
             headers: { "Content-Type": "application/json" },
         });
         // Backend trả về { query: string, hits: [...] }
@@ -115,7 +112,7 @@ export const searchRecipes = createAsyncThunk(
 export const searchRecipesByKeyword = createAsyncThunk(
     "recipes/searchByKeyword",
     async (payload: KeywordSearchPayload) => {
-        const res = await axios.post("http://127.0.0.1:8000/api/search/search-by-keyword", payload, {
+        const res = await axiosInstance.post("/search/search-by-keyword", payload, {
             headers: { "Content-Type": "application/json" },
         });
         // Backend trả về { query: string, hits: [...] }
@@ -126,53 +123,53 @@ export const searchRecipesByKeyword = createAsyncThunk(
 
 // --- Recipes ---
 export const fetchRecipes = createAsyncThunk("recipes/fetchAll", async () => {
-    const res = await axios.get(`${API_URL}/recipes`);
+    const res = await axiosInstance.get(`/recipes`);
     return res.data as Recipe[];
 });
 
 export const getRecipeById = createAsyncThunk("recipes/fetchById", async (id: string) => {
-    const res = await axios.get(`${API_URL}/recipes/${id}`);
+    const res = await axiosInstance.get(`/recipes/${id}`);
     return res.data as Recipe;
 });
 
 export const addRecipe = createAsyncThunk("recipes/add", async (recipe: Omit<Recipe, "_id">) => {
-    const res = await axios.post(`${API_URL}/recipes`, recipe);
+    const res = await axiosInstance.post(`/recipes`, recipe);
     return res.data as Recipe;
 });
 
 export const updateRecipe = createAsyncThunk(
     "recipes/update",
     async ({ id, recipe }: { id: string; recipe: Partial<Recipe> }) => {
-        const res = await axios.put(`${API_URL}/recipes/${id}`, recipe);
+        const res = await axiosInstance.put(`/recipes/${id}`, recipe);
         return res.data as Recipe;
     }
 );
 
 export const deleteRecipe = createAsyncThunk("recipes/delete", async (id: string) => {
-    await axios.delete(`${API_URL}/recipes/${id}`);
+    await axiosInstance.delete(`/recipes/${id}`);
     return id;
 });
 
 // --- Ingredients ---
 export const fetchIngredients = createAsyncThunk("ingredients/fetchAll", async () => {
-    const res = await axios.get(`${API_URL}/ingredients`);
+    const res = await axiosInstance.get(`/ingredients`);
     return res.data as Ingredient[];
 });
 
 export const getIngredientsByType = createAsyncThunk("ingredients/fetchByType", async (typeId: string) => {
-    const res = await axios.get(`${API_URL}/ingredients/type/${typeId}`);
+    const res = await axiosInstance.get(`/ingredients/type/${typeId}`);
     return res.data as Ingredient[];
 });
 
 export const getIngredientById = createAsyncThunk("ingredients/fetchById", async (id: string) => {
-    const res = await axios.get(`${API_URL}/ingredients/${id}`);
+    const res = await axiosInstance.get(`/ingredients/${id}`);
     return res.data as Ingredient;
 });
 
 export const addIngredient = createAsyncThunk(
     "ingredients/add",
     async ({ name, typeId }: { name: string; typeId: string }) => {
-        const res = await axios.post(`${API_URL}/ingredients`, { name, typeId });
+        const res = await axiosInstance.post(`/ingredients`, { name, typeId });
         return res.data as Ingredient;
     }
 );
@@ -180,121 +177,121 @@ export const addIngredient = createAsyncThunk(
 export const updateIngredient = createAsyncThunk(
     "ingredients/update",
     async ({ id, ingredient }: { id: string; ingredient: Partial<Ingredient> }) => {
-        const res = await axios.put(`${API_URL}/ingredients/${id}`, ingredient);
+        const res = await axiosInstance.put(`/ingredients/${id}`, ingredient);
         return res.data as Ingredient;
     }
 );
 
 export const deleteIngredient = createAsyncThunk("ingredients/delete", async (id: string) => {
-    await axios.delete(`${API_URL}/ingredients/${id}`);
+    await axiosInstance.delete(`/ingredients/${id}`);
     return id;
 });
 
 // --- Ingredient Types ---
 export const fetchIngredientTypes = createAsyncThunk("ingredientTypes/fetchAll", async () => {
-    const res = await axios.get(`${API_URL}/ingredient-types`);
+    const res = await axiosInstance.get(`/ingredient-types`);
     return res.data as IngredientType[];
 });
 
 export const getIngredientTypeById = createAsyncThunk("ingredientTypes/fetchById", async (id: string) => {
-    const res = await axios.get(`${API_URL}/ingredient-types/${id}`);
+    const res = await axiosInstance.get(`/ingredient-types/${id}`);
     return res.data as IngredientType;
 });
 
 export const addIngredientType = createAsyncThunk("ingredientTypes/add", async (name: string) => {
-    const res = await axios.post(`${API_URL}/ingredient-types`, { name });
+    const res = await axiosInstance.post(`/ingredient-types`, { name });
     return res.data as IngredientType;
 });
 
 export const updateIngredientType = createAsyncThunk(
     "ingredientTypes/update",
     async ({ id, type }: { id: string; type: Partial<IngredientType> }) => {
-        const res = await axios.put(`${API_URL}/ingredient-types/${id}`, type);
+        const res = await axiosInstance.put(`/ingredient-types/${id}`, type);
         return res.data as IngredientType;
     }
 );
 
 export const deleteIngredientType = createAsyncThunk("ingredientTypes/delete", async (id: string) => {
-    await axios.delete(`${API_URL}/ingredient-types/${id}`);
+    await axiosInstance.delete(`/ingredient-types/${id}`);
     return id;
 });
 
 // --- Tags ---
 export const fetchTags = createAsyncThunk("tags/fetchAll", async () => {
-    const res = await axios.get(`${API_URL}/tags`);
+    const res = await axiosInstance.get(`/tags`);
     return res.data as Tag[];
 });
 
 export const getTagById = createAsyncThunk("tags/fetchById", async (id: string) => {
-    const res = await axios.get(`${API_URL}/tags/${id}`);
+    const res = await axiosInstance.get(`/tags/${id}`);
     return res.data as Tag;
 });
 
 export const addTag = createAsyncThunk("tags/add", async (name: string) => {
-    const res = await axios.post(`${API_URL}/tags`, { name });
+    const res = await axiosInstance.post(`/tags`, { name });
     return res.data as Tag;
 });
 
 export const deleteTag = createAsyncThunk("tags/delete", async (id: string) => {
-    await axios.delete(`${API_URL}/tags/${id}`);
+    await axiosInstance.delete(`/tags/${id}`);
     return id;
 });
 
 export const updateTag = createAsyncThunk("tags/update", async ({ id, tag }: { id: string; tag: Partial<Tag> }) => {
-    const res = await axios.put(`${API_URL}/tags/${id}`, tag);
+    const res = await axiosInstance.put(`/tags/${id}`, tag);
     return res.data as Tag;
 }
 );
 
 // --- Cuisines ---
 export const fetchCuisines = createAsyncThunk("cuisines/fetchAll", async () => {
-    const res = await axios.get(`${API_URL}/cuisines`);
+    const res = await axiosInstance.get(`/cuisines`);
     return res.data as Cuisine[];
 });
 
 export const getCuisineById = createAsyncThunk("cuisines/fetchById", async (id: string) => {
-    const res = await axios.get(`${API_URL}/cuisines/${id}`);
+    const res = await axiosInstance.get(`/cuisines/${id}`);
     return res.data as Cuisine;
 });
 
 export const addCuisine = createAsyncThunk("cuisines/add", async (name: string) => {
-    const res = await axios.post(`${API_URL}/cuisines`, { name });
+    const res = await axiosInstance.post(`/cuisines`, { name });
     return res.data as Cuisine;
 });
 
 export const deleteCuisine = createAsyncThunk("cuisines/delete", async (id: string) => {
-    await axios.delete(`${API_URL}/cuisines/${id}`);
+    await axiosInstance.delete(`/cuisines/${id}`);
     return id;
 });
 
 export const updateCuisine = createAsyncThunk("cuisines/update", async ({ id, cuisine }: { id: string; cuisine: Partial<Cuisine> }) => {
-    const res = await axios.put(`${API_URL}/cuisines/${id}`, cuisine);
+    const res = await axiosInstance.put(`/cuisines/${id}`, cuisine);
     return res.data as Cuisine;
 });
 
 // --- Categories ---
 export const fetchCategories = createAsyncThunk("categories/fetchAll", async () => {
-    const res = await axios.get(`${API_URL}/categories`);
+    const res = await axiosInstance.get(`/categories`);
     return res.data as Category[];
 });
 
 export const getCategoryById = createAsyncThunk("categories/fetchById", async (id: string) => {
-    const res = await axios.get(`${API_URL}/categories/${id}`);
+    const res = await axiosInstance.get(`/categories/${id}`);
     return res.data as Category;
 });
 
 export const addCategory = createAsyncThunk("categories/add", async (name: string) => {
-    const res = await axios.post(`${API_URL}/categories`, { name });
+    const res = await axiosInstance.post(`/categories`, { name });
     return res.data as Category;
 });
 
 export const deleteCategory = createAsyncThunk("categories/delete", async (id: string) => {
-    await axios.delete(`${API_URL}/categories/${id}`);
+    await axiosInstance.delete(`/categories/${id}`);
     return id;
 });
 
 export const updateCategory = createAsyncThunk("categories/update", async ({ id, category }: { id: string; category: Partial<Category> }) => {
-    const res = await axios.put(`${API_URL}/categories/${id}`, category);
+    const res = await axiosInstance.put(`/categories/${id}`, category);
     return res.data as Category;
 });
 

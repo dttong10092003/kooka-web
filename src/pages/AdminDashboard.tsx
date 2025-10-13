@@ -20,10 +20,12 @@ import {
     Activity,
     LogOut,
 } from "lucide-react"
+import AddRecipeModal from "../components/AddRecipeModal";
 
 const AdminDashboard: React.FC = () => {
     const [activeTab, setActiveTab] = useState("overview")
     const [searchQuery, setSearchQuery] = useState("")
+    const [isRecipeModalOpen, setIsRecipeModalOpen] = useState(false)
 
     const currentUser = {
         name: "Admin User",
@@ -231,7 +233,9 @@ const AdminDashboard: React.FC = () => {
                                 <button className="text-gray-400 hover:text-gray-600 transition-colors duration-200">
                                     <Bell className="h-6 w-6" />
                                 </button>
-                                <button className="bg-orange-500 bg-gradient-to-r from-orange-500 to-red-500 text-white px-4 py-2 rounded-lg hover:from-orange-600 hover:to-red-600 transition-all duration-200 flex items-center space-x-2">
+                                <button 
+                                    onClick={() => setIsRecipeModalOpen(true)}
+                                    className="bg-orange-500 bg-gradient-to-r from-orange-500 to-red-500 text-white px-4 py-2 rounded-lg hover:from-orange-600 hover:to-red-600 transition-all duration-200 flex items-center space-x-2">
                                     <Plus className="h-4 w-4" />
                                     <span>Add Recipe</span>
                                 </button>
@@ -414,7 +418,9 @@ const AdminDashboard: React.FC = () => {
                                             <Upload className="h-5 w-5" />
                                             <span>Import</span>
                                         </button>
-                                        <button className="bg-orange-500 bg-gradient-to-r from-orange-500 to-red-500 text-white px-4 py-3 rounded-xl hover:from-orange-600 hover:to-red-600 transition-all duration-200 flex items-center space-x-2">
+                                        <button 
+                                            onClick={() => setIsRecipeModalOpen(true)}
+                                            className="bg-orange-500 bg-gradient-to-r from-orange-500 to-red-500 text-white px-4 py-3 rounded-xl hover:from-orange-600 hover:to-red-600 transition-all duration-200 flex items-center space-x-2">
                                             <Plus className="h-5 w-5" />
                                             <span>Add Recipe</span>
                                         </button>
@@ -662,6 +668,12 @@ const AdminDashboard: React.FC = () => {
                         </div>
                     )}
                 </div>
+                
+                {/* Add Recipe Modal */}
+                <AddRecipeModal 
+                    isOpen={isRecipeModalOpen} 
+                    onClose={() => setIsRecipeModalOpen(false)} 
+                />
             </div>
         </div>
     )
