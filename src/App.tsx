@@ -22,7 +22,7 @@ import ProfileLayout from "./layout/ProfileLayout";
 import Settings from "./pages/Settings";
 import MyFavourite from "./pages/MyFavourite";
 import GoogleCallback from "./pages/GoogleCallback";
-
+import About from "./pages/About";
 
 function App() {
   const location = useLocation();
@@ -60,6 +60,8 @@ function App() {
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/auth/google/callback" element={<GoogleCallback />} />
         <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/about" element={<About />} />
+
 
         {/* Group user pages dưới ProfileLayout */}
         <Route path="/" element={<ProfileLayout />}>

@@ -14,13 +14,15 @@ import { combineReducers } from "@reduxjs/toolkit";
 import authReducer from "./slices/authSlice";
 import recipeReducer from "./slices/recipeSlice";
 import userReducer from "./slices/userSlice";
+import commentReducer from "./slices/commentSlice";
+import likeReducer from "./slices/likeSlice";
 
 // Cấu hình persist - Lưu auth và user vào localStorage
 const persistConfig = {
   key: "root",
   version: 1,
   storage,
-  whitelist: ["auth", "user"], // Chỉ persist auth và user, không persist recipes
+  whitelist: ["auth", "user"], // Chỉ persist auth và user, không persist recipes, comments, likes
 };
 
 // Combine reducers
@@ -28,6 +30,8 @@ const rootReducer = combineReducers({
   auth: authReducer,
   recipes: recipeReducer,
   user: userReducer,
+  comments: commentReducer,
+  likes: likeReducer,
 });
 
 // Tạo persisted reducer
