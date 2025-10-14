@@ -8,12 +8,11 @@ import { apiClient } from "./authSlice"
 export interface Comment {
   _id: string
   recipeId: string
-  userId: {
-    _id: string
-    firstName?: string
-    lastName?: string
-    avatar?: string
-  }
+  userId: string
+  userName: string
+  firstName: string
+  lastName: string
+  userAvatar: string | null
   content: string
   likes: number
   createdAt: string

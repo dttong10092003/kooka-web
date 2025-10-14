@@ -215,15 +215,15 @@ export default function CommentSection({ recipeId }: CommentSectionProps) {
                                 {/* User Avatar */}
                                 <div className="flex-shrink-0">
                                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-semibold">
-                                        {comment.userId.avatar ? (
+                                        {comment.userAvatar ? (
                                             <img
-                                                src={comment.userId.avatar}
-                                                alt={`${comment.userId.firstName} ${comment.userId.lastName}`}
+                                                src={comment.userAvatar}
+                                                alt={`${comment.firstName} ${comment.lastName}`}
                                                 className="w-full h-full rounded-full object-cover"
                                             />
                                         ) : (
                                             <span>
-                                                {comment.userId.firstName?.[0]?.toUpperCase() || 'U'}
+                                                {comment.firstName?.[0]?.toUpperCase() || 'U'}
                                             </span>
                                         )}
                                     </div>
@@ -235,7 +235,7 @@ export default function CommentSection({ recipeId }: CommentSectionProps) {
                                         <div className="flex justify-between items-start mb-2">
                                             <div>
                                                 <h4 className="font-semibold text-gray-900">
-                                                    {comment.userId.firstName} {comment.userId.lastName}
+                                                    {comment.firstName} {comment.lastName}
                                                 </h4>
                                                 <p className="text-xs text-gray-500">
                                                     {formatDate(comment.createdAt)}
@@ -243,7 +243,7 @@ export default function CommentSection({ recipeId }: CommentSectionProps) {
                                             </div>
 
                                             {/* Edit/Delete buttons for own comments */}
-                                            {currentUser?._id === comment.userId._id && (
+                                            {currentUser?._id === comment.userId && (
                                                 <div className="flex gap-2">
                                                     {editingId !== comment._id && (
                                                         <>

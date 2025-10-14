@@ -4,6 +4,7 @@ import { Link, useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import type { AppDispatch, RootState } from '../redux/store';
 import { getRecipeById } from '../redux/slices/recipeSlice';
+import CommentSection from '../components/CommentSection';
 
 export default function RecipeDetail() {
     const { id } = useParams<{ id: string }>();
@@ -22,7 +23,8 @@ export default function RecipeDetail() {
         }
     }, [dispatch, id, recipe]);
 
-    if (loading) {
+    // Chỉ show loading spinner khi đang load VÀ chưa có recipe
+    if (loading && !recipe) {
         return (
             <div className="flex items-center justify-center h-screen">
                 <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500"></div>
@@ -30,13 +32,23 @@ export default function RecipeDetail() {
         );
     }
 
-    if (!recipe) {
+    // Show not found nếu không loading và không có recipe
+    if (!loading && !recipe) {
         return (
             <div className="container mx-auto px-4 py-10 text-center">
                 <h2 className="text-2xl font-semibold">Recipe not found</h2>
                 <Link to="/recipes" className="text-orange-500 hover:underline mt-4 block">
                     Return to recipes
                 </Link>
+            </div>
+        );
+    }
+
+    // Nếu vẫn chưa có recipe (đang load lần đầu), show loading
+    if (!recipe) {
+        return (
+            <div className="flex items-center justify-center h-screen">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500"></div>
             </div>
         );
     }
@@ -306,6 +318,9 @@ export default function RecipeDetail() {
                         <li>For best results, use fresh ingredients</li>
                     </ul>
                 </div>
+
+                {/* Comment Section */}
+                <CommentSection recipeId={recipe._id} />
 
                 {/* Related Recipes - Placeholder */}
                 <div className="mt-10 sm:mt-16 mb-6 sm:mb-10">
