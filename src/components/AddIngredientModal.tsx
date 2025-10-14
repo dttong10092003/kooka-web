@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { X } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { 
   addIngredient, 
@@ -43,7 +44,7 @@ const AddIngredientModal: React.FC<AddIngredientModalProps> = ({ isOpen, onClose
       }));
       setIngredientName('');
       onClose();
-    } catch (err) {
+    } catch {
       setError('Failed to add ingredient. Please try again.');
     }
   };
@@ -66,7 +67,7 @@ const AddIngredientModal: React.FC<AddIngredientModalProps> = ({ isOpen, onClose
         setNewTypeName('');
         setIsAddingType(false);
       }
-    } catch (err) {
+    } catch {
       setError('Failed to add ingredient type. Please try again.');
     }
   };
@@ -74,117 +75,131 @@ const AddIngredientModal: React.FC<AddIngredientModalProps> = ({ isOpen, onClose
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-[60]">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-medium">Add New Ingredient</h3>
-          <button 
-            onClick={onClose} 
-            className="text-gray-500 hover:text-gray-700"
-          >
-            &times;
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+      <div className="relative w-full max-w-md bg-white rounded-2xl shadow-xl border border-orange-200 flex flex-col max-h-[90vh]">
+        {/* Header */}
+        <div className="flex justify-between items-center px-6 py-4 bg-gradient-to-r from-orange-400 to-red-500 text-white rounded-t-2xl">
+          <h2 className="text-lg font-semibold">Thêm nguyên liệu mới</h2>
+          <button onClick={onClose} className="hover:scale-110 transition">
+            <X size={22} />
           </button>
         </div>
 
-        {error && (
-          <div className="mb-4 p-2 bg-red-100 text-red-700 rounded">
-            {error}
-          </div>
-        )}
-
-        {isAddingType ? (
-          <form onSubmit={handleSubmitType}>
-            <div className="mb-4">
-              <label className="block text-sm font-medium mb-1">
-                New Ingredient Type Name
-              </label>
-              <input
-                type="text"
-                value={newTypeName}
-                onChange={(e) => setNewTypeName(e.target.value)}
-                className="w-full p-2 border rounded"
-                placeholder="Enter type name"
-                required
-              />
+        {/* Content */}
+        <div className="overflow-y-auto p-6 space-y-6">
+          {error && (
+            <div className="mb-4 p-3 bg-red-100 border border-red-300 text-red-700 rounded-lg">
+              {error}
             </div>
+          )}
 
-            <div className="flex justify-end space-x-2">
-              <button
-                type="button"
-                onClick={() => setIsAddingType(false)}
-                className="py-2 px-4 border border-gray-300 rounded-md hover:bg-gray-100"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="py-2 px-4 bg-green-600 text-white rounded-md hover:bg-green-700"
-              >
-                Save Type
-              </button>
-            </div>
-          </form>
-        ) : (
-          <form onSubmit={handleSubmitIngredient}>
-            <div className="mb-4">
-              <label className="block text-sm font-medium mb-1">
-                Ingredient Name
-              </label>
-              <input
-                type="text"
-                value={ingredientName}
-                onChange={(e) => setIngredientName(e.target.value)}
-                className="w-full p-2 border rounded"
-                placeholder="Enter ingredient name"
-                required
-              />
-            </div>
-
-            <div className="mb-4">
-              <div className="flex justify-between items-center mb-1">
-                <label className="block text-sm font-medium">
-                  Ingredient Type
+          {isAddingType ? (
+            <form onSubmit={handleSubmitType} className="space-y-4">
+              <div>
+                <h3 className="text-md font-semibold text-gray-700 mb-3">
+                  Thêm loại nguyên liệu mới
+                </h3>
+                <label className="block text-sm font-medium text-gray-600 mb-1">
+                  Tên loại nguyên liệu
                 </label>
+                <input
+                  type="text"
+                  value={newTypeName}
+                  onChange={(e) => setNewTypeName(e.target.value)}
+                  className="border rounded-lg p-2 w-full focus:ring-2 focus:ring-orange-400 outline-none"
+                  placeholder="Nhập tên loại nguyên liệu"
+                  required
+                />
+              </div>
+
+              <div className="flex justify-end gap-3">
                 <button
                   type="button"
-                  onClick={() => setIsAddingType(true)}
-                  className="text-sm text-blue-500 hover:text-blue-700"
+                  onClick={() => setIsAddingType(false)}
+                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100"
                 >
-                  + Add New Type
+                  Huỷ
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-gradient-to-r from-orange-400 to-red-500 text-white rounded-lg hover:opacity-90"
+                >
+                  Lưu loại
                 </button>
               </div>
-              <select
-                value={selectedTypeId}
-                onChange={(e) => setSelectedTypeId(e.target.value)}
-                className="w-full p-2 border rounded"
-                required
-              >
-                <option value="">Select Type</option>
-                {ingredientTypes.map((type: IngredientType) => (
-                  <option key={type._id} value={type._id}>
-                    {type.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+            </form>
+          ) : (
+            <form onSubmit={handleSubmitIngredient} className="space-y-4">
+              <div>
+                <h3 className="text-md font-semibold text-gray-700 mb-3">
+                  Thông tin nguyên liệu
+                </h3>
+                <label className="block text-sm font-medium text-gray-600 mb-1">
+                  Tên nguyên liệu
+                </label>
+                <input
+                  type="text"
+                  value={ingredientName}
+                  onChange={(e) => setIngredientName(e.target.value)}
+                  className="border rounded-lg p-2 w-full focus:ring-2 focus:ring-orange-400 outline-none"
+                  placeholder="Nhập tên nguyên liệu"
+                  required
+                />
+              </div>
 
-            <div className="flex justify-end space-x-2">
-              <button
-                type="button"
-                onClick={onClose}
-                className="py-2 px-4 border border-gray-300 rounded-md hover:bg-gray-100"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="py-2 px-4 bg-green-600 text-white rounded-md hover:bg-green-700"
-              >
-                Save Ingredient
-              </button>
-            </div>
-          </form>
-        )}
+              <div>
+                <div className="flex justify-between items-center mb-1">
+                  <label className="block text-sm font-medium text-gray-600">
+                    Loại nguyên liệu
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setIsAddingType(true)}
+                    className="text-orange-500 text-sm hover:underline"
+                  >
+                    + Thêm loại mới
+                  </button>
+                </div>
+                <div className="relative">
+                  <select
+                    value={selectedTypeId}
+                    onChange={(e) => setSelectedTypeId(e.target.value)}
+                    className="border rounded-lg p-2 w-full focus:ring-2 focus:ring-orange-400 outline-none appearance-none"
+                    required
+                  >
+                    <option value="">Chọn loại nguyên liệu</option>
+                    {ingredientTypes.map((type: IngredientType) => (
+                      <option key={type._id} value={type._id}>
+                        {type.name}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                    <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100"
+                >
+                  Huỷ
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-gradient-to-r from-orange-400 to-red-500 text-white rounded-lg hover:opacity-90"
+                >
+                  Lưu nguyên liệu
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
       </div>
     </div>
   );

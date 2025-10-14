@@ -1,23 +1,19 @@
-import React, { useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import React, { useEffect, useState, useRef } from "react";
+import { X, CheckSquare, Square } from "lucide-react";
+import { useDispatch, useSelector } from "react-redux";
 import {
     addRecipe,
     fetchCategories,
     fetchCuisines,
     fetchIngredients,
-    fetchTags
-} from '../redux/slices/recipeSlice';
-import type {
-    Category,
-    Cuisine,
-    Ingredient,
-    Tag
-} from '../redux/slices/recipeSlice';
-import type { RootState, AppDispatch } from '../redux/store';
-import AddCategoryModal from './AddCategoryModal';
-import AddCuisineModal from './AddCuisineModal';
-import AddIngredientModal from './AddIngredientModal';
-import AddTagModal from './AddTagModal';
+    fetchTags,
+} from "../redux/slices/recipeSlice";
+import type { RootState, AppDispatch } from "../redux/store";
+import AddCategoryModal from "./AddCategoryModal";
+import AddCuisineModal from "./AddCuisineModal";
+import AddIngredientModal from "./AddIngredientModal";
+import AddTagModal from "./AddTagModal";
+import IngredientSelectorModal from "./IngredientSelectorModal";
 
 interface AddRecipeModalProps {
     isOpen: boolean;
@@ -30,47 +26,189 @@ interface Instruction {
     subTitle: string[];
 }
 
+interface TagSelectorModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    onSelect: (tags: string[]) => void;
+    selectedTags: string[];
+    tags: Array<{ _id: string; name: string }>;
+}
+
+const TagSelectorModal: React.FC<TagSelectorModalProps> = ({
+    isOpen,
+    onClose,
+    onSelect,
+    selectedTags = [],
+    tags
+}) => {
+    const [localSelectedTags, setLocalSelectedTags] = useState<string[]>(selectedTags);
+    const [searchTerm, setSearchTerm] = useState("");
+    const modalRef = useRef<HTMLDivElement>(null);
+
+    // Reset local state when modal opens
+    useEffect(() => {
+        if (isOpen) {
+            setLocalSelectedTags([...selectedTags]);
+        }
+    }, [isOpen, selectedTags]);
+
+    // Effect for clicking outside to close
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
+                onClose();
+            }
+        };
+
+        if (isOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [isOpen, onClose]);
+
+    const handleTagToggle = (tagId: string) => {
+        setLocalSelectedTags(prev =>
+            prev.includes(tagId)
+                ? prev.filter(item => item !== tagId)
+                : [...prev, tagId]
+        );
+    };
+
+    const handleApply = () => {
+        onSelect(localSelectedTags);
+        onClose();
+    };
+
+    const handleClear = () => {
+        setLocalSelectedTags([]);
+    };
+
+    // Filter tags by search term
+    const filteredTags = tags.filter(tag =>
+        tag.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-gray-800/20 flex items-center justify-center z-50">
+            <div ref={modalRef} className="bg-white rounded-xl shadow-lg w-full max-w-lg p-6 relative max-h-[600px] flex flex-col">
+                {/* Close Button */}
+                <button
+                    onClick={onClose}
+                    className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
+                >
+                    <X className="w-5 h-5" />
+                </button>
+
+                <h2 className="text-xl font-bold mb-4">Chọn thẻ (Tags)</h2>
+
+                {/* Search bar */}
+                <div className="mb-4">
+                    <input
+                        type="text"
+                        placeholder="Tìm thẻ..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full h-10 px-4 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                    />
+                </div>
+
+                {/* Tags list */}
+                <div className="flex-grow overflow-y-auto mb-4 max-h-[300px]">
+                    {filteredTags.length > 0 ? (
+                        <div className="space-y-2">
+                            {filteredTags.map(tag => (
+                                <div key={tag._id} className="flex items-center">
+                                    <button
+                                        className="flex items-center w-full hover:bg-gray-50 p-2 rounded-lg"
+                                        onClick={() => handleTagToggle(tag._id)}
+                                    >
+                                        {localSelectedTags.includes(tag._id) ? (
+                                            <CheckSquare className="w-5 h-5 text-blue-500 mr-2" />
+                                        ) : (
+                                            <Square className="w-5 h-5 text-gray-400 mr-2" />
+                                        )}
+                                        <span>{tag.name}</span>
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <p className="text-gray-500 text-center pt-4">Không tìm thấy thẻ nào</p>
+                    )}
+                </div>
+
+                {/* Selected count and actions */}
+                <div className="pt-4 border-t border-gray-200 flex items-center justify-between">
+                    <div className="text-sm text-gray-600">
+                        Đã chọn: <span className="font-medium">{localSelectedTags.length}</span> thẻ
+                    </div>
+
+                    <div className="flex gap-3">
+                        <button
+                            onClick={handleClear}
+                            disabled={localSelectedTags.length === 0}
+                            className={`px-4 py-2 border rounded-lg ${localSelectedTags.length === 0
+                                ? 'border-gray-200 text-gray-400 cursor-not-allowed'
+                                : 'border-gray-300 text-gray-700 hover:bg-gray-100'
+                                }`}
+                        >
+                            Xóa tất cả
+                        </button>
+                        <button
+                            onClick={handleApply}
+                            className="px-4 py-2 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white rounded-lg"
+                        >
+                            Áp dụng
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ isOpen, onClose }) => {
     const dispatch = useDispatch<AppDispatch>();
-
-    // Get data from Redux store
     const { categories, cuisines, ingredients, tags } = useSelector(
         (state: RootState) => state.recipes
     );
 
-    // Local states for sub-modals
     const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
     const [isCuisineModalOpen, setIsCuisineModalOpen] = useState(false);
     const [isIngredientModalOpen, setIsIngredientModalOpen] = useState(false);
     const [isTagModalOpen, setIsTagModalOpen] = useState(false);
+    const [isIngredientSelectorOpen, setIsIngredientSelectorOpen] = useState(false);
+    const [isTagSelectorOpen, setIsTagSelectorOpen] = useState(false);
 
-    // State for recipe form
     const [recipe, setRecipe] = useState({
-        name: '',
+        name: "",
         ingredients: [] as string[],
         tags: [] as string[],
-        short: '',
+        short: "",
         instructions: [] as Instruction[],
-        image: '',
-        video: '',
-        calories: 0,
-        time: 0,
-        size: 0,
-        difficulty: '',
-        cuisine: '',
-        category: '',
-        rate: 0,        // Default values for required fields
-        numberOfRate: 0 // Default values for required fields
+        image: "",
+        video: "",
+        calories: 1,
+        time: 1,
+        size: 1,
+        difficulty: "",
+        cuisine: "",
+        category: "",
+        rate: 0,
+        numberOfRate: 0,
     });
 
-    // State for current instruction being added
     const [currentInstruction, setCurrentInstruction] = useState<Instruction>({
-        title: '',
-        image: '',
-        subTitle: ['']
+        title: "",
+        image: "",
+        subTitle: [""],
     });
 
-    // Fetch all necessary data when component mounts
     useEffect(() => {
         dispatch(fetchCategories());
         dispatch(fetchCuisines());
@@ -78,472 +216,546 @@ const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ isOpen, onClose }) => {
         dispatch(fetchTags());
     }, [dispatch]);
 
-    // Handle form input changes
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const handleInputChange = (
+        e: React.ChangeEvent<
+            HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+        >
+    ) => {
         const { name, value } = e.target;
-        if (name === 'calories' || name === 'time' || name === 'size') {
-            setRecipe({ ...recipe, [name]: Number(value) });
-        } else {
-            setRecipe({ ...recipe, [name]: value });
-        }
+        setRecipe((prev) => ({
+            ...prev,
+            [name]: ["calories", "time", "size"].includes(name)
+                ? Number(value)
+                : value,
+        }));
     };
 
-    // Handle select changes for multi-select (ingredients, tags)
-    const handleMultiSelectChange = (e: React.ChangeEvent<HTMLSelectElement>, field: 'ingredients' | 'tags') => {
-        const selectedOptions = Array.from(e.target.selectedOptions).map(option => option.value);
-        setRecipe({ ...recipe, [field]: selectedOptions });
-    };
 
-    // Handle instruction subtitle changes
+
     const handleSubtitleChange = (index: number, value: string) => {
-        const updatedSubtitles = [...currentInstruction.subTitle];
-        updatedSubtitles[index] = value;
-        setCurrentInstruction({
-            ...currentInstruction,
-            subTitle: updatedSubtitles
-        });
+        const updated = [...currentInstruction.subTitle];
+        updated[index] = value;
+        setCurrentInstruction({ ...currentInstruction, subTitle: updated });
     };
 
-    // Add a new subtitle field
-    const addSubtitle = () => {
-        setCurrentInstruction({
-            ...currentInstruction,
-            subTitle: [...currentInstruction.subTitle, '']
-        });
-    };
+    const addSubtitle = () =>
+        setCurrentInstruction((prev) => ({
+            ...prev,
+            subTitle: [...prev.subTitle, ""],
+        }));
 
-    // Remove a subtitle field
-    const removeSubtitle = (index: number) => {
-        const updatedSubtitles = currentInstruction.subTitle.filter((_, i) => i !== index);
-        setCurrentInstruction({
-            ...currentInstruction,
-            subTitle: updatedSubtitles
-        });
-    };
+    const removeSubtitle = (index: number) =>
+        setCurrentInstruction((prev) => ({
+            ...prev,
+            subTitle: prev.subTitle.filter((_, i) => i !== index),
+        }));
 
-    // Add current instruction to recipe instructions
     const addInstruction = () => {
-        if (currentInstruction.title && currentInstruction.subTitle.some(subtitle => subtitle.trim() !== '')) {
-            setRecipe({
-                ...recipe,
-                instructions: [...recipe.instructions, { ...currentInstruction }]
-            });
-            setCurrentInstruction({
-                title: '',
-                image: '',
-                subTitle: ['']
-            });
+        if (
+            currentInstruction.title &&
+            currentInstruction.subTitle.some((s) => s.trim() !== "")
+        ) {
+            setRecipe((prev) => ({
+                ...prev,
+                instructions: [...prev.instructions, { ...currentInstruction }],
+            }));
+            setCurrentInstruction({ title: "", image: "", subTitle: [""] });
         }
     };
 
-    // Remove an instruction
-    const removeInstruction = (index: number) => {
-        const updatedInstructions = recipe.instructions.filter((_, i) => i !== index);
-        setRecipe({
-            ...recipe,
-            instructions: updatedInstructions
-        });
+    const removeInstruction = (index: number) =>
+        setRecipe((prev) => ({
+            ...prev,
+            instructions: prev.instructions.filter((_, i) => i !== index),
+        }));
+
+    const handleIngredientSelect = (selectedIngredients: string[]) => {
+        // Convert ingredient names to IDs
+        const ingredientIds = selectedIngredients.map(ingredientName => {
+            const ingredient = ingredients.find(ing => ing.name === ingredientName);
+            return ingredient ? ingredient._id : null;
+        }).filter(Boolean) as string[];
+        
+        setRecipe((prev) => ({
+            ...prev,
+            ingredients: ingredientIds,
+        }));
     };
 
-    // Handle form submission
+    const handleTagSelect = (selectedTags: string[]) => {
+        setRecipe((prev) => ({
+            ...prev,
+            tags: selectedTags,
+        }));
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-
         try {
-            // Transform the data to match the expected format for the API
-            // The backend expects ingredient IDs, not Ingredient objects
-            // We need to use type assertion to match the expected interface
-            const recipeData = {
-                name: recipe.name,
-                ingredients: recipe.ingredients, // Already string IDs
-                tags: recipe.tags, // Already string IDs
-                short: recipe.short,
-                instructions: recipe.instructions,
-                image: recipe.image,
-                video: recipe.video,
-                calories: recipe.calories,
-                time: recipe.time,
-                size: recipe.size,
-                difficulty: recipe.difficulty,
-                cuisine: recipe.cuisine, // Already a string ID
-                category: recipe.category, // Already a string ID
-                rate: recipe.rate,
-                numberOfRate: recipe.numberOfRate,
-            };
-
-            await dispatch(addRecipe(recipeData as any)); // Using any as a temporary workaround for type issues
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            await dispatch(addRecipe(recipe as any));
             onClose();
         } catch (error) {
-            console.error('Failed to add recipe:', error);
-            // You could add error handling UI here
+            console.error("Failed to add recipe:", error);
         }
     };
 
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 overflow-auto">
-            <div className="bg-white rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-                <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-xl font-bold">Add New Recipe</h2>
-                    <button
-                        onClick={onClose}
-                        className="text-gray-500 hover:text-gray-700"
-                    >
-                        &times;
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+            <div className="relative w-full max-w-4xl bg-white rounded-2xl shadow-xl border border-orange-200 flex flex-col max-h-[90vh]">
+
+                {/* Header cố định */}
+                <div className="flex justify-between items-center px-6 py-4 bg-gradient-to-r from-orange-400 to-red-500 text-white rounded-t-2xl sticky top-0 z-10">
+                    <h2 className="text-lg font-semibold">Thêm công thức mới</h2>
+                    <button onClick={onClose} className="hover:scale-110 transition">
+                        <X size={22} />
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit}>
-                    {/* Basic Info */}
-                    <div className="mb-4">
-                        <label className="block text-sm font-medium mb-1">Recipe Name</label>
-                        <input
-                            type="text"
-                            name="name"
-                            value={recipe.name}
-                            onChange={handleInputChange}
-                            className="w-full p-2 border rounded"
-                            required
-                        />
-                    </div>
-
-                    <div className="mb-4">
-                        <label className="block text-sm font-medium mb-1">Short Description</label>
-                        <textarea
-                            name="short"
-                            value={recipe.short}
-                            onChange={handleInputChange}
-                            className="w-full p-2 border rounded"
-                            rows={2}
-                            required
-                        />
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                {/* Nội dung có thể cuộn */}
+                <div className="overflow-y-auto p-6 space-y-6">
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                        {/* ==== Thông tin cơ bản ==== */}
                         <div>
-                            <label className="block text-sm font-medium mb-1">Image URL</label>
-                            <input
-                                type="text"
-                                name="image"
-                                value={recipe.image}
+                            <h3 className="text-md font-semibold text-gray-700 mb-2">
+                                Thông tin cơ bản
+                            </h3>
+                            <div className="grid md:grid-cols-2 gap-4">
+                                <input
+                                    name="name"
+                                    placeholder="Tên món ăn"
+                                    value={recipe.name}
+                                    onChange={handleInputChange}
+                                    required
+                                    className="border rounded-lg p-2 w-full focus:ring-2 focus:ring-orange-400 outline-none"
+                                />
+                                <div className="relative">
+                                    <select
+                                        name="difficulty"
+                                        value={recipe.difficulty}
+                                        onChange={handleInputChange}
+                                        required
+                                        className="border rounded-lg p-2 w-full focus:ring-2 focus:ring-orange-400 outline-none appearance-none"
+                                    >
+                                        <option value="">Độ khó</option>
+                                        <option value="Dễ">Dễ</option>
+                                        <option value="Trung bình">Trung bình</option>
+                                        <option value="Khó">Khó</option>
+                                    </select>
+                                    <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                                        <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                        </svg>
+                                    </div>
+                                </div>
+                            </div>
+                            <textarea
+                                name="short"
+                                placeholder="Mô tả ngắn..."
+                                value={recipe.short}
                                 onChange={handleInputChange}
-                                className="w-full p-2 border rounded"
+                                className="border rounded-lg p-2 w-full mt-3 focus:ring-2 focus:ring-orange-400 outline-none"
                             />
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Video URL</label>
-                            <input
-                                type="text"
-                                name="video"
-                                value={recipe.video}
-                                onChange={handleInputChange}
-                                className="w-full p-2 border rounded"
-                            />
-                        </div>
-                    </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                        {/* ==== Hình ảnh & Video ==== */}
                         <div>
-                            <label className="block text-sm font-medium mb-1">Calories</label>
-                            <input
-                                type="number"
-                                name="calories"
-                                value={recipe.calories}
-                                onChange={handleInputChange}
-                                className="w-full p-2 border rounded"
-                                min="0"
-                            />
+                            <h3 className="text-md font-semibold text-gray-700 mb-2">
+                                Hình ảnh & Video
+                            </h3>
+                            <div className="grid md:grid-cols-2 gap-4">
+                                <input
+                                    name="image"
+                                    placeholder="URL hình ảnh"
+                                    value={recipe.image}
+                                    onChange={handleInputChange}
+                                    className="border rounded-lg p-2 w-full focus:ring-2 focus:ring-orange-400 outline-none"
+                                />
+                                <input
+                                    name="video"
+                                    placeholder="URL video (tuỳ chọn)"
+                                    value={recipe.video}
+                                    onChange={handleInputChange}
+                                    className="border rounded-lg p-2 w-full focus:ring-2 focus:ring-orange-400 outline-none"
+                                />
+                            </div>
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Preparation Time (minutes)</label>
-                            <input
-                                type="number"
-                                name="time"
-                                value={recipe.time}
-                                onChange={handleInputChange}
-                                className="w-full p-2 border rounded"
-                                min="0"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Serving Size</label>
-                            <input
-                                type="number"
-                                name="size"
-                                value={recipe.size}
-                                onChange={handleInputChange}
-                                className="w-full p-2 border rounded"
-                                min="1"
-                            />
-                        </div>
-                    </div>
 
-                    <div className="mb-4">
-                        <label className="block text-sm font-medium mb-1">Difficulty</label>
-                        <select
-                            name="difficulty"
-                            value={recipe.difficulty}
-                            onChange={handleInputChange}
-                            className="w-full p-2 border rounded"
-                            required
-                        >
-                            <option value="">Select Difficulty</option>
-                            <option value="Dễ">Dễ</option>
-                            <option value="Trung bình">Trung bình</option>
-                            <option value="Khó">Khó</option>
-                        </select>
-                    </div>
+                        {/* ==== Calories / Time / Size ==== */}
+                        <div>
+                            <h3 className="text-md font-semibold text-gray-700 mb-2">
+                                Thông số (Số)
+                            </h3>
+                            <div className="grid md:grid-cols-3 gap-4">
+                                <div>
+                                    <label className="block text-sm text-gray-600 mb-1">
+                                        Calories
+                                    </label>
+                                    <input
+                                        type="number"
+                                        name="calories"
+                                        value={recipe.calories}
+                                        onChange={handleInputChange}
+                                        min={0}
+                                        className="border rounded-lg p-2 w-full focus:ring-2 focus:ring-orange-400 outline-none"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm text-gray-600 mb-1">
+                                        Thời gian (phút)
+                                    </label>
+                                    <input
+                                        type="number"
+                                        name="time"
+                                        value={recipe.time}
+                                        onChange={handleInputChange}
+                                        min={0}
+                                        className="border rounded-lg p-2 w-full focus:ring-2 focus:ring-orange-400 outline-none"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm text-gray-600 mb-1">
+                                        Khẩu phần
+                                    </label>
+                                    <input
+                                        type="number"
+                                        name="size"
+                                        value={recipe.size}
+                                        onChange={handleInputChange}
+                                        min={1}
+                                        className="border rounded-lg p-2 w-full focus:ring-2 focus:ring-orange-400 outline-none"
+                                    />
+                                </div>
+                            </div>
+                        </div>
 
-                    {/* Category Selection with Add New option */}
-                    <div className="mb-4">
-                        <div className="flex justify-between items-center mb-1">
-                            <label className="block text-sm font-medium">Category</label>
+                        {/* ==== Phân loại ==== */}
+                        <div className="grid md:grid-cols-2 gap-4">
+                            <div>
+                                <div className="flex justify-between mb-1">
+                                    <label className="font-medium text-gray-700">Danh mục</label>
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsCategoryModalOpen(true)}
+                                        className="text-orange-500 text-sm hover:underline"
+                                    >
+                                        + Thêm mới
+                                    </button>
+                                </div>
+                                <div className="relative">
+                                    <select
+                                        name="category"
+                                        value={recipe.category}
+                                        onChange={handleInputChange}
+                                        required
+                                        className="border rounded-lg p-2 w-full focus:ring-2 focus:ring-orange-400 outline-none appearance-none"
+                                    >
+                                        <option value="">Chọn danh mục</option>
+                                        {categories.map((c) => (
+                                            <option key={c._id} value={c._id}>
+                                                {c.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                                        <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                        </svg>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <div className="flex justify-between mb-1">
+                                    <label className="font-medium text-gray-700">Ẩm thực</label>
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsCuisineModalOpen(true)}
+                                        className="text-orange-500 text-sm hover:underline"
+                                    >
+                                        + Thêm mới
+                                    </button>
+                                </div>
+                                <div className="relative">
+                                    <select
+                                        name="cuisine"
+                                        value={recipe.cuisine}
+                                        onChange={handleInputChange}
+                                        required
+                                        className="border rounded-lg p-2 w-full focus:ring-2 focus:ring-orange-400 outline-none appearance-none"
+                                    >
+                                        <option value="">Chọn ẩm thực</option>
+                                        {cuisines.map((c) => (
+                                            <option key={c._id} value={c._id}>
+                                                {c.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                                        <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                        </svg>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* ==== Nguyên liệu ==== */}
+                        <div>
+                            <div className="flex justify-between mb-1">
+                                <label className="font-medium text-gray-700">Nguyên liệu</label>
+                                <div className="flex items-center gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsIngredientModalOpen(true)}
+                                        className="text-orange-500 text-sm hover:underline"
+                                    >
+                                        + Thêm mới
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setRecipe((prev) => ({ ...prev, ingredients: [] }));
+                                        }}
+                                        className="text-sm text-gray-500 hover:underline"
+                                    >
+                                        Xóa tất cả
+                                    </button>
+                                </div>
+                            </div>
+                            
                             <button
                                 type="button"
-                                onClick={() => setIsCategoryModalOpen(true)}
-                                className="text-sm text-blue-500 hover:text-blue-700"
+                                onClick={() => setIsIngredientSelectorOpen(true)}
+                                className="w-full border rounded-lg p-3 text-left bg-white hover:bg-gray-50 focus:ring-2 focus:ring-orange-400 outline-none transition-colors relative"
                             >
-                                + Add New Category
+                                <div className="flex justify-between items-center">
+                                    <span className={recipe.ingredients.length > 0 ? "text-gray-800" : "text-gray-400"}>
+                                        {recipe.ingredients.length > 0 
+                                            ? (() => {
+                                                const ingredientNames = recipe.ingredients.map(ingredientId => {
+                                                    const ingredient = ingredients.find(ing => ing._id === ingredientId);
+                                                    return ingredient ? ingredient.name : '';
+                                                }).filter(Boolean);
+                                                
+                                                return ingredientNames.length > 0 ? ingredientNames.join(', ') : `Đã chọn ${recipe.ingredients.length} nguyên liệu`;
+                                              })()
+                                            : "Chọn nguyên liệu..."
+                                        }
+                                    </span>
+                                </div>
+                                <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                                    <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </div>
                             </button>
                         </div>
-                        <select
-                            name="category"
-                            value={recipe.category}
-                            onChange={handleInputChange}
-                            className="w-full p-2 border rounded"
-                            required
-                        >
-                            <option value="">Select Category</option>
-                            {categories.map((category: Category) => (
-                                <option key={category._id} value={category._id}>
-                                    {category.name}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
 
-                    {/* Cuisine Selection with Add New option */}
-                    <div className="mb-4">
-                        <div className="flex justify-between items-center mb-1">
-                            <label className="block text-sm font-medium">Cuisine</label>
+                        {/* ==== Tags ==== */}
+                        <div>
+                            <div className="flex justify-between mb-1">
+                                <label className="font-medium text-gray-700">Thẻ (Tags)</label>
+                                <div className="flex items-center gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsTagModalOpen(true)}
+                                        className="text-orange-500 text-sm hover:underline"
+                                    >
+                                        + Thêm mới
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setRecipe((prev) => ({ ...prev, tags: [] }))}
+                                        className="text-sm text-gray-500 hover:underline"
+                                    >
+                                        Xóa tất cả
+                                    </button>
+                                </div>
+                            </div>
+                            
                             <button
                                 type="button"
-                                onClick={() => setIsCuisineModalOpen(true)}
-                                className="text-sm text-blue-500 hover:text-blue-700"
+                                onClick={() => setIsTagSelectorOpen(true)}
+                                className="w-full border rounded-lg p-3 text-left bg-white hover:bg-gray-50 focus:ring-2 focus:ring-orange-400 outline-none transition-colors relative"
                             >
-                                + Add New Cuisine
+                                <div className="flex justify-between items-center">
+                                    <span className={recipe.tags.length > 0 ? "text-gray-800" : "text-gray-400"}>
+                                        {recipe.tags.length > 0 
+                                            ? recipe.tags.map(tagId => {
+                                                const tag = tags.find(t => t._id === tagId);
+                                                return tag ? tag.name : '';
+                                              }).filter(Boolean).join(', ')
+                                            : "Chọn thẻ..."
+                                        }
+                                    </span>
+                                </div>
+                                <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                                    <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </div>
                             </button>
                         </div>
-                        <select
-                            name="cuisine"
-                            value={recipe.cuisine}
-                            onChange={handleInputChange}
-                            className="w-full p-2 border rounded"
-                            required
-                        >
-                            <option value="">Select Cuisine</option>
-                            {cuisines.map((cuisine: Cuisine) => (
-                                <option key={cuisine._id} value={cuisine._id}>
-                                    {cuisine.name}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
 
-                    {/* Ingredients Selection with Add New option */}
-                    <div className="mb-4">
-                        <div className="flex justify-between items-center mb-1">
-                            <label className="block text-sm font-medium">Ingredients</label>
-                            <button
-                                type="button"
-                                onClick={() => setIsIngredientModalOpen(true)}
-                                className="text-sm text-blue-500 hover:text-blue-700"
-                            >
-                                + Add New Ingredient
-                            </button>
-                        </div>
-                        <select
-                            multiple
-                            name="ingredients"
-                            value={recipe.ingredients}
-                            onChange={(e) => handleMultiSelectChange(e, 'ingredients')}
-                            className="w-full p-2 border rounded h-32"
-                            required
-                        >
-                            {ingredients.map((ingredient: Ingredient) => (
-                                <option key={ingredient._id} value={ingredient._id}>
-                                    {ingredient.name}
-                                </option>
-                            ))}
-                        </select>
-                        <p className="text-xs text-gray-500 mt-1">Hold Ctrl/Cmd to select multiple ingredients</p>
-                    </div>
+                        {/* ==== Hướng dẫn ==== */}
+                        <div>
+                            <h3 className="text-md font-semibold text-gray-700 mb-2">
+                                Hướng dẫn nấu ăn
+                            </h3>
 
-                    {/* Tags Selection with Add New option */}
-                    <div className="mb-4">
-                        <div className="flex justify-between items-center mb-1">
-                            <label className="block text-sm font-medium">Tags</label>
-                            <button
-                                type="button"
-                                onClick={() => setIsTagModalOpen(true)}
-                                className="text-sm text-blue-500 hover:text-blue-700"
-                            >
-                                + Add New Tag
-                            </button>
-                        </div>
-                        <select
-                            multiple
-                            name="tags"
-                            value={recipe.tags}
-                            onChange={(e) => handleMultiSelectChange(e, 'tags')}
-                            className="w-full p-2 border rounded h-32"
-                        >
-                            {tags.map((tag: Tag) => (
-                                <option key={tag._id} value={tag._id}>
-                                    {tag.name}
-                                </option>
-                            ))}
-                        </select>
-                        <p className="text-xs text-gray-500 mt-1">Hold Ctrl/Cmd to select multiple tags</p>
-                    </div>
-
-                    {/* Instructions Section */}
-                    <div className="mb-6">
-                        <h3 className="text-lg font-medium mb-2">Instructions</h3>
-
-                        {/* Existing Instructions */}
-                        {recipe.instructions.length > 0 && (
-                            <div className="mb-4 space-y-2">
-                                {recipe.instructions.map((instruction, idx) => (
-                                    <div key={idx} className="p-3 border rounded bg-gray-50">
-                                        <div className="flex justify-between mb-2">
-                                            <h4 className="font-medium">{instruction.title}</h4>
-                                            <button
-                                                type="button"
-                                                onClick={() => removeInstruction(idx)}
-                                                className="text-red-500 hover:text-red-700"
-                                            >
-                                                Remove
-                                            </button>
-                                        </div>
-                                        <p className="text-sm text-gray-600 mb-1">Image: {instruction.image || 'N/A'}</p>
-                                        <ul className="list-disc list-inside">
-                                            {instruction.subTitle.map((sub, subIdx) => (
-                                                <li key={subIdx} className="text-sm">{sub}</li>
+                            {/* Danh sách hướng dẫn đã thêm */}
+                            {recipe.instructions.map((ins, i) => (
+                                <div
+                                    key={i}
+                                    className="border rounded-lg p-3 mb-3 bg-gray-50 flex justify-between items-start"
+                                >
+                                    <div className="flex-1">
+                                        <p className="font-medium text-gray-800">{ins.title}</p>
+                                        {ins.image && (
+                                            <img
+                                                src={ins.image}
+                                                alt={ins.title}
+                                                className="w-40 h-28 object-cover rounded-lg my-2 border"
+                                            />
+                                        )}
+                                        <ul className="list-disc ml-5 text-sm text-gray-600">
+                                            {ins.subTitle.map((s, j) => (
+                                                <li key={j}>{s}</li>
                                             ))}
                                         </ul>
                                     </div>
-                                ))}
-                            </div>
-                        )}
-
-                        {/* Add New Instruction Form */}
-                        <div className="p-4 border rounded bg-gray-50">
-                            <h4 className="font-medium mb-2">Add New Instruction</h4>
-
-                            <div className="mb-3">
-                                <label className="block text-sm font-medium mb-1">Title</label>
-                                <input
-                                    type="text"
-                                    value={currentInstruction.title}
-                                    onChange={(e) => setCurrentInstruction({ ...currentInstruction, title: e.target.value })}
-                                    className="w-full p-2 border rounded"
-                                />
-                            </div>
-
-                            <div className="mb-3">
-                                <label className="block text-sm font-medium mb-1">Image</label>
-                                <input
-                                    type="text"
-                                    value={currentInstruction.image}
-                                    onChange={(e) => setCurrentInstruction({ ...currentInstruction, image: e.target.value })}
-                                    className="w-full p-2 border rounded"
-                                />
-                            </div>
-
-                            <div className="mb-3">
-                                <div className="flex justify-between items-center mb-1">
-                                    <label className="block text-sm font-medium">Sub-steps</label>
                                     <button
                                         type="button"
-                                        onClick={addSubtitle}
-                                        className="text-sm text-blue-500 hover:text-blue-700"
+                                        onClick={() => removeInstruction(i)}
+                                        className="text-red-500 hover:text-red-700 ml-3"
                                     >
-                                        + Add Step
+                                        X
                                     </button>
                                 </div>
+                            ))}
 
-                                {currentInstruction.subTitle.map((subtitle, idx) => (
-                                    <div key={idx} className="flex items-center mb-2">
+                            {/* Form thêm hướng dẫn mới */}
+                            <div className="border rounded-lg p-4 bg-gray-50 space-y-3">
+                                <input
+                                    placeholder="Tên bước"
+                                    value={currentInstruction.title}
+                                    onChange={(e) =>
+                                        setCurrentInstruction({
+                                            ...currentInstruction,
+                                            title: e.target.value,
+                                        })
+                                    }
+                                    className="border rounded-lg p-2 w-full focus:ring-2 focus:ring-orange-400 outline-none"
+                                />
+
+                                <input
+                                    placeholder="URL hình ảnh minh họa"
+                                    value={currentInstruction.image}
+                                    onChange={(e) =>
+                                        setCurrentInstruction({
+                                            ...currentInstruction,
+                                            image: e.target.value,
+                                        })
+                                    }
+                                    className="border rounded-lg p-2 w-full focus:ring-2 focus:ring-orange-400 outline-none"
+                                />
+
+                                {currentInstruction.subTitle.map((sub, idx) => (
+                                    <div key={idx} className="flex items-center gap-2">
                                         <input
-                                            type="text"
-                                            value={subtitle}
+                                            value={sub}
+                                            placeholder={`Bước ${idx + 1}`}
                                             onChange={(e) => handleSubtitleChange(idx, e.target.value)}
-                                            className="w-full p-2 border rounded"
-                                            placeholder={`Step ${idx + 1}`}
+                                            className="border rounded-lg p-2 flex-1 focus:ring-2 focus:ring-orange-400 outline-none"
                                         />
                                         {idx > 0 && (
                                             <button
                                                 type="button"
                                                 onClick={() => removeSubtitle(idx)}
-                                                className="ml-2 text-red-500 hover:text-red-700"
+                                                className="text-red-500 hover:text-red-700"
                                             >
-                                                &times;
+                                                X
                                             </button>
                                         )}
                                     </div>
                                 ))}
-                            </div>
 
+                                <div className="flex justify-between items-center">
+                                    <button
+                                        type="button"
+                                        onClick={addSubtitle}
+                                        className="text-orange-500 text-sm hover:underline"
+                                    >
+                                        + Thêm bước phụ
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={addInstruction}
+                                        className="bg-gradient-to-r from-orange-400 to-red-500 text-white px-4 py-1 rounded-lg hover:opacity-90"
+                                    >
+                                        Lưu hướng dẫn
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+
+                        {/* ==== Submit ==== */}
+                        <div className="flex justify-end gap-3 pb-2">
                             <button
                                 type="button"
-                                onClick={addInstruction}
-                                className="bg-blue-500 text-white py-1 px-3 rounded hover:bg-blue-600"
+                                onClick={onClose}
+                                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100"
                             >
-                                Add Instruction
+                                Huỷ
+                            </button>
+                            <button
+                                type="submit"
+                                className="px-4 py-2 bg-gradient-to-r from-orange-400 to-red-500 text-white rounded-lg hover:opacity-90"
+                            >
+                                Lưu công thức
                             </button>
                         </div>
-                    </div>
+                    </form>
+                </div>
 
-                    <div className="flex justify-end space-x-2">
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="py-2 px-4 border border-gray-300 rounded-md hover:bg-gray-100"
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            type="submit"
-                            className="py-2 px-4 bg-green-600 text-white rounded-md hover:bg-green-700"
-                        >
-                            Save Recipe
-                        </button>
-                    </div>
-                </form>
+                {/* Modal phụ */}
+                <AddCategoryModal
+                    isOpen={isCategoryModalOpen}
+                    onClose={() => setIsCategoryModalOpen(false)}
+                />
+                <AddCuisineModal
+                    isOpen={isCuisineModalOpen}
+                    onClose={() => setIsCuisineModalOpen(false)}
+                />
+                <AddIngredientModal
+                    isOpen={isIngredientModalOpen}
+                    onClose={() => setIsIngredientModalOpen(false)}
+                />
+                <AddTagModal
+                    isOpen={isTagModalOpen}
+                    onClose={() => setIsTagModalOpen(false)}
+                />
+                <IngredientSelectorModal
+                    isOpen={isIngredientSelectorOpen}
+                    onClose={() => setIsIngredientSelectorOpen(false)}
+                    onSelect={handleIngredientSelect}
+                    selectedIngredients={recipe.ingredients.map(ingredientId => {
+                        const ingredient = ingredients.find(ing => ing._id === ingredientId);
+                        return ingredient ? ingredient.name : '';
+                    }).filter(Boolean)}
+                />
+                <TagSelectorModal
+                    isOpen={isTagSelectorOpen}
+                    onClose={() => setIsTagSelectorOpen(false)}
+                    onSelect={handleTagSelect}
+                    selectedTags={recipe.tags}
+                    tags={tags}
+                />
             </div>
-
-            {/* Sub-Modals */}
-            <AddCategoryModal
-                isOpen={isCategoryModalOpen}
-                onClose={() => setIsCategoryModalOpen(false)}
-            />
-
-            <AddCuisineModal
-                isOpen={isCuisineModalOpen}
-                onClose={() => setIsCuisineModalOpen(false)}
-            />
-
-            <AddIngredientModal
-                isOpen={isIngredientModalOpen}
-                onClose={() => setIsIngredientModalOpen(false)}
-            />
-
-            <AddTagModal
-                isOpen={isTagModalOpen}
-                onClose={() => setIsTagModalOpen(false)}
-            />
         </div>
     );
 };

@@ -5,16 +5,6 @@ import { useDispatch, useSelector } from "react-redux"
 import type { AppDispatch, RootState } from "../redux/store"
 import { fetchIngredientTypes } from "../redux/slices/recipeSlice"
 
-// Define ingredient categories for organization
-// const INGREDIENT_CATEGORIES = {
-//     "Rau củ": ["cà rốt", "cà chua", "hành tây", "khoai tây", "bắp cải", "bông cải", "cải thìa", "rau muống", "rau dền"],
-//     "Thịt": ["thịt heo", "thịt bò", "thịt gà", "thịt vịt", "thịt cừu", "thịt nai"],
-//     "Hải sản": ["cá", "tôm", "mực", "cua", "sò", "hàu", "nghêu"],
-//     "Gia vị": ["muối", "tiêu", "đường", "bột ngọt", "nước mắm", "tương ớt", "tương cà", "dầu hào"],
-//     "Ngũ cốc": ["gạo", "bột mì", "bột năng", "ngô", "kê"],
-//     "Khác": ["trứng", "đậu phụ", "nấm", "sữa", "phô mai", "bơ"]
-// };
-
 interface IngredientSelectorModalProps {
     isOpen: boolean;
     onClose: () => void;
