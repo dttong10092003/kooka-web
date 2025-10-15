@@ -1,4 +1,5 @@
 import { Routes, Route, useLocation } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "./redux/store";
@@ -48,6 +49,7 @@ function App() {
   const hideHeader = location.pathname.startsWith("/admin");
   return (
     <>
+      <Toaster position="top-right" reverseOrder={false} />
       {!hideHeader && <Header />}
       <Routes>
         <Route path="/" element={<Home />} />

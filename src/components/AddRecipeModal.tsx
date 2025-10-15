@@ -14,6 +14,7 @@ import AddCuisineModal from "./AddCuisineModal";
 import AddIngredientModal from "./AddIngredientModal";
 import AddTagModal from "./AddTagModal";
 import IngredientSelectorModal from "./IngredientSelectorModal";
+import toast from "react-hot-toast";
 
 interface AddRecipeModalProps {
     isOpen: boolean;
@@ -275,7 +276,7 @@ const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ isOpen, onClose }) => {
             const ingredient = ingredients.find(ing => ing.name === ingredientName);
             return ingredient ? ingredient._id : null;
         }).filter(Boolean) as string[];
-        
+
         setRecipe((prev) => ({
             ...prev,
             ingredients: ingredientIds,
@@ -293,10 +294,12 @@ const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ isOpen, onClose }) => {
         e.preventDefault();
         try {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            await dispatch(addRecipe(recipe as any));
+            await dispatch(addRecipe(recipe as any)).unwrap();
+            toast.success("Thêm công thức thành công!", { duration: 2500 });
             onClose();
         } catch (error) {
             console.error("Failed to add recipe:", error);
+            toast.error("Thêm công thức thất bại. Vui lòng thử lại.", { duration: 2500 });
         }
     };
 
@@ -361,7 +364,7 @@ const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ isOpen, onClose }) => {
                         </div>
 
                         {/* ==== Hình ảnh & Video ==== */}
-                        <div>
+                        {/* <div>
                             <h3 className="text-md font-semibold text-gray-700 mb-2">
                                 Hình ảnh & Video
                             </h3>
@@ -381,7 +384,76 @@ const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ isOpen, onClose }) => {
                                     className="border rounded-lg p-2 w-full focus:ring-2 focus:ring-orange-400 outline-none"
                                 />
                             </div>
+                        </div> */}
+
+                        {/* ==== Hình ảnh & Video ==== */}
+                        <div>
+                            <h3 className="text-md font-semibold text-gray-700 mb-2">
+                                Hình ảnh & Video
+                            </h3>
+                            <div className="grid md:grid-cols-2 gap-4">
+                                {/* Upload ảnh */}
+                                <div>
+                                    <label className="block text-sm text-gray-600 mb-1">
+                                        Ảnh minh hoạ
+                                    </label>
+
+                                    {/* Ô chọn file */}
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={(e) => {
+                                            const file = e.target.files?.[0];
+                                            if (file) {
+                                                const reader = new FileReader();
+                                                reader.onloadend = () => {
+                                                    setRecipe((prev) => ({
+                                                        ...prev,
+                                                        image: reader.result as string, // base64 string
+                                                    }));
+                                                };
+                                                reader.readAsDataURL(file);
+                                            }
+                                        }}
+                                        className="block w-full text-sm text-gray-700 border border-gray-300 rounded-lg cursor-pointer bg-white focus:ring-2 focus:ring-orange-400 focus:border-transparent p-2"
+                                    />
+
+                                    {/* Hiển thị preview ảnh */}
+                                    {recipe.image && (
+                                        <div className="mt-3 relative">
+                                            <img
+                                                src={recipe.image}
+                                                alt="Preview"
+                                                className="w-full h-40 object-cover rounded-lg border"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    setRecipe((prev) => ({ ...prev, image: "" }))
+                                                }
+                                                className="absolute top-2 right-2 bg-white/70 hover:bg-white text-red-500 rounded-full p-1 shadow"
+                                            >
+                                                <X size={16} />
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm text-gray-600 mb-1">
+                                        Video (tuỳ chọn)
+                                    </label>
+                                    <input
+                                        name="video"
+                                        placeholder="URL video (tuỳ chọn)"
+                                        value={recipe.video}
+                                        onChange={handleInputChange}
+                                        className="border rounded-lg p-2 w-full focus:ring-2 focus:ring-orange-400 outline-none"
+                                    />
+                                </div>
+                            </div>
                         </div>
+
 
                         {/* ==== Calories / Time / Size ==== */}
                         <div>
@@ -525,7 +597,7 @@ const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ isOpen, onClose }) => {
                                     </button>
                                 </div>
                             </div>
-                            
+
                             <button
                                 type="button"
                                 onClick={() => setIsIngredientSelectorOpen(true)}
@@ -533,15 +605,15 @@ const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ isOpen, onClose }) => {
                             >
                                 <div className="flex justify-between items-center">
                                     <span className={recipe.ingredients.length > 0 ? "text-gray-800" : "text-gray-400"}>
-                                        {recipe.ingredients.length > 0 
+                                        {recipe.ingredients.length > 0
                                             ? (() => {
                                                 const ingredientNames = recipe.ingredients.map(ingredientId => {
                                                     const ingredient = ingredients.find(ing => ing._id === ingredientId);
                                                     return ingredient ? ingredient.name : '';
                                                 }).filter(Boolean);
-                                                
+
                                                 return ingredientNames.length > 0 ? ingredientNames.join(', ') : `Đã chọn ${recipe.ingredients.length} nguyên liệu`;
-                                              })()
+                                            })()
                                             : "Chọn nguyên liệu..."
                                         }
                                     </span>
@@ -575,7 +647,7 @@ const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ isOpen, onClose }) => {
                                     </button>
                                 </div>
                             </div>
-                            
+
                             <button
                                 type="button"
                                 onClick={() => setIsTagSelectorOpen(true)}
@@ -583,11 +655,11 @@ const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ isOpen, onClose }) => {
                             >
                                 <div className="flex justify-between items-center">
                                     <span className={recipe.tags.length > 0 ? "text-gray-800" : "text-gray-400"}>
-                                        {recipe.tags.length > 0 
+                                        {recipe.tags.length > 0
                                             ? recipe.tags.map(tagId => {
                                                 const tag = tags.find(t => t._id === tagId);
                                                 return tag ? tag.name : '';
-                                              }).filter(Boolean).join(', ')
+                                            }).filter(Boolean).join(', ')
                                             : "Chọn thẻ..."
                                         }
                                     </span>
@@ -627,12 +699,13 @@ const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ isOpen, onClose }) => {
                                             ))}
                                         </ul>
                                     </div>
+
                                     <button
                                         type="button"
                                         onClick={() => removeInstruction(i)}
-                                        className="text-red-500 hover:text-red-700 ml-3"
+                                        className="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50 transition ml-3"
                                     >
-                                        X
+                                        <X size={18} />
                                     </button>
                                 </div>
                             ))}
@@ -651,7 +724,7 @@ const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ isOpen, onClose }) => {
                                     className="border rounded-lg p-2 w-full focus:ring-2 focus:ring-orange-400 outline-none"
                                 />
 
-                                <input
+                                {/* <input
                                     placeholder="URL hình ảnh minh họa"
                                     value={currentInstruction.image}
                                     onChange={(e) =>
@@ -661,7 +734,52 @@ const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ isOpen, onClose }) => {
                                         })
                                     }
                                     className="border rounded-lg p-2 w-full focus:ring-2 focus:ring-orange-400 outline-none"
-                                />
+                                /> */}
+
+                                <div>
+                                    <label className="block text-sm text-gray-600 mb-1">
+                                        Ảnh minh hoạ bước nấu (tuỳ chọn)
+                                    </label>
+
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={(e) => {
+                                            const file = e.target.files?.[0];
+                                            if (file) {
+                                                const reader = new FileReader();
+                                                reader.onloadend = () => {
+                                                    setCurrentInstruction((prev) => ({
+                                                        ...prev,
+                                                        image: reader.result as string, // base64
+                                                    }));
+                                                };
+                                                reader.readAsDataURL(file);
+                                            }
+                                        }}
+                                        className="block w-full text-sm text-gray-700 border border-gray-300 rounded-lg cursor-pointer bg-white focus:ring-2 focus:ring-orange-400 focus:border-transparent p-2"
+                                    />
+
+                                    {currentInstruction.image && (
+                                        <div className="mt-3 relative inline-block">
+                                            <img
+                                                src={currentInstruction.image}
+                                                alt="Preview step"
+                                                className="w-40 h-28 object-cover rounded-lg border"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    setCurrentInstruction((prev) => ({ ...prev, image: "" }))
+                                                }
+                                                className="absolute top-1 right-1 bg-white/80 hover:bg-white text-red-500 rounded-full p-1 shadow-md transition"
+                                            >
+                                                <X size={14} />
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+
 
                                 {currentInstruction.subTitle.map((sub, idx) => (
                                     <div key={idx} className="flex items-center gap-2">
@@ -675,9 +793,9 @@ const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ isOpen, onClose }) => {
                                             <button
                                                 type="button"
                                                 onClick={() => removeSubtitle(idx)}
-                                                className="text-red-500 hover:text-red-700"
+                                                className="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50 transition"
                                             >
-                                                X
+                                                <X size={16} />
                                             </button>
                                         )}
                                     </div>
