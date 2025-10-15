@@ -15,6 +15,8 @@ export interface Comment {
   userAvatar: string | null
   content: string
   likes: number
+  parentCommentId?: string | null
+  replies?: Comment[]
   createdAt: string
   updatedAt: string
 }
@@ -100,6 +102,25 @@ export const deleteComment = createAsyncThunk<
   }
 })
 
+// Tạo reply cho comment
+export const createReply = createAsyncThunk<
+  Comment,
+  { parentCommentId: string; content: string; recipeId: string },
+  { rejectValue: string }
+>("comments/createReply", async ({ parentCommentId, content, recipeId }, { rejectWithValue }) => {
+  try {
+    // Backend sử dụng endpoint /comments với parentCommentId trong body
+    const res = await apiClient.post(`/comments`, { 
+      content, 
+      recipeId,
+      parentCommentId // Gửi parentCommentId trong body
+    })
+    return res.data.comment || res.data
+  } catch (err: any) {
+    return rejectWithValue(err.response?.data?.message || "Failed to create reply")
+  }
+})
+
 // =====================
 // SLICE
 // =====================
@@ -118,9 +139,24 @@ const commentSlice = createSlice({
     },
     // Update comment likes locally (sau khi like/unlike)
     updateCommentLikes: (state, action: PayloadAction<{ commentId: string; likes: number }>) => {
-      const comment = state.comments.find(c => c._id === action.payload.commentId)
+      const { commentId, likes } = action.payload
+      
+      // Tìm trong comments chính
+      const comment = state.comments.find(c => c._id === commentId)
       if (comment) {
-        comment.likes = action.payload.likes
+        comment.likes = likes
+        return
+      }
+      
+      // Nếu không tìm thấy, tìm trong replies
+      for (const parentComment of state.comments) {
+        if (parentComment.replies) {
+          const reply = parentComment.replies.find(r => r._id === commentId)
+          if (reply) {
+            reply.likes = likes
+            return
+          }
+        }
       }
     },
   },
@@ -186,6 +222,30 @@ const commentSlice = createSlice({
       .addCase(deleteComment.rejected, (state, action) => {
         state.loading = false
         state.error = action.payload || "Failed to delete comment"
+      })
+
+      // CREATE REPLY
+      .addCase(createReply.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(createReply.fulfilled, (state, action) => {
+        state.loading = false
+        const reply = action.payload
+        
+        // Tìm parent comment và thêm reply vào
+        const parentComment = state.comments.find(c => c._id === reply.parentCommentId)
+        if (parentComment) {
+          if (!parentComment.replies) {
+            parentComment.replies = []
+          }
+          parentComment.replies.push(reply)
+        }
+        state.totalComments += 1
+      })
+      .addCase(createReply.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload || "Failed to create reply"
       })
   },
 })

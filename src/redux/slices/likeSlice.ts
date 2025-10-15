@@ -13,7 +13,7 @@ export interface Like {
 }
 
 interface LikeState {
-  likedComments: Set<string> // Set của commentId mà user đã like
+  likedComments: string[] // Array của commentId mà user đã like
   loading: boolean
   error: string | null
 }
@@ -23,7 +23,7 @@ interface LikeState {
 // =====================
 
 const initialState: LikeState = {
-  likedComments: new Set(),
+  likedComments: [],
   loading: false,
   error: null,
 }
@@ -36,47 +36,70 @@ const initialState: LikeState = {
 export const getUserLikes = createAsyncThunk<
   string[],
   string,
-  { rejectValue: string }
->("likes/getUserLikes", async (_recipeId, { rejectWithValue }) => {
+  { rejectValue: string; state: { auth: { user: { _id: string } | null } } }
+>("likes/getUserLikes", async (_recipeId, { getState }) => {
   try {
-    const res = await apiClient.get(`/likes/user`)
+    const userId = getState().auth.user?._id
+    if (!userId) {
+      return []
+    }
+    const res = await apiClient.get(`/likes/user/${userId}`)
     // Trả về array của commentIds mà user đã like
     return res.data.likes?.map((like: Like) => like.commentId) || []
   } catch (err: any) {
     // Nếu lỗi, trả về array rỗng thay vì reject để không block UI
     console.warn('Failed to load user likes:', err.response?.data?.message || err.message)
-    return rejectWithValue(err.response?.data?.message || "Failed to load likes")
+    return []
   }
 })
 
-// Like một comment
+// Toggle like (like hoặc unlike)
+export const toggleLike = createAsyncThunk<
+  { commentId: string; liked: boolean; likes: number },
+  string,
+  { rejectValue: string }
+>("likes/toggleLike", async (commentId, { rejectWithValue }) => {
+  try {
+    const res = await apiClient.post(`/likes/toggle`, { commentId })
+    console.log('🔵 Backend response:', res.data);
+    return {
+      commentId,
+      liked: res.data.liked,
+      likes: res.data.likes || 0,  // ✅ Backend trả về "likes" không phải "likeCount"
+    }
+  } catch (err: any) {
+    return rejectWithValue(err.response?.data?.message || "Failed to toggle like")
+  }
+})
+
+// Legacy: Like một comment (kept for backward compatibility)
 export const likeComment = createAsyncThunk<
   { commentId: string; likes: number },
   string,
   { rejectValue: string }
 >("likes/likeComment", async (commentId, { rejectWithValue }) => {
   try {
-    const res = await apiClient.post(`/likes/${commentId}`)
+    const res = await apiClient.post(`/likes/toggle`, { commentId })
     return {
       commentId,
-      likes: res.data.likes || 0,
+      likes: res.data.likes || 0,  // ✅ Fixed: "likes" not "likeCount"
     }
   } catch (err: any) {
     return rejectWithValue(err.response?.data?.message || "Failed to like comment")
   }
 })
 
-// Unlike một comment
+// Legacy: Unlike một comment (kept for backward compatibility)
 export const unlikeComment = createAsyncThunk<
   { commentId: string; likes: number },
   string,
   { rejectValue: string }
 >("likes/unlikeComment", async (commentId, { rejectWithValue }) => {
   try {
-    const res = await apiClient.delete(`/likes/${commentId}`)
+    const res = await apiClient.post(`/likes/toggle`, { commentId })
     return {
       commentId,
-      likes: res.data.likes || 0,
+      likes: res.data.likes || 0,  // ✅ Fixed: "likes" not "likeCount"
     }
   } catch (err: any) {
     return rejectWithValue(err.response?.data?.message || "Failed to unlike comment")
@@ -92,7 +115,7 @@ const likeSlice = createSlice({
   initialState,
   reducers: {
     clearLikes: (state) => {
-      state.likedComments.clear()
+      state.likedComments = []
       state.error = null
     },
     clearLikeError: (state) => {
@@ -101,10 +124,11 @@ const likeSlice = createSlice({
     // Toggle like locally (optimistic update)
     toggleLikeLocally: (state, action) => {
       const commentId = action.payload
-      if (state.likedComments.has(commentId)) {
-        state.likedComments.delete(commentId)
+      const index = state.likedComments.indexOf(commentId)
+      if (index > -1) {
+        state.likedComments.splice(index, 1)
       } else {
-        state.likedComments.add(commentId)
+        state.likedComments.push(commentId)
       }
     },
   },
@@ -117,7 +141,7 @@ const likeSlice = createSlice({
       })
       .addCase(getUserLikes.fulfilled, (state, action) => {
         state.loading = false
-        state.likedComments = new Set(action.payload)
+        state.likedComments = action.payload
       })
       .addCase(getUserLikes.rejected, (state, action) => {
         state.loading = false
@@ -129,7 +153,9 @@ const likeSlice = createSlice({
         state.error = null
       })
       .addCase(likeComment.fulfilled, (state, action) => {
-        state.likedComments.add(action.payload.commentId)
+        if (!state.likedComments.includes(action.payload.commentId)) {
+          state.likedComments.push(action.payload.commentId)
+        }
       })
       .addCase(likeComment.rejected, (state, action) => {
         state.error = action.payload || "Failed to like comment"
@@ -140,24 +166,36 @@ const likeSlice = createSlice({
         state.error = null
       })
       .addCase(unlikeComment.fulfilled, (state, action) => {
-        state.likedComments.delete(action.payload.commentId)
+        const index = state.likedComments.indexOf(action.payload.commentId)
+        if (index > -1) {
+          state.likedComments.splice(index, 1)
+        }
       })
       .addCase(unlikeComment.rejected, (state, action) => {
         state.error = action.payload || "Failed to unlike comment"
+      })
+
+      // TOGGLE LIKE
+      .addCase(toggleLike.pending, (state) => {
+        state.error = null
+      })
+      .addCase(toggleLike.fulfilled, (state, action) => {
+        const index = state.likedComments.indexOf(action.payload.commentId)
+        if (action.payload.liked) {
+          if (index === -1) {
+            state.likedComments.push(action.payload.commentId)
+          }
+        } else {
+          if (index > -1) {
+            state.likedComments.splice(index, 1)
+          }
+        }
+      })
+      .addCase(toggleLike.rejected, (state, action) => {
+        state.error = action.payload || "Failed to toggle like"
       })
   },
 })
 
 export const { clearLikes, clearLikeError, toggleLikeLocally } = likeSlice.actions
 export default likeSlice.reducer
-
-// Helper để serialize Set trong Redux persist
-export const serializeLikeState = (state: LikeState) => ({
-  ...state,
-  likedComments: Array.from(state.likedComments),
-})
-
-export const deserializeLikeState = (state: any): LikeState => ({
-  ...state,
-  likedComments: new Set(state.likedComments || []),
-})
