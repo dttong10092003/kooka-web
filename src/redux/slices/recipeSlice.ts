@@ -318,32 +318,40 @@ const recipeSlice = createSlice({
             .addCase(getRecipeById.fulfilled, (state, action: PayloadAction<Recipe>) => {
                 const existing = state.recipes.find((r) => r._id === action.payload._id);
                 if (!existing) state.recipes.push(action.payload);
+                state.loading = false;
             })
             .addCase(addRecipe.fulfilled, (state, action: PayloadAction<Recipe>) => {
                 state.recipes.push(action.payload);
+                state.loading = false;
             })
             .addCase(updateRecipe.fulfilled, (state, action: PayloadAction<Recipe>) => {
                 const index = state.recipes.findIndex((r) => r._id === action.payload._id);
                 if (index !== -1) state.recipes[index] = action.payload;
+                state.loading = false;
             })
             .addCase(deleteRecipe.fulfilled, (state, action: PayloadAction<string>) => {
                 state.recipes = state.recipes.filter((r) => r._id !== action.payload);
+                state.loading = false;
             });
 
         // Ingredients
         builder
             .addCase(fetchIngredients.fulfilled, (state, action: PayloadAction<Ingredient[]>) => {
                 state.ingredients = action.payload;
+                state.loading = false;
             })
             .addCase(getIngredientsByType.fulfilled, (state, action: PayloadAction<Ingredient[]>) => {
                 state.ingredients = action.payload;
+                state.loading = false;
             })
             .addCase(getIngredientById.fulfilled, (state, action: PayloadAction<Ingredient>) => {
                 const existing = state.ingredients.find((i) => i._id === action.payload._id);
                 if (!existing) state.ingredients.push(action.payload);
+                state.loading = false;
             })
             .addCase(addIngredient.fulfilled, (state, action: PayloadAction<Ingredient>) => {
                 state.ingredients.push(action.payload);
+                state.loading = false;
             })
             .addCase(updateIngredient.fulfilled, (state, action: PayloadAction<Ingredient>) => {
                 const index = state.ingredients.findIndex((i) => i._id === action.payload._id);
@@ -351,86 +359,107 @@ const recipeSlice = createSlice({
             })
             .addCase(deleteIngredient.fulfilled, (state, action: PayloadAction<string>) => {
                 state.ingredients = state.ingredients.filter((i) => i._id !== action.payload);
+                state.loading = false;
             });
 
         // Ingredient Types
         builder
             .addCase(fetchIngredientTypes.fulfilled, (state, action: PayloadAction<IngredientType[]>) => {
                 state.ingredientTypes = action.payload;
+                state.loading = false;
             })
             .addCase(getIngredientTypeById.fulfilled, (state, action: PayloadAction<IngredientType>) => {
                 const existing = state.ingredientTypes.find((t) => t._id === action.payload._id);
                 if (!existing) state.ingredientTypes.push(action.payload);
+                state.loading = false;
             })
             .addCase(addIngredientType.fulfilled, (state, action: PayloadAction<IngredientType>) => {
                 state.ingredientTypes.push(action.payload);
+                state.loading = false;
             })
             .addCase(updateIngredientType.fulfilled, (state, action: PayloadAction<IngredientType>) => {
                 const index = state.ingredientTypes.findIndex((t) => t._id === action.payload._id);
                 if (index !== -1) state.ingredientTypes[index] = action.payload;
+                state.loading = false;
             })
             .addCase(deleteIngredientType.fulfilled, (state, action: PayloadAction<string>) => {
                 state.ingredientTypes = state.ingredientTypes.filter((t) => t._id !== action.payload);
+                state.loading = false;
             });
 
         // Tags
         builder
             .addCase(fetchTags.fulfilled, (state, action: PayloadAction<Tag[]>) => {
                 state.tags = action.payload;
+                state.loading = false;
             })
             .addCase(getTagById.fulfilled, (state, action: PayloadAction<Tag>) => {
                 const existing = state.tags.find((t) => t._id === action.payload._id);
                 if (!existing) state.tags.push(action.payload);
+                state.loading = false;
             })
             .addCase(addTag.fulfilled, (state, action: PayloadAction<Tag>) => {
                 state.tags.push(action.payload);
+                state.loading = false;
             })
             .addCase(updateTag.fulfilled, (state, action: PayloadAction<Tag>) => {
                 const index = state.tags.findIndex((t) => t._id === action.payload._id);
                 if (index !== -1) state.tags[index] = action.payload;
+                state.loading = false;
             })
             .addCase(deleteTag.fulfilled, (state, action: PayloadAction<string>) => {
                 state.tags = state.tags.filter((t) => t._id !== action.payload);
+                state.loading = false;
             });
 
         // Cuisines
         builder
             .addCase(fetchCuisines.fulfilled, (state, action: PayloadAction<Cuisine[]>) => {
                 state.cuisines = action.payload;
+                state.loading = false;
             })
             .addCase(getCuisineById.fulfilled, (state, action: PayloadAction<Cuisine>) => {
                 const existing = state.cuisines.find((c) => c._id === action.payload._id);
                 if (!existing) state.cuisines.push(action.payload);
+                state.loading = false;
             })
             .addCase(addCuisine.fulfilled, (state, action: PayloadAction<Cuisine>) => {
                 state.cuisines.push(action.payload);
+                state.loading = false;
             })
             .addCase(updateCuisine.fulfilled, (state, action: PayloadAction<Cuisine>) => {
                 const index = state.cuisines.findIndex((c) => c._id === action.payload._id);
                 if (index !== -1) state.cuisines[index] = action.payload;
+                state.loading = false;
             })
             .addCase(deleteCuisine.fulfilled, (state, action: PayloadAction<string>) => {
                 state.cuisines = state.cuisines.filter((c) => c._id !== action.payload);
+                state.loading = false;
             });
 
         // Categories
         builder
             .addCase(fetchCategories.fulfilled, (state, action: PayloadAction<Category[]>) => {
                 state.categories = action.payload;
+                state.loading = false;
             })
             .addCase(getCategoryById.fulfilled, (state, action: PayloadAction<Category>) => {
                 const existing = state.categories.find((c) => c._id === action.payload._id);
                 if (!existing) state.categories.push(action.payload);
+                state.loading = false;
             })
             .addCase(addCategory.fulfilled, (state, action: PayloadAction<Category>) => {
                 state.categories.push(action.payload);
+                state.loading = false;
             })
             .addCase(updateCategory.fulfilled, (state, action: PayloadAction<Category>) => {
                 const index = state.categories.findIndex((c) => c._id === action.payload._id);
                 if (index !== -1) state.categories[index] = action.payload;
+                state.loading = false;
             })
             .addCase(deleteCategory.fulfilled, (state, action: PayloadAction<string>) => {
                 state.categories = state.categories.filter((c) => c._id !== action.payload);
+                state.loading = false;
             });
 
         // Generic pending/rejected
@@ -441,7 +470,7 @@ const recipeSlice = createSlice({
             })
             .addMatcher(
                 (action) => action.type.endsWith("/rejected"),
-                (state, action: any) => {
+                (state, action: { error?: { message?: string } }) => {
                     state.loading = false;
                     state.error = action.error?.message || "Something went wrong";
                 }

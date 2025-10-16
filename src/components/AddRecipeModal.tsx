@@ -1,13 +1,15 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { X, CheckSquare, Square } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import {
     addRecipe,
+    updateRecipe,
     fetchCategories,
     fetchCuisines,
     fetchIngredients,
     fetchTags,
 } from "../redux/slices/recipeSlice";
+import type { Recipe } from "../redux/slices/recipeSlice";
 import type { RootState, AppDispatch } from "../redux/store";
 import AddCategoryModal from "./AddCategoryModal";
 import AddCuisineModal from "./AddCuisineModal";
@@ -19,6 +21,7 @@ import toast from "react-hot-toast";
 interface AddRecipeModalProps {
     isOpen: boolean;
     onClose: () => void;
+    editRecipe?: Recipe | null; // Recipe để edit, null/undefined = add mode
 }
 
 interface Instruction {
@@ -173,7 +176,7 @@ const TagSelectorModal: React.FC<TagSelectorModalProps> = ({
     );
 };
 
-const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ isOpen, onClose }) => {
+const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ isOpen, onClose, editRecipe }) => {
     const dispatch = useDispatch<AppDispatch>();
     const { categories, cuisines, ingredients, tags } = useSelector(
         (state: RootState) => state.recipes
@@ -186,23 +189,46 @@ const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ isOpen, onClose }) => {
     const [isIngredientSelectorOpen, setIsIngredientSelectorOpen] = useState(false);
     const [isTagSelectorOpen, setIsTagSelectorOpen] = useState(false);
 
-    const [recipe, setRecipe] = useState({
-        name: "",
-        ingredients: [] as string[],
-        tags: [] as string[],
-        short: "",
-        instructions: [] as Instruction[],
-        image: "",
-        video: "",
-        calories: 1,
-        time: 1,
-        size: 1,
-        difficulty: "",
-        cuisine: "",
-        category: "",
-        rate: 0,
-        numberOfRate: 0,
-    });
+    const getInitialRecipe = useCallback(() => {
+        if (editRecipe) {
+            return {
+                name: editRecipe.name,
+                ingredients: editRecipe.ingredients.map(ing => ing._id),
+                tags: editRecipe.tags.map(tag => tag._id),
+                short: editRecipe.short,
+                instructions: editRecipe.instructions,
+                image: editRecipe.image,
+                video: editRecipe.video,
+                calories: editRecipe.calories,
+                time: editRecipe.time,
+                size: editRecipe.size,
+                difficulty: editRecipe.difficulty,
+                cuisine: editRecipe.cuisine?._id || "",
+                category: editRecipe.category?._id || "",
+                rate: editRecipe.rate,
+                numberOfRate: editRecipe.numberOfRate,
+            };
+        }
+        return {
+            name: "",
+            ingredients: [] as string[],
+            tags: [] as string[],
+            short: "",
+            instructions: [] as Instruction[],
+            image: "",
+            video: "",
+            calories: 1,
+            time: 1,
+            size: 1,
+            difficulty: "",
+            cuisine: "",
+            category: "",
+            rate: 0,
+            numberOfRate: 0,
+        };
+    }, [editRecipe]);
+
+    const [recipe, setRecipe] = useState(getInitialRecipe());
 
     const [currentInstruction, setCurrentInstruction] = useState<Instruction>({
         title: "",
@@ -216,6 +242,13 @@ const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ isOpen, onClose }) => {
         dispatch(fetchIngredients());
         dispatch(fetchTags());
     }, [dispatch]);
+
+    // Reset recipe khi editRecipe hoặc isOpen thay đổi
+    useEffect(() => {
+        if (isOpen) {
+            setRecipe(getInitialRecipe());
+        }
+    }, [getInitialRecipe, isOpen]);
 
     const handleInputChange = (
         e: React.ChangeEvent<
@@ -293,25 +326,41 @@ const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ isOpen, onClose }) => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            await dispatch(addRecipe(recipe as any)).unwrap();
-            toast.success("Thêm công thức thành công!", { duration: 2500 });
+            if (editRecipe) {
+                // Edit mode - Use original recipe structure for update
+                await dispatch(updateRecipe({ 
+                    id: editRecipe._id, 
+                    recipe: recipe as any // Backend expects the current recipe format
+                })).unwrap();
+                toast.success("Cập nhật công thức thành công!", { duration: 2500 });
+            } else {
+                // Add mode - Use recipe as is for new creation
+                await dispatch(addRecipe(recipe as any)).unwrap();
+                toast.success("Thêm công thức thành công!", { duration: 2500 });
+            }
             onClose();
         } catch (error) {
-            console.error("Failed to add recipe:", error);
-            toast.error("Thêm công thức thất bại. Vui lòng thử lại.", { duration: 2500 });
+            console.error("Failed to save recipe:", error);
+            toast.error(
+                editRecipe 
+                    ? "Cập nhật công thức thất bại. Vui lòng thử lại." 
+                    : "Thêm công thức thất bại. Vui lòng thử lại.", 
+                { duration: 2500 }
+            );
         }
     };
 
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-800/20 p-4">
             <div className="relative w-full max-w-4xl bg-white rounded-2xl shadow-xl border border-orange-200 flex flex-col max-h-[90vh]">
 
                 {/* Header cố định */}
                 <div className="flex justify-between items-center px-6 py-4 bg-gradient-to-r from-orange-400 to-red-500 text-white rounded-t-2xl sticky top-0 z-10">
-                    <h2 className="text-lg font-semibold">Thêm công thức mới</h2>
+                    <h2 className="text-lg font-semibold">
+                        {editRecipe ? "Chỉnh sửa công thức" : "Thêm công thức mới"}
+                    </h2>
                     <button onClick={onClose} className="hover:scale-110 transition">
                         <X size={22} />
                     </button>
@@ -834,7 +883,7 @@ const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ isOpen, onClose }) => {
                                 type="submit"
                                 className="px-4 py-2 bg-gradient-to-r from-orange-400 to-red-500 text-white rounded-lg hover:opacity-90"
                             >
-                                Lưu công thức
+                                {editRecipe ? "Cập nhật" : "Lưu công thức"}
                             </button>
                         </div>
                     </form>

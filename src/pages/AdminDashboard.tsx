@@ -1,5 +1,9 @@
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useDispatch, useSelector } from "react-redux"
+import type { AppDispatch, RootState } from "../redux/store"
+import { fetchRecipes, deleteRecipe } from "../redux/slices/recipeSlice"
+import type { Recipe } from "../redux/slices/recipeSlice"
 import {
     BarChart3,
     Users,
@@ -9,9 +13,7 @@ import {
     Edit,
     Trash2,
     Search,
-    Filter,
     Download,
-    Upload,
     Settings,
     Bell,
     Star,
@@ -21,11 +23,24 @@ import {
     LogOut,
 } from "lucide-react"
 import AddRecipeModal from "../components/AddRecipeModal";
+import EditRecipeModal from "../components/EditRecipeModal";
+import toast from "react-hot-toast";
 
 const AdminDashboard: React.FC = () => {
     const [activeTab, setActiveTab] = useState("overview")
     const [searchQuery, setSearchQuery] = useState("")
     const [isRecipeModalOpen, setIsRecipeModalOpen] = useState(false)
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+    const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null)
+    const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+    const [recipeToDelete, setRecipeToDelete] = useState<Recipe | null>(null)
+
+    const dispatch = useDispatch<AppDispatch>()
+    const { recipes, loading, error } = useSelector((state: RootState) => state.recipes)
+
+    useEffect(() => {
+        dispatch(fetchRecipes())
+    }, [dispatch])
 
     const currentUser = {
         name: "Admin User",
@@ -161,6 +176,40 @@ const AdminDashboard: React.FC = () => {
         }
     }
 
+    const handleDeleteClick = (recipe: Recipe) => {
+        setRecipeToDelete(recipe)
+        setDeleteConfirmOpen(true)
+    }
+
+    const handleDeleteConfirm = async () => {
+        if (recipeToDelete) {
+            try {
+                await dispatch(deleteRecipe(recipeToDelete._id))
+                setDeleteConfirmOpen(false)
+                setRecipeToDelete(null)
+                toast.success("Xóa công thức thành công!", { duration: 2500 })
+            } catch (error) {
+                console.error("Failed to delete recipe:", error)
+                toast.error("Xóa công thức thất bại. Vui lòng thử lại.", { duration: 2500 })
+            }
+        }
+    }
+
+    const handleDeleteCancel = () => {
+        setDeleteConfirmOpen(false)
+        setRecipeToDelete(null)
+    }
+
+    const handleEditClick = (recipe: Recipe) => {
+        setSelectedRecipe(recipe)
+        setIsEditModalOpen(true)
+    }
+
+    const handleEditModalClose = () => {
+        setIsEditModalOpen(false)
+        setSelectedRecipe(null)
+    }
+
     return (
         <div className="h-screen bg-gray-50 flex overflow-hidden">
             <div className="w-64 bg-white shadow-lg border-r border-gray-200 flex flex-col h-full overflow-y-auto">
@@ -233,7 +282,7 @@ const AdminDashboard: React.FC = () => {
                                 <button className="text-gray-400 hover:text-gray-600 transition-colors duration-200">
                                     <Bell className="h-6 w-6" />
                                 </button>
-                                <button 
+                                <button
                                     onClick={() => setIsRecipeModalOpen(true)}
                                     className="bg-orange-500 bg-gradient-to-r from-orange-500 to-red-500 text-white px-4 py-2 rounded-lg hover:from-orange-600 hover:to-red-600 transition-all duration-200 flex items-center space-x-2">
                                     <Plus className="h-4 w-4" />
@@ -393,10 +442,9 @@ const AdminDashboard: React.FC = () => {
                         </div>
                     )}
 
-                    {/* Recipes Tab */}
                     {activeTab === "recipes" && (
                         <div className="space-y-6">
-                            {/* Search and Filters */}
+                            {/* Search & Add */}
                             <div className="bg-white rounded-2xl shadow-lg p-6">
                                 <div className="flex flex-col md:flex-row gap-4">
                                     <div className="flex-1 relative">
@@ -410,17 +458,10 @@ const AdminDashboard: React.FC = () => {
                                         />
                                     </div>
                                     <div className="flex space-x-3">
-                                        <button className="px-4 py-3 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors duration-200 flex items-center space-x-2">
-                                            <Filter className="h-5 w-5" />
-                                            <span>Filter</span>
-                                        </button>
-                                        <button className="px-4 py-3 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors duration-200 flex items-center space-x-2">
-                                            <Upload className="h-5 w-5" />
-                                            <span>Import</span>
-                                        </button>
-                                        <button 
+                                        <button
                                             onClick={() => setIsRecipeModalOpen(true)}
-                                            className="bg-orange-500 bg-gradient-to-r from-orange-500 to-red-500 text-white px-4 py-3 rounded-xl hover:from-orange-600 hover:to-red-600 transition-all duration-200 flex items-center space-x-2">
+                                            className="bg-orange-500 bg-gradient-to-r from-orange-500 to-red-500 text-white px-4 py-3 rounded-xl hover:from-orange-600 hover:to-red-600 transition-all duration-200 flex items-center space-x-2"
+                                        >
                                             <Plus className="h-5 w-5" />
                                             <span>Add Recipe</span>
                                         </button>
@@ -430,73 +471,76 @@ const AdminDashboard: React.FC = () => {
 
                             {/* Recipes Table */}
                             <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-                                <div className="overflow-x-auto">
-                                    <table className="w-full">
-                                        <thead className="bg-gray-50">
-                                            <tr>
-                                                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                    Recipe
-                                                </th>
-                                                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                    Author
-                                                </th>
-                                                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                    Status
-                                                </th>
-                                                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                    Views
-                                                </th>
-                                                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                    Rating
-                                                </th>
-                                                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                    Date
-                                                </th>
-                                                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                    Actions
-                                                </th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="bg-white divide-y divide-gray-200">
-                                            {recentRecipes.map((recipe) => (
-                                                <tr key={recipe.id} className="hover:bg-gray-50 transition-colors duration-200">
-                                                    <td className="px-6 py-4 whitespace-nowrap">
-                                                        <div className="font-medium text-gray-900">{recipe.title}</div>
-                                                    </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{recipe.author}</td>
-                                                    <td className="px-6 py-4 whitespace-nowrap">
-                                                        <span
-                                                            className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(recipe.status)}`}
-                                                        >
-                                                            {recipe.status}
-                                                        </span>
-                                                    </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{recipe.views}</td>
-                                                    <td className="px-6 py-4 whitespace-nowrap">
-                                                        <div className="flex items-center">
-                                                            <Star className="h-4 w-4 text-yellow-400 mr-1" />
-                                                            <span className="text-sm text-gray-600">{recipe.rating}</span>
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{recipe.date}</td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                                        <div className="flex space-x-2">
-                                                            <button className="text-blue-600 hover:text-blue-900 transition-colors duration-200">
-                                                                <Edit className="h-4 w-4" />
-                                                            </button>
-                                                            <button className="text-red-600 hover:text-red-900 transition-colors duration-200">
-                                                                <Trash2 className="h-4 w-4" />
-                                                            </button>
-                                                        </div>
-                                                    </td>
+                                {loading ? (
+                                    <div className="p-6 text-center text-gray-500">Loading recipes...</div>
+                                ) : error ? (
+                                    <div className="p-6 text-center text-red-500">Error: {error}</div>
+                                ) : (
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full">
+                                            <thead className="bg-gray-50">
+                                                <tr>
+                                                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                                                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Cuisine</th>
+                                                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Difficulty</th>
+                                                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Rating</th>
+                                                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                                                 </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
+                                            </thead>
+                                            <tbody className="bg-white divide-y divide-gray-200">
+                                                {recipes.length === 0 ? (
+                                                    <tr>
+                                                        <td colSpan={5} className="text-center py-6 text-gray-500">
+                                                            No recipes found
+                                                        </td>
+                                                    </tr>
+                                                ) : (
+                                                    recipes
+                                                        .filter((r) =>
+                                                            r.name.toLowerCase().includes(searchQuery.toLowerCase())
+                                                        )
+                                                        .map((recipe: Recipe) => (
+                                                            <tr key={recipe._id} className="hover:bg-gray-50 transition-colors">
+                                                                <td className="px-6 py-4 font-medium text-gray-900">{recipe.name}</td>
+                                                                <td className="px-6 py-4 text-sm text-gray-700">
+                                                                    {recipe.cuisine?.name || "—"}
+                                                                </td>
+                                                                <td className="px-6 py-4 text-sm text-gray-700">
+                                                                    {recipe.difficulty || "Normal"}
+                                                                </td>
+                                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                                    <div className="flex items-center">
+                                                                        <Star className="h-4 w-4 text-yellow-400 mr-1" />
+                                                                        <span className="text-sm text-gray-600">{recipe.rate}</span>
+                                                                    </div>
+                                                                </td>
+                                                                <td className="px-6 py-4">
+                                                                    <div className="flex space-x-2">
+                                                                        <button 
+                                                                            onClick={() => handleEditClick(recipe)}
+                                                                            className="text-blue-600 hover:text-blue-900 transition-colors duration-200"
+                                                                        >
+                                                                            <Edit className="h-4 w-4" />
+                                                                        </button>
+                                                                        <button 
+                                                                            onClick={() => handleDeleteClick(recipe)}
+                                                                            className="text-red-600 hover:text-red-900 transition-colors duration-200"
+                                                                        >
+                                                                            <Trash2 className="h-4 w-4" />
+                                                                        </button>
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        ))
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     )}
+
 
                     {/* Users Tab */}
                     {activeTab === "users" && (
@@ -669,10 +713,49 @@ const AdminDashboard: React.FC = () => {
                     )}
                 </div>
                 
+                {/* Delete Confirmation Modal */}
+                {deleteConfirmOpen && (
+                    <div className="fixed inset-0 bg-gray-800/20 flex items-center justify-center z-50">
+                        <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-xl">
+                            <div className="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full mb-4">
+                                <Trash2 className="h-6 w-6 text-red-600" />
+                            </div>
+                            <h3 className="text-lg font-semibold text-gray-900 text-center mb-2">
+                                Xác nhận xóa công thức
+                            </h3>
+                            <p className="text-gray-600 text-center mb-6">
+                                Bạn có chắc chắn muốn xóa công thức "{recipeToDelete?.name}"? 
+                                Hành động này không thể hoàn tác.
+                            </p>
+                            <div className="flex space-x-3">
+                                <button
+                                    onClick={handleDeleteCancel}
+                                    className="flex-1 px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors duration-200"
+                                >
+                                    Hủy
+                                </button>
+                                <button
+                                    onClick={handleDeleteConfirm}
+                                    className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200"
+                                >
+                                    Xóa
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {/* Add Recipe Modal */}
-                <AddRecipeModal 
-                    isOpen={isRecipeModalOpen} 
-                    onClose={() => setIsRecipeModalOpen(false)} 
+                <AddRecipeModal
+                    isOpen={isRecipeModalOpen}
+                    onClose={() => setIsRecipeModalOpen(false)}
+                />
+
+                {/* Edit Recipe Modal */}
+                <EditRecipeModal
+                    isOpen={isEditModalOpen}
+                    onClose={handleEditModalClose}
+                    recipe={selectedRecipe}
                 />
             </div>
         </div>
