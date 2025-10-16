@@ -4,9 +4,11 @@ import { useDispatch, useSelector } from "react-redux"
 import { Calendar, MapPin, Edit, Save, X, Camera } from "lucide-react"
 import type { RootState, AppDispatch } from "../redux/store"
 import { fetchProfile, updateProfile } from "../redux/slices/userSlice"
+import { useRef } from "react"
 
 const ProfilePage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>()
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Lấy từ Redux
   const { user } = useSelector((state: RootState) => state.auth)
@@ -16,6 +18,7 @@ const ProfilePage: React.FC = () => {
 
   const [isEditing, setIsEditing] = useState(false)
   const [formData, setFormData] = useState(profile || null)
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
 
   // Lấy profile khi user login xong
   useEffect(() => {
@@ -40,6 +43,44 @@ const ProfilePage: React.FC = () => {
       dispatch(updateProfile({ userId: user._id, data: formData }))
     }
     setIsEditing(false)
+    setAvatarPreview(null) // Clear preview after save
+  }
+
+  // Handle avatar file selection
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file')
+      return
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('File size must be less than 5MB')
+      return
+    }
+
+    // Convert to base64
+    const reader = new FileReader()
+    reader.onload = () => {
+      const base64 = reader.result as string
+      setAvatarPreview(base64)
+      handleInputChange('avatar', base64)
+    }
+    reader.onerror = () => {
+      alert('Failed to read file')
+    }
+    reader.readAsDataURL(file)
+  }
+
+  // Trigger file input
+  const handleCameraClick = () => {
+    if (isEditing) {
+      fileInputRef.current?.click()
+    }
   }
 
   const getUserInitials = (name: string) =>
@@ -63,11 +104,12 @@ const ProfilePage: React.FC = () => {
       <div className="bg-gradient-to-r from-orange-500 to-red-500 p-8 rounded-t-2xl">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-4">
+            {/* Avatar with Camera Button */}
             <div className="relative">
               <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white text-2xl font-bold overflow-hidden">
-                {(user?.avatar || profile?.avatar || formData?.avatar) ? (
+                {(avatarPreview || formData?.avatar) ? (
                   <img 
-                    src={user?.avatar || profile?.avatar || formData?.avatar} 
+                    src={avatarPreview || formData?.avatar} 
                     alt="Avatar" 
                     className="w-full h-full object-cover rounded-full"
                     referrerPolicy="no-referrer"
@@ -75,18 +117,34 @@ const ProfilePage: React.FC = () => {
                     onError={(e) => {
                       e.currentTarget.style.display = 'none'
                     }}
-                   
                   />
-                ) : null}
-                <div className={`w-full h-full flex items-center justify-center ${
-                  (user?.avatar || profile?.avatar || formData?.avatar) ? 'hidden' : ''
-                }`}>
-                  {getUserInitials(`${formData.firstName} ${formData.lastName}`)}
-                </div>
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    {getUserInitials(`${formData.firstName} ${formData.lastName}`)}
+                  </div>
+                )}
               </div>
-              <button className="absolute bottom-0 right-0 bg-white text-gray-700 p-1.5 rounded-full hover:bg-gray-100 transition-colors duration-200">
-                <Camera className="h-3 w-3" />
-              </button>
+              
+              {/* Camera Button - Only show when editing */}
+              {isEditing && (
+                <button 
+                  type="button"
+                  onClick={handleCameraClick}
+                  className="absolute bottom-0 right-0 bg-white text-gray-700 p-1.5 rounded-full hover:bg-gray-100 transition-colors duration-200 shadow-lg"
+                  title="Change Avatar"
+                >
+                  <Camera className="h-3 w-3" />
+                </button>
+              )}
+              
+              {/* Hidden File Input */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleAvatarChange}
+                className="hidden"
+              />
             </div>
             <div className="text-white">
               <h1 className="text-2xl font-bold mb-1">
@@ -110,7 +168,14 @@ const ProfilePage: React.FC = () => {
             </div>
           </div>
           <button
-            onClick={() => setIsEditing(!isEditing)}
+            onClick={() => {
+              if (isEditing) {
+                // Canceling - reset everything
+                setAvatarPreview(null)
+                setFormData(profile)
+              }
+              setIsEditing(!isEditing)
+            }}
             className="bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-all duration-200 flex items-center space-x-2"
           >
             {isEditing ? <X className="h-4 w-4" /> : <Edit className="h-4 w-4" />}
