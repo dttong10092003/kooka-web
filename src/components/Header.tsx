@@ -77,6 +77,9 @@ export default function Header() {
           <Link to="/recipes" className="text-gray-600 hover:text-gray-900">
             {t("header.recipes")}
           </Link>
+          <Link to="/meal-planner" className="text-gray-600 hover:text-gray-900">
+            {t("header.mealPlanner")}
+          </Link>
           <Link to="/categories" className="text-gray-600 hover:text-gray-900">
             {t("header.categories")}
           </Link>

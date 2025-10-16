@@ -4,6 +4,7 @@ export const translations = {
         header: {
             home: "Trang Chủ",
             recipes: "Công Thức",
+            mealPlanner: "Lập Kế Hoạch Bữa Ăn",
             categories: "Danh Mục",
             about: "Giới Thiệu",
             signin: "Đăng Nhập",
@@ -108,6 +109,7 @@ export const translations = {
         header: {
             home: "Home",
             recipes: "Recipes",
+            mealPlanner: "Meal Planner",
             categories: "Categories",
             about: "About",
             signin: "Sign In",

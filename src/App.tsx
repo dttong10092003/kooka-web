@@ -24,6 +24,7 @@ import Settings from "./pages/Settings";
 import MyFavourite from "./pages/MyFavourite";
 import GoogleCallback from "./pages/GoogleCallback";
 import About from "./pages/About";
+import MealPlannerPage from "./pages/MealPlannerPage";
 
 function App() {
   const location = useLocation();
@@ -63,6 +64,7 @@ function App() {
         <Route path="/auth/google/callback" element={<GoogleCallback />} />
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/about" element={<About />} />
+        <Route path="/meal-planner" element={<MealPlannerPage />} />
 
 
         {/* Group user pages dưới ProfileLayout */}
