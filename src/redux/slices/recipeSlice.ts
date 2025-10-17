@@ -356,6 +356,7 @@ const recipeSlice = createSlice({
             .addCase(updateIngredient.fulfilled, (state, action: PayloadAction<Ingredient>) => {
                 const index = state.ingredients.findIndex((i) => i._id === action.payload._id);
                 if (index !== -1) state.ingredients[index] = action.payload;
+                state.loading = false;
             })
             .addCase(deleteIngredient.fulfilled, (state, action: PayloadAction<string>) => {
                 state.ingredients = state.ingredients.filter((i) => i._id !== action.payload);
@@ -462,14 +463,39 @@ const recipeSlice = createSlice({
                 state.loading = false;
             });
 
-        // Generic pending/rejected
+        // Generic pending/rejected - Only for recipe-related actions
         builder
-            .addMatcher((action) => action.type.endsWith("/pending"), (state) => {
-                state.loading = true;
-                state.error = null;
-            })
             .addMatcher(
-                (action) => action.type.endsWith("/rejected"),
+                (action) => action.type.startsWith("recipes/") && action.type.endsWith("/pending"), 
+                (state) => {
+                    state.loading = true;
+                    state.error = null;
+                }
+            )
+            .addMatcher(
+                (action) => action.type.startsWith("recipes/") && action.type.endsWith("/rejected"),
+                (state, action: { error?: { message?: string } }) => {
+                    state.loading = false;
+                    state.error = action.error?.message || "Something went wrong";
+                }
+            )
+            .addMatcher(
+                (action) => (action.type.startsWith("ingredients/") || 
+                             action.type.startsWith("ingredientTypes/") || 
+                             action.type.startsWith("tags/") || 
+                             action.type.startsWith("cuisines/") || 
+                             action.type.startsWith("categories/")) && action.type.endsWith("/pending"), 
+                (state) => {
+                    state.loading = true;
+                    state.error = null;
+                }
+            )
+            .addMatcher(
+                (action) => (action.type.startsWith("ingredients/") || 
+                             action.type.startsWith("ingredientTypes/") || 
+                             action.type.startsWith("tags/") || 
+                             action.type.startsWith("cuisines/") || 
+                             action.type.startsWith("categories/")) && action.type.endsWith("/rejected"),
                 (state, action: { error?: { message?: string } }) => {
                     state.loading = false;
                     state.error = action.error?.message || "Something went wrong";

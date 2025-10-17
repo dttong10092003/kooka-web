@@ -33,8 +33,17 @@ export default function SearchingRecipes({
     const user = useSelector((state: RootState) => state.auth.user)
 
     useEffect(() => {
+        console.log("SearchingRecipes useEffect triggered with:", {
+            searchParams,
+            ingredients,
+            cuisine,
+            category,
+            tags
+        });
+
         if (searchParams?.keyword) {
             // tìm theo keyword
+            console.log("Dispatching searchRecipesByKeyword");
             dispatch(
                 searchRecipesByKeyword({
                     keywords: searchParams.keyword,
@@ -49,6 +58,7 @@ export default function SearchingRecipes({
             (ingredients.length > 0 || cuisine || category || (tags && tags.length > 0))
         ) {
             // tìm theo ingredients
+            console.log("Dispatching searchRecipes");
             dispatch(
                 searchRecipes({
                     ingredients,
@@ -70,6 +80,8 @@ export default function SearchingRecipes({
     }, [user, recipes, dispatch])
 
     console.log("SearchingRecipes - recipes:", recipes)
+    console.log("SearchingRecipes - loading:", loading)
+    console.log("SearchingRecipes - error:", error)
 
     return (
         <section className="py-16 px-4 bg-gray-50">
