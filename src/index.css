@@ -1,1 +1,11 @@
 @import "tailwindcss";
+/* Ẩn icon mặc định của Edge khi nhập password */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+  display: none !important;
+}
+
+/* Ẩn icon của Chrome/Webkit (nếu có) */
+input[type="password"]::-webkit-textfield-decoration-container {
+  display: none !important;
+}
