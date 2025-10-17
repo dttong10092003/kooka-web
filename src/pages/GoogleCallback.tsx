@@ -1,15 +1,22 @@
-import { useEffect } from "react"
+import { useEffect, useRef } from "react"
 import { useLocation, useNavigate } from "react-router-dom"
 
 const GoogleCallback: React.FC = () => {
   const location = useLocation()
   const navigate = useNavigate()
+  const hasProcessed = useRef(false) // Prevent double processing
 
   useEffect(() => {
+    // Chỉ xử lý một lần duy nhất
+    if (hasProcessed.current) return
+    hasProcessed.current = true
+
     // Parse URL parameters hoặc handle kết quả từ Google OAuth
     const urlParams = new URLSearchParams(location.search)
     const token = urlParams.get('token')
     const error = urlParams.get('error')
+
+    console.log("🔍 GoogleCallback - Processing:", { token: token ? "exists" : "none", error, isPopup: !!window.opener })
 
     if (window.opener) {
       if (token) {
@@ -33,12 +40,13 @@ const GoogleCallback: React.FC = () => {
       }
       
       // Đóng popup
-      window.close()
+      setTimeout(() => window.close(), 500)
     } else {
-      // Nếu không phải popup, redirect về trang chủ
-      navigate('/')
+      // Nếu không phải popup, redirect về trang chủ ngay lập tức
+      // Replace thay vì push để tránh quay lại trang này
+      navigate('/', { replace: true })
     }
-  }, [location, navigate])
+  }, []) // Empty dependency array - chỉ chạy 1 lần
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">

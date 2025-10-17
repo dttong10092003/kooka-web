@@ -35,7 +35,13 @@ function App() {
   // Auto-load user data khi có token nhưng chưa có user
   useEffect(() => {
     if (token && !user) {
-      dispatch(loadUser());
+      console.log("📡 Loading user data with token...");
+      dispatch(loadUser()).catch((err) => {
+        console.error("❌ Failed to load user:", err);
+        // Nếu load user thất bại, clear token
+        localStorage.removeItem("token");
+        localStorage.removeItem("persist:root");
+      });
     }
   }, [dispatch, token, user]);
 

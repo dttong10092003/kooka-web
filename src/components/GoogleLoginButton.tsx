@@ -21,8 +21,14 @@ const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
   const dispatch = useDispatch<AppDispatch>()
   const navigate = useNavigate()
   const [isLoading, setIsLoading] = useState(false)
+  const [hasProcessed, setHasProcessed] = useState(false) // Prevent double processing
 
   const handleGoogleLogin = () => {
+    if (isLoading || hasProcessed) {
+      console.log("⏸️ Google login already in progress or completed");
+      return;
+    }
+    
     setIsLoading(true)
     
     // 🚀 Universal Google Auth Flow:
@@ -37,6 +43,12 @@ const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
 
     // Lắng nghe message từ popup
     const handleMessage = (event: MessageEvent) => {
+      // Prevent double processing
+      if (hasProcessed) {
+        console.log("⏸️ Message already processed, skipping");
+        return;
+      }
+      
       console.log("🔔 Message received:", event.data)
       
       // Allow messages from backend (localhost:3000) and frontend (localhost:5173)
@@ -47,6 +59,8 @@ const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
       }
 
       if (event.data.type === "GOOGLE_AUTH_SUCCESS") {
+        setHasProcessed(true) // Mark as processed
+        
         const { token, user } = event.data.payload
         
         console.log("🎯 Google Auth Success - Token:", token)
@@ -62,8 +76,8 @@ const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
         // Callback success
         onSuccess?.()
         
-        // Navigate về home page
-        navigate('/')
+        // Navigate về home page với replace để tránh quay lại
+        navigate('/', { replace: true })
       } else if (event.data.type === "GOOGLE_AUTH_ERROR") {
         console.error("Google auth failed:", event.data.error)
         popup?.close()

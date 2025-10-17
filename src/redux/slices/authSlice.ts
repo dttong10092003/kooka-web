@@ -27,7 +27,16 @@ const createAxiosWithAuth = () => {
       if (error.response?.status === 401) {
         // Token không hợp lệ - clear localStorage
         localStorage.removeItem("token")
-        window.location.href = "/login"
+        localStorage.removeItem("persist:root")
+        
+        // Chỉ redirect nếu KHÔNG đang ở trang login hoặc auth-related pages
+        const currentPath = window.location.pathname
+        const authPaths = ['/login', '/register', '/forgot-password', '/reset-password', '/auth/google/callback']
+        const isAuthPage = authPaths.some(path => currentPath.startsWith(path))
+        
+        if (!isAuthPage) {
+          window.location.href = "/login"
+        }
       }
       return Promise.reject(error)
     }

@@ -21,8 +21,9 @@ const LoginPage: React.FC<LoginPageProps> = ({ onBack }) => {
 
   const dispatch = useDispatch<AppDispatch>()
   const navigate = useNavigate()
-  const { error, token } = useSelector((state: RootState) => state.auth)
-  const [buttonLoading, setButtonLoading] = useState(false); // thêm state này
+  const { error } = useSelector((state: RootState) => state.auth)
+  const [buttonLoading, setButtonLoading] = useState(false)
+  const [showSuccess, setShowSuccess] = useState(false) // State riêng cho success message
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -34,7 +35,8 @@ const LoginPage: React.FC<LoginPageProps> = ({ onBack }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setButtonLoading(true); // bật loading cho nút ngay khi submit
+    setButtonLoading(true);
+    setShowSuccess(false); // Reset success message
 
     const result = await dispatch(
       login({
@@ -44,13 +46,14 @@ const LoginPage: React.FC<LoginPageProps> = ({ onBack }) => {
     );
 
     if (login.fulfilled.match(result)) {
+      setShowSuccess(true); // Hiển thị success message
       // delay 1s rồi chuyển trang
       setTimeout(() => {
-        navigate("/");
-        setButtonLoading(false); // tắt loading khi xong
+        navigate("/", { replace: true }); // replace để không quay lại được
+        setButtonLoading(false);
       }, 1000);
     } else {
-      setButtonLoading(false); // nếu login fail thì tắt loading luôn
+      setButtonLoading(false);
     }
   };
 
@@ -90,7 +93,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onBack }) => {
             </div>
           )}
 
-          {token && (
+          {showSuccess && (
             <div className="mb-3 lg:mb-4 p-2.5 lg:p-3 rounded-lg flex items-center space-x-2 text-xs lg:text-sm bg-green-50 border border-green-200 text-green-800">
               <CheckCircle className="h-3.5 w-3.5 lg:h-4 lg:w-4" />
               <span>{t("auth.loginSuccess")}</span>
