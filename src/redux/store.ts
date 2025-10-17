@@ -16,13 +16,14 @@ import recipeReducer from "./slices/recipeSlice";
 import userReducer from "./slices/userSlice";
 import commentReducer from "./slices/commentSlice";
 import likeReducer from "./slices/likeSlice";
+import favoriteReducer from "./slices/favoriteSlice";
 
 // Cấu hình persist - Lưu auth và user vào localStorage
 const persistConfig = {
   key: "root",
   version: 1,
   storage,
-  whitelist: ["auth", "user"], // Chỉ persist auth và user, không persist recipes, comments, likes
+  whitelist: ["auth", "user"], // Chỉ persist auth và user, không persist recipes, comments, likes, favorites
 };
 
 // Combine reducers
@@ -32,6 +33,7 @@ const rootReducer = combineReducers({
   user: userReducer,
   comments: commentReducer,
   likes: likeReducer,
+  favorites: favoriteReducer,
 });
 
 // Tạo persisted reducer

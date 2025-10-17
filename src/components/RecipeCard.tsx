@@ -1,5 +1,8 @@
-import { Clock, Users, Star } from "lucide-react"
+import { Clock, Users, Star, Heart } from "lucide-react"
 import { useNavigate } from "react-router-dom"
+import { useAppDispatch, useAppSelector } from "../redux/hooks"
+import { toggleFavorite } from "../redux/slices/favoriteSlice"
+import { useEffect, useState } from "react"
 
 interface RecipeCardProps {
   id: string
@@ -31,6 +34,15 @@ export function RecipeCard({
   reviews,
 }: RecipeCardProps) {
   const navigate = useNavigate()
+  const dispatch = useAppDispatch()
+  const { favoriteRecipeIds } = useAppSelector((state: any) => state.favorites)
+  const { user } = useAppSelector((state: any) => state.auth)
+  const [isFavorited, setIsFavorited] = useState(false)
+  
+  useEffect(() => {
+    setIsFavorited(favoriteRecipeIds.includes(id))
+  }, [favoriteRecipeIds, id])
+
   const difficultyColors: Record<string, string> = {
     "Dễ": "bg-green-100 text-green-800",
     "Trung bình": "bg-yellow-100 text-yellow-800",
@@ -39,6 +51,19 @@ export function RecipeCard({
 
   const difficultyClass =
     difficultyColors[difficulty] || "bg-gray-100 text-gray-800"
+
+  const handleFavoriteClick = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!user) {
+      navigate("/login")
+      return
+    }
+    try {
+      await dispatch(toggleFavorite({ recipeId: id })).unwrap()
+    } catch (error) {
+      console.error("Failed to toggle favorite:", error)
+    }
+  }
 
   return (
     <div
@@ -51,8 +76,19 @@ export function RecipeCard({
           <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
           <span className="text-sm font-medium">{rating}</span>
         </div>
+        <button
+          onClick={handleFavoriteClick}
+          className="absolute top-3 right-3 p-2 bg-white/90 backdrop-blur-sm rounded-full hover:bg-white transition-colors z-10"
+          aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
+        >
+          <Heart
+            className={`w-5 h-5 transition-colors ${
+              isFavorited ? "fill-red-500 text-red-500" : "text-gray-600"
+            }`}
+          />
+        </button>
         <div
-          className={`absolute top-3 right-3 px-2 py-1 rounded-full text-xs font-medium ${difficultyClass}`}
+          className={`absolute bottom-3 right-3 px-2 py-1 rounded-full text-xs font-medium ${difficultyClass}`}
         >
           {difficulty}
         </div>

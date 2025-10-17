@@ -4,6 +4,7 @@ import { RecipeCard } from "./RecipeCard"
 import { useDispatch, useSelector } from "react-redux"
 import type { AppDispatch, RootState } from "../redux/store"
 import { fetchRecipes } from "../redux/slices/recipeSlice"
+import { checkMultipleRecipes } from "../redux/slices/favoriteSlice"
 
 export default function PopularRecipes() {
     // const recipes = [
@@ -94,11 +95,20 @@ export default function PopularRecipes() {
     // ]
 
     const dispatch = useDispatch<AppDispatch>()
-    const { recipes, loading, error } = useSelector((state: RootState) => state.recipes)
+    const { recipes} = useSelector((state: RootState) => state.recipes)
+    const user = useSelector((state: RootState) => state.auth.user)
 
     useEffect(() => {
         dispatch(fetchRecipes())
     }, [dispatch])
+
+    // Check favorites for all recipes when user is logged in
+    useEffect(() => {
+        if (user && recipes.length > 0) {
+            const recipeIds = recipes.slice(0, 6).map(recipe => recipe._id)
+            dispatch(checkMultipleRecipes({ recipeIds }))
+        }
+    }, [user, recipes, dispatch])
 
     console.log("PopularRecipes - recipes:", recipes)
 
@@ -113,9 +123,7 @@ export default function PopularRecipes() {
                     </p>
                 </div>
 
-                {/* Loading / Error */}
-                {loading && <p className="text-center text-gray-500">Đang tải...</p>}
-                {error && <p className="text-center text-red-500">Lỗi: {error}</p>}
+                
 
                 {/* Recipe Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

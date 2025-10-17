@@ -3,6 +3,7 @@ import { RecipeCard } from "./RecipeCard"
 import { useDispatch, useSelector } from "react-redux"
 import type { AppDispatch, RootState } from "../redux/store"
 import { searchRecipes, searchRecipesByKeyword } from "../redux/slices/recipeSlice"
+import { checkMultipleRecipes } from "../redux/slices/favoriteSlice"
 
 interface SearchingRecipesProps {
     // trường hợp tìm theo ingredients
@@ -29,6 +30,7 @@ export default function SearchingRecipes({
 }: SearchingRecipesProps) {
     const dispatch = useDispatch<AppDispatch>()
     const { recipes, loading, error } = useSelector((state: RootState) => state.recipes)
+    const user = useSelector((state: RootState) => state.auth.user)
 
     useEffect(() => {
         if (searchParams?.keyword) {
@@ -58,6 +60,14 @@ export default function SearchingRecipes({
             )
         }
     }, [ingredients, cuisine, category, tags, searchParams, dispatch])
+
+    // Check favorites for all recipes when user is logged in
+    useEffect(() => {
+        if (user && recipes.length > 0) {
+            const recipeIds = recipes.map(recipe => recipe._id)
+            dispatch(checkMultipleRecipes({ recipeIds }))
+        }
+    }, [user, recipes, dispatch])
 
     console.log("SearchingRecipes - recipes:", recipes)
 

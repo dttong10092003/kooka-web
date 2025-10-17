@@ -1,27 +1,61 @@
-import { ArrowLeft, ChefHat, Clock, Star, Users } from 'lucide-react';
+import { ArrowLeft, ChefHat, Clock, Star, Users, Heart } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import type { AppDispatch, RootState } from '../redux/store';
 import { getRecipeById } from '../redux/slices/recipeSlice';
+import { toggleFavorite, checkUserFavorited } from '../redux/slices/favoriteSlice';
 import CommentSection from '../components/CommentSection';
 
 export default function RecipeDetail() {
     const { id } = useParams<{ id: string }>();
     const dispatch = useDispatch<AppDispatch>();
+    const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState<'ingredients' | 'instructions'>('ingredients');
     const [showVideo, setShowVideo] = useState(false);
+    const [isFavorited, setIsFavorited] = useState(false);
 
     // Get recipe from Redux store
     const recipes = useSelector((state: RootState) => state.recipes.recipes);
     const loading = useSelector((state: RootState) => state.recipes.loading);
     const recipe = recipes.find(r => r._id === id);
+    
+    // Get user and favorite state
+    const user = useSelector((state: RootState) => state.auth.user);
+    const favoriteRecipeIds = useSelector((state: RootState) => state.favorites.favoriteRecipeIds);
 
     useEffect(() => {
         if (id && !recipe) {
             dispatch(getRecipeById(id));
         }
     }, [dispatch, id, recipe]);
+
+    // Check if recipe is favorited
+    useEffect(() => {
+        if (id && user?._id) {
+            dispatch(checkUserFavorited({ recipeId: id, userId: user._id }));
+        }
+    }, [dispatch, id, user]);
+
+    useEffect(() => {
+        if (id) {
+            setIsFavorited(favoriteRecipeIds.includes(id));
+        }
+    }, [favoriteRecipeIds, id]);
+
+    const handleFavoriteClick = async () => {
+        if (!user) {
+            navigate("/login");
+            return;
+        }
+        if (id) {
+            try {
+                await dispatch(toggleFavorite({ recipeId: id })).unwrap();
+            } catch (error) {
+                console.error("Failed to toggle favorite:", error);
+            }
+        }
+    };
 
     // Chỉ show loading spinner khi đang load VÀ chưa có recipe
     if (loading && !recipe) {
@@ -69,6 +103,17 @@ export default function RecipeDetail() {
                 >
                     <ArrowLeft className="h-6 w-6" />
                 </Link>
+                <button
+                    onClick={handleFavoriteClick}
+                    className="absolute top-4 right-4 bg-white/90 hover:bg-white rounded-full p-2 z-20 transition-all"
+                    aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
+                >
+                    <Heart
+                        className={`h-6 w-6 transition-colors ${
+                            isFavorited ? "fill-red-500 text-red-500" : "text-gray-600"
+                        }`}
+                    />
+                </button>
                 <div className="absolute bottom-0 left-0 w-full p-6 md:p-10 text-white z-20">
                     <div className="container mx-auto max-w-6xl px-4">
                         <div className="flex flex-wrap gap-2 mb-4">
