@@ -32,7 +32,7 @@ export interface Category {
 
 export interface Instruction {
     title: string;
-    image: string;
+    images: string[];
     subTitle: string[];
 }
 

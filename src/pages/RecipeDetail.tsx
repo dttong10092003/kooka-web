@@ -19,7 +19,7 @@ export default function RecipeDetail() {
     const recipes = useSelector((state: RootState) => state.recipes.recipes);
     const loading = useSelector((state: RootState) => state.recipes.loading);
     const recipe = recipes.find(r => r._id === id);
-    
+
     // Get user and favorite state
     const user = useSelector((state: RootState) => state.auth.user);
     const favoriteRecipeIds = useSelector((state: RootState) => state.favorites.favoriteRecipeIds);
@@ -109,9 +109,8 @@ export default function RecipeDetail() {
                     aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
                 >
                     <Heart
-                        className={`h-6 w-6 transition-colors ${
-                            isFavorited ? "fill-red-500 text-red-500" : "text-gray-600"
-                        }`}
+                        className={`h-6 w-6 transition-colors ${isFavorited ? "fill-red-500 text-red-500" : "text-gray-600"
+                            }`}
                     />
                 </button>
                 <div className="absolute bottom-0 left-0 w-full p-6 md:p-10 text-white z-20">
@@ -159,8 +158,8 @@ export default function RecipeDetail() {
                     <div className="flex flex-wrap border-b border-gray-200">
                         <button
                             className={`py-3 px-3 sm:py-4 sm:px-6 font-medium flex items-center ${activeTab === 'ingredients'
-                                    ? 'text-orange-500 border-b-2 border-orange-500'
-                                    : 'text-gray-600'
+                                ? 'text-orange-500 border-b-2 border-orange-500'
+                                : 'text-gray-600'
                                 }`}
                             onClick={() => setActiveTab('ingredients')}
                         >
@@ -171,8 +170,8 @@ export default function RecipeDetail() {
                         </button>
                         <button
                             className={`py-3 px-3 sm:py-4 sm:px-6 font-medium flex items-center ${activeTab === 'instructions'
-                                    ? 'text-orange-500 border-b-2 border-orange-500'
-                                    : 'text-gray-600'
+                                ? 'text-orange-500 border-b-2 border-orange-500'
+                                : 'text-gray-600'
                                 }`}
                             onClick={() => setActiveTab('instructions')}
                         >
@@ -324,20 +323,143 @@ export default function RecipeDetail() {
                                                 {index + 1}
                                             </div>
                                         </div>
-                                        <div className="flex-grow">
-                                            <h3 className="text-base sm:text-lg font-semibold mb-1.5 sm:mb-2 text-gray-800">{instruction.title}</h3>
 
-                                            {instruction.image && (
-                                                <img
-                                                    src={instruction.image}
-                                                    alt={instruction.title}
-                                                    className="w-full h-auto object-cover rounded-lg mb-3 sm:mb-4"
-                                                />
+                                        <div className="flex-grow">
+                                            {/* Tiêu đề bước */}
+                                            <h3 className="text-base sm:text-lg font-semibold mb-1.5 sm:mb-2 text-gray-800">
+                                                {instruction.title}
+                                            </h3>
+
+                                            {/* Danh sách ảnh (nếu có) */}
+                                            {instruction.images && instruction.images.length > 0 && (
+                                                <div className="mb-3 sm:mb-4">
+                                                    {instruction.images.length === 1 && (
+                                                        <div className="w-3/4 h-56 sm:h-64">
+                                                            <img
+                                                                src={instruction.images[0]}
+                                                                alt={`${instruction.title} - 1`}
+                                                                className="w-full h-full object-cover rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow"
+                                                                onError={(e) => {
+                                                                    const target = e.target as HTMLImageElement;
+                                                                    target.style.display = 'none';
+                                                                }}
+                                                            />
+                                                        </div>
+                                                    )}
+                                                    
+                                                    {instruction.images.length === 2 && (
+                                                        <div className="grid grid-cols-2 gap-2 sm:gap-3 max-w-3xl">
+                                                            {instruction.images.map((img: string, imgIndex: number) => (
+                                                                <div key={imgIndex} className="w-full h-36 sm:h-44">
+                                                                    <img
+                                                                        src={img}
+                                                                        alt={`${instruction.title} - ${imgIndex + 1}`}
+                                                                        className="w-full h-full object-cover rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow"
+                                                                        onError={(e) => {
+                                                                            const target = e.target as HTMLImageElement;
+                                                                            target.style.display = 'none';
+                                                                        }}
+                                                                    />
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                    
+                                                    {instruction.images.length === 3 && (
+                                                        <div className="space-y-2 sm:space-y-3 max-w-3xl">
+                                                            <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                                                                {instruction.images.slice(0, 2).map((img: string, imgIndex: number) => (
+                                                                    <div key={imgIndex} className="w-full h-36 sm:h-44">
+                                                                        <img
+                                                                            src={img}
+                                                                            alt={`${instruction.title} - ${imgIndex + 1}`}
+                                                                            className="w-full h-full object-cover rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow"
+                                                                            onError={(e) => {
+                                                                                const target = e.target as HTMLImageElement;
+                                                                                target.style.display = 'none';
+                                                                            }}
+                                                                        />
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                            <div className="w-full h-36 sm:h-44">
+                                                                <img
+                                                                    src={instruction.images[2]}
+                                                                    alt={`${instruction.title} - 3`}
+                                                                    className="w-full h-full object-cover rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow"
+                                                                    onError={(e) => {
+                                                                        const target = e.target as HTMLImageElement;
+                                                                        target.style.display = 'none';
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                    
+                                                    {instruction.images.length === 4 && (
+                                                        <div className="space-y-2 sm:space-y-3 max-w-3xl">
+                                                            <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                                                                {instruction.images.slice(0, 2).map((img: string, imgIndex: number) => (
+                                                                    <div key={imgIndex} className="w-full h-36 sm:h-44">
+                                                                        <img
+                                                                            src={img}
+                                                                            alt={`${instruction.title} - ${imgIndex + 1}`}
+                                                                            className="w-full h-full object-cover rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow"
+                                                                            onError={(e) => {
+                                                                                const target = e.target as HTMLImageElement;
+                                                                                target.style.display = 'none';
+                                                                            }}
+                                                                        />
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                            <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                                                                {instruction.images.slice(2, 4).map((img: string, imgIndex: number) => (
+                                                                    <div key={imgIndex + 2} className="w-full h-36 sm:h-44">
+                                                                        <img
+                                                                            src={img}
+                                                                            alt={`${instruction.title} - ${imgIndex + 3}`}
+                                                                            className="w-full h-full object-cover rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow"
+                                                                            onError={(e) => {
+                                                                                const target = e.target as HTMLImageElement;
+                                                                                target.style.display = 'none';
+                                                                            }}
+                                                                        />
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                    
+                                                    {instruction.images.length > 4 && (
+                                                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3 max-w-4xl">
+                                                            {instruction.images.map((img: string, imgIndex: number) => (
+                                                                <div key={imgIndex} className="relative w-full h-36 sm:h-44">
+                                                                    <img
+                                                                        src={img}
+                                                                        alt={`${instruction.title} - ${imgIndex + 1}`}
+                                                                        className="w-full h-full object-cover rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow"
+                                                                        onError={(e) => {
+                                                                            const target = e.target as HTMLImageElement;
+                                                                            target.style.display = 'none';
+                                                                        }}
+                                                                    />
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
                                             )}
 
+                                            {/* Nội dung chi tiết bước */}
                                             <div className="space-y-2 sm:space-y-3">
-                                                {instruction.subTitle.map((step, stepIndex) => (
-                                                    <p key={stepIndex} className="text-sm sm:text-base text-gray-700 leading-relaxed">{step}</p>
+                                                {instruction.subTitle.map((step: string, stepIndex: number) => (
+                                                    <p
+                                                        key={stepIndex}
+                                                        className="text-sm sm:text-base text-gray-700 leading-relaxed"
+                                                    >
+                                                        {step}
+                                                    </p>
                                                 ))}
                                             </div>
                                         </div>

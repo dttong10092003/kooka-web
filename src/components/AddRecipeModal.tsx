@@ -23,7 +23,7 @@ interface AddRecipeModalProps {
 
 interface Instruction {
     title: string;
-    image: string;
+    images: string[];
     subTitle: string[];
 }
 
@@ -206,7 +206,7 @@ const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ isOpen, onClose }) => {
 
     const [currentInstruction, setCurrentInstruction] = useState<Instruction>({
         title: "",
-        image: "",
+        images: [],
         subTitle: [""],
     });
 
@@ -260,7 +260,7 @@ const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ isOpen, onClose }) => {
                 ...prev,
                 instructions: [...prev.instructions, { ...currentInstruction }],
             }));
-            setCurrentInstruction({ title: "", image: "", subTitle: [""] });
+            setCurrentInstruction({ title: "", images: [], subTitle: [""] });
         }
     };
 
@@ -683,15 +683,27 @@ const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ isOpen, onClose }) => {
                                 <div
                                     key={i}
                                     className="border rounded-lg p-3 mb-3 bg-gray-50 flex justify-between items-start"
-                                >
+                                >?
                                     <div className="flex-1">
                                         <p className="font-medium text-gray-800">{ins.title}</p>
-                                        {ins.image && (
+                                        {/* {ins.image && (
                                             <img
                                                 src={ins.image}
                                                 alt={ins.title}
                                                 className="w-40 h-28 object-cover rounded-lg my-2 border"
                                             />
+                                        )} */}
+                                        {ins.images && ins.images.length > 0 && (
+                                            <div className="flex gap-2 my-2 flex-wrap">
+                                                {ins.images.map((img, j) => (
+                                                    <img
+                                                        key={j}
+                                                        src={img}
+                                                        alt={`${ins.title}-${j}`}
+                                                        className="w-32 h-24 object-cover rounded-lg border"
+                                                    />
+                                                ))}
+                                            </div>
                                         )}
                                         <ul className="list-disc ml-5 text-sm text-gray-600">
                                             {ins.subTitle.map((s, j) => (
@@ -741,7 +753,7 @@ const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ isOpen, onClose }) => {
                                         Ảnh minh hoạ bước nấu (tuỳ chọn)
                                     </label>
 
-                                    <input
+                                    {/* <input
                                         type="file"
                                         accept="image/*"
                                         onChange={(e) => {
@@ -758,9 +770,32 @@ const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ isOpen, onClose }) => {
                                             }
                                         }}
                                         className="block w-full text-sm text-gray-700 border border-gray-300 rounded-lg cursor-pointer bg-white focus:ring-2 focus:ring-orange-400 focus:border-transparent p-2"
+                                    /> */}
+
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        multiple
+                                        onChange={(e) => {
+                                            const files = Array.from(e.target.files || []);
+                                            const remainingSlots = 4 - currentInstruction.images.length;
+                                            const filesToAdd = files.slice(0, remainingSlots);
+
+                                            filesToAdd.forEach((file) => {
+                                                const reader = new FileReader();
+                                                reader.onloadend = () => {
+                                                    setCurrentInstruction((prev) => ({
+                                                        ...prev,
+                                                        images: [...prev.images, reader.result as string],
+                                                    }));
+                                                };
+                                                reader.readAsDataURL(file);
+                                            });
+                                        }}
+                                        className="block w-full text-sm text-gray-700 border border-gray-300 rounded-lg cursor-pointer bg-white focus:ring-2 focus:ring-orange-400 focus:border-transparent p-2"
                                     />
 
-                                    {currentInstruction.image && (
+                                    {/* {currentInstruction.image && (
                                         <div className="mt-3 relative inline-block">
                                             <img
                                                 src={currentInstruction.image}
@@ -777,8 +812,42 @@ const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ isOpen, onClose }) => {
                                                 <X size={14} />
                                             </button>
                                         </div>
+                                    )} */}
+
+                                    {/* Preview ảnh */}
+                                    {currentInstruction.images && currentInstruction.images.length > 0 && (
+                                        <div className="mt-3 flex flex-wrap gap-3">
+                                            {currentInstruction.images.map((img, index) => (
+                                                <div key={index} className="relative inline-block">
+                                                    <img
+                                                        src={img}
+                                                        alt={`Preview ${index}`}
+                                                        className="w-32 h-24 object-cover rounded-lg border"
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            setCurrentInstruction((prev) => ({
+                                                                ...prev,
+                                                                images: prev.images.filter((_, i) => i !== index),
+                                                            }))
+                                                        }
+                                                        className="absolute top-1 right-1 bg-white/80 hover:bg-white text-red-500 rounded-full p-1 shadow-md transition"
+                                                    >
+                                                        <X size={14} />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
                                     )}
                                 </div>
+
+                                {/* Thông báo nếu đạt giới hạn 4 ảnh */}
+                                {currentInstruction.images.length >= 4 && (
+                                    <p className="text-sm text-orange-500 mt-2">
+                                        ⚠️ Bạn chỉ có thể chọn tối đa 4 ảnh cho mỗi bước.
+                                    </p>
+                                )}
 
 
                                 {currentInstruction.subTitle.map((sub, idx) => (
