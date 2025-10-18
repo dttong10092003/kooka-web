@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { ThumbsUp, Send, Edit2, Trash2, X, MessageCircle, Reply, MoreVertical, AlertCircle, EyeOff } from 'lucide-react';
+import { ThumbsUp, Send, Edit2, Trash2, X, MessageCircle, Reply, MoreVertical, AlertCircle, EyeOff, Star, CheckCircle } from 'lucide-react';
 import type { AppDispatch, RootState } from '../redux/store';
 import {
     getCommentsByRecipeId,
@@ -9,8 +9,10 @@ import {
     deleteComment,
     updateCommentLikes,
     createReply,
+    checkUserReview,
 } from '../redux/slices/commentSlice';
 import { toggleLike, getUserLikes } from '../redux/slices/likeSlice';
+import { getRecipeById } from '../redux/slices/recipeSlice';
 
 interface CommentSectionProps {
     recipeId: string;
@@ -19,6 +21,8 @@ interface CommentSectionProps {
 export default function CommentSection({ recipeId }: CommentSectionProps) {
     const dispatch = useDispatch<AppDispatch>();
     const [newComment, setNewComment] = useState('');
+    const [rating, setRating] = useState(0); // Rating từ 0-5 (0 = chưa chọn)
+    const [hoverRating, setHoverRating] = useState(0); // Hiển thị khi hover
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editContent, setEditContent] = useState('');
     const [replyingTo, setReplyingTo] = useState<string | null>(null);
@@ -30,6 +34,8 @@ export default function CommentSection({ recipeId }: CommentSectionProps) {
     const comments = useSelector((state: RootState) => state.comments.comments);
     const loading = useSelector((state: RootState) => state.comments.loading);
     const totalComments = useSelector((state: RootState) => state.comments.totalComments);
+    const userHasReviewed = useSelector((state: RootState) => state.comments.userHasReviewed);
+    const userRating = useSelector((state: RootState) => state.comments.userRating);
     const currentUser = useSelector((state: RootState) => state.auth.user);
     const userProfile = useSelector((state: RootState) => state.user.profile);
     const likedComments = useSelector((state: RootState) => state.likes.likedComments);
@@ -55,6 +61,15 @@ export default function CommentSection({ recipeId }: CommentSectionProps) {
         }
     }, [dispatch, recipeId]);
 
+    // Check nếu user đã review recipe này chưa
+    useEffect(() => {
+        if (recipeId && currentUser) {
+            dispatch(checkUserReview(recipeId)).catch(err => {
+                console.warn('Failed to check user review:', err);
+            });
+        }
+    }, [dispatch, recipeId, currentUser]);
+
     useEffect(() => {
         if (recipeId && currentUser) {
             // Load user likes - không block UI nếu fail
@@ -69,11 +84,24 @@ export default function CommentSection({ recipeId }: CommentSectionProps) {
         e.preventDefault();
         if (!newComment.trim() || !currentUser) return;
 
+        // Validate rating (phải chọn số sao từ 1-5)
+        if (!rating || rating < 1 || rating > 5) {
+            alert('Please select a rating (1-5 stars) for this recipe');
+            return;
+        }
+
         try {
-            await dispatch(createComment({ recipeId, content: newComment })).unwrap();
+            await dispatch(createComment({ recipeId, content: newComment, rating })).unwrap();
             setNewComment('');
-        } catch (error) {
+            setRating(0); // Reset rating
+            
+            // Reload recipe để cập nhật rating mới
+            dispatch(getRecipeById(recipeId));
+        } catch (error: any) {
             console.error('Failed to create comment:', error);
+            if (error.message) {
+                alert(error.message);
+            }
         }
     };
 
@@ -251,7 +279,46 @@ export default function CommentSection({ recipeId }: CommentSectionProps) {
 
             {/* Add Comment Form */}
             {currentUser ? (
-                <form onSubmit={handleSubmitComment} className="mb-8">
+                userHasReviewed ? (
+                    // User đã review rồi - hiển thị thông báo
+                    <div className="mb-8 p-6 bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-lg">
+                        <div className="flex items-start gap-3">
+                            <div className="flex-shrink-0">
+                                <CheckCircle className="h-6 w-6 text-green-600" />
+                            </div>
+                            <div className="flex-grow">
+                                <h3 className="text-lg font-semibold text-green-800 mb-2">
+                                    You have already reviewed this recipe
+                                </h3>
+                                <p className="text-green-700 mb-3">
+                                    Thank you for your feedback! Your rating helps others discover great recipes.
+                                </p>
+                                {userRating && (
+                                    <div className="flex items-center gap-2 bg-white/60 px-4 py-2 rounded-lg inline-flex">
+                                        <span className="text-sm font-medium text-gray-700">Your rating:</span>
+                                        <div className="flex gap-1">
+                                            {[1, 2, 3, 4, 5].map((star) => (
+                                                <Star
+                                                    key={star}
+                                                    className={`h-5 w-5 ${
+                                                        star <= userRating
+                                                            ? 'fill-yellow-400 text-yellow-400'
+                                                            : 'text-gray-300'
+                                                    }`}
+                                                />
+                                            ))}
+                                        </div>
+                                        <span className="text-sm font-semibold text-gray-800">
+                                            ({userRating}/5)
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                ) : (
+                    // User chưa review - hiển thị form
+                    <form onSubmit={handleSubmitComment} className="mb-8">
                     <div className="flex gap-3">
                         <div className="flex-shrink-0">
                             {userAvatar ? (
@@ -267,6 +334,38 @@ export default function CommentSection({ recipeId }: CommentSectionProps) {
                             )}
                         </div>
                         <div className="flex-grow">
+                            {/* Rating Stars */}
+                            <div className="mb-3">
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Your Rating <span className="text-red-500">*</span>
+                                </label>
+                                <div className="flex gap-1">
+                                    {[1, 2, 3, 4, 5].map((star) => (
+                                        <button
+                                            key={star}
+                                            type="button"
+                                            onClick={() => setRating(star)}
+                                            onMouseEnter={() => setHoverRating(star)}
+                                            onMouseLeave={() => setHoverRating(0)}
+                                            className="focus:outline-none transition-transform hover:scale-110"
+                                        >
+                                            <Star
+                                                className={`h-8 w-8 transition-colors ${
+                                                    star <= (hoverRating || rating)
+                                                        ? 'fill-yellow-400 text-yellow-400'
+                                                        : 'text-gray-300'
+                                                }`}
+                                            />
+                                        </button>
+                                    ))}
+                                    {rating > 0 && (
+                                        <span className="ml-2 text-sm text-gray-600 self-center">
+                                            {rating} {rating === 1 ? 'star' : 'stars'}
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+
                             <textarea
                                 value={newComment}
                                 onChange={(e) => setNewComment(e.target.value)}
@@ -277,7 +376,7 @@ export default function CommentSection({ recipeId }: CommentSectionProps) {
                             <div className="flex justify-end mt-2">
                                 <button
                                     type="submit"
-                                    disabled={!newComment.trim() || loading}
+                                    disabled={!newComment.trim() || !rating || loading}
                                     className="bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 text-white px-5 py-2 rounded-lg flex items-center gap-2 font-medium transition-colors"
                                 >
                                     <Send className="h-4 w-4" />
@@ -287,6 +386,7 @@ export default function CommentSection({ recipeId }: CommentSectionProps) {
                         </div>
                     </div>
                 </form>
+                )
             ) : (
                 <div className="mb-8 p-4 bg-orange-50 border border-orange-200 rounded-lg text-center">
                     <p className="text-orange-700">
@@ -339,6 +439,24 @@ export default function CommentSection({ recipeId }: CommentSectionProps) {
                                                 <p className="text-xs text-gray-500">
                                                     {formatDate(comment.createdAt)}
                                                 </p>
+                                                {/* Hiển thị rating nếu có */}
+                                                {comment.ratingRecipe && (
+                                                    <div className="flex items-center gap-1 mt-1">
+                                                        {[1, 2, 3, 4, 5].map((star) => (
+                                                            <Star
+                                                                key={star}
+                                                                className={`h-4 w-4 ${
+                                                                    star <= comment.ratingRecipe!
+                                                                        ? 'fill-yellow-400 text-yellow-400'
+                                                                        : 'text-gray-300'
+                                                                }`}
+                                                            />
+                                                        ))}
+                                                        <span className="text-xs text-gray-600 ml-1">
+                                                            ({comment.ratingRecipe}/5)
+                                                        </span>
+                                                    </div>
+                                                )}
                                             </div>
 
                                             {/* Edit/Delete buttons for own comments */}

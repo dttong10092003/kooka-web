@@ -15,6 +15,7 @@ export interface Comment {
   userAvatar: string | null
   content: string
   likes: number
+  ratingRecipe?: number | null // Rating từ 1-5 (chỉ parent comment mới có) - backend dùng field ratingRecipe
   parentCommentId?: string | null
   replies?: Comment[]
   createdAt: string
@@ -26,6 +27,8 @@ interface CommentState {
   loading: boolean
   error: string | null
   totalComments: number
+  userHasReviewed: boolean // User đã review recipe này chưa
+  userRating: number | null // Rating hiện tại của user (nếu đã review)
 }
 
 // =====================
@@ -37,6 +40,8 @@ const initialState: CommentState = {
   loading: false,
   error: null,
   totalComments: 0,
+  userHasReviewed: false,
+  userRating: null,
 }
 
 // =====================
@@ -60,14 +65,35 @@ export const getCommentsByRecipeId = createAsyncThunk<
   }
 })
 
+// Kiểm tra xem user đã review recipe này chưa
+export const checkUserReview = createAsyncThunk<
+  { hasReviewed: boolean; rating?: number },
+  string,
+  { rejectValue: string }
+>("comments/checkUserReview", async (recipeId, { rejectWithValue }) => {
+  try {
+    const res = await apiClient.get(`/reviews/recipe/${recipeId}/user`)
+    return {
+      hasReviewed: true,
+      rating: res.data.rating
+    }
+  } catch (err: any) {
+    // Nếu 404 = chưa review
+    if (err.response?.status === 404) {
+      return { hasReviewed: false }
+    }
+    return rejectWithValue(err.response?.data?.message || "Failed to check user review")
+  }
+})
+
 // Tạo comment mới
 export const createComment = createAsyncThunk<
   Comment,
-  { recipeId: string; content: string },
+  { recipeId: string; content: string; rating: number },
   { rejectValue: string }
->("comments/create", async ({ recipeId, content }, { rejectWithValue }) => {
+>("comments/create", async ({ recipeId, content, rating }, { rejectWithValue }) => {
   try {
-    const res = await apiClient.post("/comments", { recipeId, content })
+    const res = await apiClient.post("/comments", { recipeId, content, rating })
     return res.data.comment || res.data
   } catch (err: any) {
     return rejectWithValue(err.response?.data?.message || "Failed to create comment")
@@ -177,6 +203,16 @@ const commentSlice = createSlice({
         state.error = action.payload || "Failed to load comments"
       })
 
+      // CHECK USER REVIEW
+      .addCase(checkUserReview.fulfilled, (state, action) => {
+        state.userHasReviewed = action.payload.hasReviewed
+        state.userRating = action.payload.rating || null
+      })
+      .addCase(checkUserReview.rejected, (state) => {
+        state.userHasReviewed = false
+        state.userRating = null
+      })
+
       // CREATE COMMENT
       .addCase(createComment.pending, (state) => {
         state.loading = true
@@ -186,6 +222,11 @@ const commentSlice = createSlice({
         state.loading = false
         state.comments.unshift(action.payload)
         state.totalComments += 1
+        // Đánh dấu user đã review
+        if (action.payload.ratingRecipe) {
+          state.userHasReviewed = true
+          state.userRating = action.payload.ratingRecipe
+        }
       })
       .addCase(createComment.rejected, (state, action) => {
         state.loading = false
