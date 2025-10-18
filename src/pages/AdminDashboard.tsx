@@ -511,7 +511,7 @@ const AdminDashboard: React.FC = () => {
                                                                 <td className="px-6 py-4 whitespace-nowrap">
                                                                     <div className="flex items-center">
                                                                         <Star className="h-4 w-4 text-yellow-400 mr-1" />
-                                                                        <span className="text-sm text-gray-600">{recipe.rate}</span>
+                                                                        <span className="text-sm text-gray-600">{(recipe.rate || 0).toFixed(1)}</span>
                                                                     </div>
                                                                 </td>
                                                                 <td className="px-6 py-4">

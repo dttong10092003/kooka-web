@@ -25,10 +25,10 @@ export default function RecipeDetail() {
     const favoriteRecipeIds = useSelector((state: RootState) => state.favorites.favoriteRecipeIds);
 
     useEffect(() => {
-        if (id && !recipe) {
+        if (id) {
             dispatch(getRecipeById(id));
         }
-    }, [dispatch, id, recipe]);
+    }, [dispatch, id]);
 
     // Check if recipe is favorited
     useEffect(() => {
@@ -142,8 +142,8 @@ export default function RecipeDetail() {
                             </div>
                             <div className="flex items-center gap-2">
                                 <Star className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-400 fill-yellow-400" />
-                                <span className="font-medium text-sm sm:text-base">{recipe.rate.toFixed(1)}</span>
-                                <span className="opacity-80 text-sm sm:text-base">({recipe.numberOfRate} reviews)</span>
+                                <span className="font-medium text-sm sm:text-base">{(recipe.rate || 0).toFixed(1)}</span>
+                                <span className="opacity-80 text-sm sm:text-base">({recipe.numberOfRate || 0} reviews)</span>
                             </div>
                         </div>
                     </div>

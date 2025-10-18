@@ -419,7 +419,7 @@ const MealPlannerPage: React.FC = () => {
                                         </div>
                                         <div className="flex items-center space-x-1">
                                           <Star className="h-3 w-3 text-yellow-400" />
-                                          <span>{recipe.rate.toFixed(1)}</span>
+                                          <span>{(recipe.rate || 0).toFixed(1)}</span>
                                         </div>
                                       </div>
                                     </div>
@@ -592,7 +592,7 @@ const MealPlannerPage: React.FC = () => {
                             </div>
                             <div className="flex items-center space-x-1">
                               <Star className="h-3 w-3 text-yellow-400" />
-                              <span>{recipe.rate.toFixed(1)}</span>
+                              <span>{(recipe.rate || 0).toFixed(1)}</span>
                             </div>
                           </div>
                         </div>
