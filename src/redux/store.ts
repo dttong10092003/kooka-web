@@ -17,6 +17,7 @@ import userReducer from "./slices/userSlice";
 import commentReducer from "./slices/commentSlice";
 import likeReducer from "./slices/likeSlice";
 import favoriteReducer from "./slices/favoriteSlice";
+import mealPlanReducer from "./slices/mealPlanSlice";
 
 // Cấu hình persist - Lưu auth và user vào localStorage
 const persistConfig = {
@@ -34,6 +35,7 @@ const rootReducer = combineReducers({
   comments: commentReducer,
   likes: likeReducer,
   favorites: favoriteReducer,
+  mealPlans: mealPlanReducer,
 });
 
 // Tạo persisted reducer
