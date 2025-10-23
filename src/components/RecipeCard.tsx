@@ -74,7 +74,7 @@ export function RecipeCard({
         <img src={image || "/placeholder.svg"} alt={title} className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105" />
         <div className="absolute top-3 left-3 flex items-center gap-1 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full">
           <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-          <span className="text-sm font-medium">{rating}</span>
+          <span className="text-sm font-medium">{(rating || 0).toFixed(1)}</span>
         </div>
         <button
           onClick={handleFavoriteClick}

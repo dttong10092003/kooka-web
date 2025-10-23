@@ -25,6 +25,7 @@ import MyFavourite from "./pages/MyFavourite";
 import GoogleCallback from "./pages/GoogleCallback";
 import About from "./pages/About";
 import MealPlannerPage from "./pages/MealPlannerPage";
+import AIChatBot from "./components/AIChatBot";
 
 function App() {
   const location = useLocation();
@@ -82,6 +83,7 @@ function App() {
         </Route>
       </Routes>
       {!hideHeader && <Footer />}
+      <AIChatBot />
     </>
   );
 }

@@ -32,7 +32,7 @@ export interface Category {
 
 export interface Instruction {
     title: string;
-    image: string;
+    images: string[];
     subTitle: string[];
 }
 
@@ -316,8 +316,19 @@ const recipeSlice = createSlice({
                 state.loading = false;
             })
             .addCase(getRecipeById.fulfilled, (state, action: PayloadAction<Recipe>) => {
-                const existing = state.recipes.find((r) => r._id === action.payload._id);
-                if (!existing) state.recipes.push(action.payload);
+
+                // const existing = state.recipes.find((r) => r._id === action.payload._id);
+                // if (!existing) state.recipes.push(action.payload);
+                // state.loading = false;
+
+                const index = state.recipes.findIndex((r) => r._id === action.payload._id);
+                if (index !== -1) {
+                    // Cập nhật recipe đã tồn tại
+                    state.recipes[index] = action.payload;
+                } else {
+                    // Thêm recipe mới
+                    state.recipes.push(action.payload);
+                }
                 state.loading = false;
             })
             .addCase(addRecipe.fulfilled, (state, action: PayloadAction<Recipe>) => {
@@ -466,7 +477,7 @@ const recipeSlice = createSlice({
         // Generic pending/rejected - Only for recipe-related actions
         builder
             .addMatcher(
-                (action) => action.type.startsWith("recipes/") && action.type.endsWith("/pending"), 
+                (action) => action.type.startsWith("recipes/") && action.type.endsWith("/pending"),
                 (state) => {
                     state.loading = true;
                     state.error = null;
@@ -480,22 +491,22 @@ const recipeSlice = createSlice({
                 }
             )
             .addMatcher(
-                (action) => (action.type.startsWith("ingredients/") || 
-                             action.type.startsWith("ingredientTypes/") || 
-                             action.type.startsWith("tags/") || 
-                             action.type.startsWith("cuisines/") || 
-                             action.type.startsWith("categories/")) && action.type.endsWith("/pending"), 
+                (action) => (action.type.startsWith("ingredients/") ||
+                    action.type.startsWith("ingredientTypes/") ||
+                    action.type.startsWith("tags/") ||
+                    action.type.startsWith("cuisines/") ||
+                    action.type.startsWith("categories/")) && action.type.endsWith("/pending"),
                 (state) => {
                     state.loading = true;
                     state.error = null;
                 }
             )
             .addMatcher(
-                (action) => (action.type.startsWith("ingredients/") || 
-                             action.type.startsWith("ingredientTypes/") || 
-                             action.type.startsWith("tags/") || 
-                             action.type.startsWith("cuisines/") || 
-                             action.type.startsWith("categories/")) && action.type.endsWith("/rejected"),
+                (action) => (action.type.startsWith("ingredients/") ||
+                    action.type.startsWith("ingredientTypes/") ||
+                    action.type.startsWith("tags/") ||
+                    action.type.startsWith("cuisines/") ||
+                    action.type.startsWith("categories/")) && action.type.endsWith("/rejected"),
                 (state, action: { error?: { message?: string } }) => {
                     state.loading = false;
                     state.error = action.error?.message || "Something went wrong";

@@ -25,7 +25,7 @@ interface EditRecipeModalProps {
 
 interface Instruction {
     title: string;
-    image: string;
+    images: string[];
     subTitle: string[];
 }
 
@@ -208,7 +208,7 @@ const EditRecipeModal: React.FC<EditRecipeModalProps> = ({ isOpen, onClose, reci
 
     const [currentInstruction, setCurrentInstruction] = useState<Instruction>({
         title: "",
-        image: "",
+        images: [],
         subTitle: [""],
     });
 
@@ -285,7 +285,7 @@ const EditRecipeModal: React.FC<EditRecipeModalProps> = ({ isOpen, onClose, reci
                 ...prev,
                 instructions: [...prev.instructions, { ...currentInstruction }],
             }));
-            setCurrentInstruction({ title: "", image: "", subTitle: [""] });
+            setCurrentInstruction({ title: "", images: [], subTitle: [""] });
         }
     };
 
@@ -645,26 +645,31 @@ const EditRecipeModal: React.FC<EditRecipeModalProps> = ({ isOpen, onClose, reci
                                 >
                                     <div className="flex-1">
                                         <p className="font-medium text-gray-800">Bước {index + 1}: {instruction.title}</p>
-                                        {instruction.image && (
-                                            <div className="relative w-40 h-28 my-2">
-                                                <img
-                                                    src={instruction.image}
-                                                    alt={instruction.title}
-                                                    className="w-full h-full object-cover rounded-lg border"
-                                                    onError={(e) => {
-                                                        const target = e.target as HTMLImageElement;
-                                                        target.style.display = 'none';
-                                                    }}
-                                                />
+                                        {instruction.images && instruction.images.length > 0 && (
+                                            <div className="flex flex-wrap gap-2 my-2">
+                                                {instruction.images.map((img, imgIndex) => (
+                                                    <div key={imgIndex} className="relative w-32 h-24">
+                                                        <img
+                                                            src={img}
+                                                            alt={`Instruction ${index + 1} - ${imgIndex + 1}`}
+                                                            className="w-full h-full object-cover rounded-lg border"
+                                                            onError={(e) => {
+                                                                const target = e.target as HTMLImageElement;
+                                                                target.style.display = 'none';
+                                                            }}
+                                                        />
+                                                    </div>
+                                                ))}
                                             </div>
                                         )}
+
                                         <ul className="list-disc ml-5 text-sm text-gray-600">
                                             {instruction.subTitle.map((sub, subIndex) => (
                                                 <li key={subIndex}>{sub}</li>
                                             ))}
                                         </ul>
                                     </div>
-                                    
+
                                     <div className="flex gap-2 ml-3">
                                         <button
                                             type="button"
@@ -706,41 +711,64 @@ const EditRecipeModal: React.FC<EditRecipeModalProps> = ({ isOpen, onClose, reci
                                     <input
                                         type="file"
                                         accept="image/*"
+                                        multiple
                                         onChange={(e) => {
-                                            const file = e.target.files?.[0];
-                                            if (file) {
-                                                const reader = new FileReader();
-                                                reader.onload = (event) => {
-                                                    const result = event.target?.result as string;
-                                                    setCurrentInstruction(prev => ({ ...prev, image: result }));
-                                                };
-                                                reader.readAsDataURL(file);
+                                            const files = Array.from(e.target.files || []);
+                                            if (files.length + currentInstruction.images.length > 4) {
+                                                toast.error("Chỉ được chọn tối đa 4 ảnh mỗi bước!");
+                                                return;
                                             }
+
+                                            Promise.all(
+                                                files.map(file => {
+                                                    return new Promise<string>((resolve) => {
+                                                        const reader = new FileReader();
+                                                        reader.onload = (event) => resolve(event.target?.result as string);
+                                                        reader.readAsDataURL(file);
+                                                    });
+                                                })
+                                            ).then((newImages) => {
+                                                setCurrentInstruction(prev => ({
+                                                    ...prev,
+                                                    images: [...prev.images, ...newImages],
+                                                }));
+                                            });
                                         }}
                                         className="block w-full text-sm text-gray-700 border border-gray-300 rounded-lg cursor-pointer bg-white focus:ring-2 focus:ring-blue-400 focus:border-transparent p-2"
                                     />
 
+
                                     {/* Preview ảnh instruction */}
-                                    {currentInstruction.image && (
-                                        <div className="mt-2 relative w-40 h-28">
-                                            <img
-                                                src={currentInstruction.image}
-                                                alt="Preview bước"
-                                                className="w-full h-full object-cover rounded-lg border border-gray-200"
-                                                onError={(e) => {
-                                                    const target = e.target as HTMLImageElement;
-                                                    target.style.display = 'none';
-                                                }}
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={() => setCurrentInstruction(prev => ({ ...prev, image: '' }))}
-                                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors shadow-md"
-                                            >
-                                                <X size={12} />
-                                            </button>
+                                    {currentInstruction.images.length > 0 && (
+                                        <div className="flex flex-wrap gap-2 mt-2">
+                                            {currentInstruction.images.map((img, index) => (
+                                                <div key={index} className="relative w-32 h-24">
+                                                    <img
+                                                        src={img}
+                                                        alt={`Preview ${index + 1}`}
+                                                        className="w-full h-full object-cover rounded-lg border border-gray-200"
+                                                        onError={(e) => {
+                                                            const target = e.target as HTMLImageElement;
+                                                            target.style.display = 'none';
+                                                        }}
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            setCurrentInstruction(prev => ({
+                                                                ...prev,
+                                                                images: prev.images.filter((_, i) => i !== index),
+                                                            }))
+                                                        }
+                                                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors shadow-md"
+                                                    >
+                                                        <X size={12} />
+                                                    </button>
+                                                </div>
+                                            ))}
                                         </div>
                                     )}
+
                                 </div>
 
                                 <div className="space-y-2">
@@ -854,7 +882,7 @@ const EditRecipeModal: React.FC<EditRecipeModalProps> = ({ isOpen, onClose, reci
                                 Xác nhận cập nhật công thức
                             </h3>
                             <p className="text-gray-600 text-center mb-6">
-                                Bạn có chắc chắn muốn cập nhật công thức "{recipe?.name}"? 
+                                Bạn có chắc chắn muốn cập nhật công thức "{recipe?.name}"?
                                 Tất cả thay đổi sẽ được lưu lại.
                             </p>
                             <div className="flex space-x-3">
