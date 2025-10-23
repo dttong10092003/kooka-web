@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Send, Bot, User, ChefHat, Lightbulb, Star, Clock, Users } from 'lucide-react';
+import { X, Send, Bot, User, ChefHat, Lightbulb, Star, Clock, Users, Image as ImageIcon } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import axiosInstance from '../utils/axiosInstance';
 import { useSelector } from 'react-redux';
@@ -24,6 +24,7 @@ interface Message {
     sender: 'user' | 'bot';
     timestamp: Date;
     recipes?: Recipe[];
+    images?: string[]; // Base64 images
 }
 
 const AIChatBot: React.FC = () => {
@@ -39,8 +40,10 @@ const AIChatBot: React.FC = () => {
     const [error, setError] = useState<string>('');
     const [chatSize, setChatSize] = useState({ width: 358, height: 552 });
     const [isResizing, setIsResizing] = useState(false);
+    const [selectedImages, setSelectedImages] = useState<string[]>([]); // Preview images (max 1 for backend)
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const chatRef = useRef<HTMLDivElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Format markdown text to React elements
     const formatMessage = (text: string) => {
@@ -134,14 +137,23 @@ const AIChatBot: React.FC = () => {
     }, [isOpen, sessionId]);
 
     // Send message to backend API
-    const sendMessageToAPI = async (userMessage: string): Promise<{ message: string; recipes: Recipe[] }> => {
+    const sendMessageToAPI = async (userMessage: string, images?: string[]): Promise<{ message: string; recipes: Recipe[] }> => {
         try {
             setError('');
-            const response = await axiosInstance.post('/chatbot/chat', {
-                message: userMessage,
+
+            // Backend expects imageBase64 (single string), not images array
+            const requestBody: any = {
+                message: userMessage || undefined,
                 sessionId: sessionId,
                 userId: user?._id || null
-            });
+            };
+
+            // If images provided, send first image as imageBase64
+            if (images && images.length > 0) {
+                requestBody.imageBase64 = images[0]; // Backend only processes 1 image at a time
+            }
+
+            const response = await axiosInstance.post('/chatbot/chat', requestBody);
 
             console.log('✅ Chatbot response:', response.data);
 
@@ -165,24 +177,115 @@ const AIChatBot: React.FC = () => {
         }
     };
 
+    // Handle file upload
+    const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (!files || files.length === 0) return;
+
+        // Backend only supports 1 image at a time
+        if (selectedImages.length >= 1) {
+            alert(language === 'vi' ? 'Chỉ có thể gửi 1 ảnh mỗi lần!' : 'Only 1 image allowed per message!');
+            e.target.value = '';
+            return;
+        }
+
+        const file = files[0]; // Only process first file
+
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+            alert(language === 'vi' ? 'Vui lòng chỉ chọn file ảnh!' : 'Please select image files only!');
+            e.target.value = '';
+            return;
+        }
+
+        // Validate file size (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            alert(language === 'vi' ? 'Kích thước ảnh không được vượt quá 5MB!' : 'Image size must not exceed 5MB!');
+            e.target.value = '';
+            return;
+        }
+
+        // Convert to base64
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            const base64 = reader.result as string;
+            setSelectedImages([base64]); // Replace with new image
+        };
+        reader.onerror = () => {
+            console.error('Error reading file:', file.name);
+            alert(language === 'vi' ? 'Lỗi khi đọc file!' : 'Error reading file!');
+        };
+        reader.readAsDataURL(file);
+
+        // Reset input to allow selecting the same file again
+        e.target.value = '';
+    };
+
+    // Handle paste image
+    const handlePaste = async (e: React.ClipboardEvent) => {
+        const items = e.clipboardData?.items;
+        if (!items) return;
+
+        // Backend only supports 1 image at a time
+        if (selectedImages.length >= 1) {
+            alert(language === 'vi' ? 'Chỉ có thể gửi 1 ảnh mỗi lần!' : 'Only 1 image allowed per message!');
+            return;
+        }
+
+        for (let i = 0; i < items.length; i++) {
+            const item = items[i];
+
+            if (item.type.startsWith('image/')) {
+                e.preventDefault();
+
+                const blob = item.getAsFile();
+                if (!blob) continue;
+
+                // Validate file size
+                if (blob.size > 5 * 1024 * 1024) {
+                    alert(language === 'vi' ? 'Kích thước ảnh không được vượt quá 5MB!' : 'Image size must not exceed 5MB!');
+                    continue;
+                }
+
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    const base64 = reader.result as string;
+                    setSelectedImages([base64]); // Replace with new image
+                };
+                reader.readAsDataURL(blob);
+
+                break; // Only process first image
+            }
+        }
+    };
+
+    // Remove image
+    const removeImage = () => {
+        setSelectedImages([]);
+    };
+
     const handleSendMessage = async () => {
-        if (!inputValue.trim()) return;
+        if (!inputValue.trim() && selectedImages.length === 0) return;
 
         const userMessage: Message = {
             id: Date.now().toString(),
-            text: inputValue,
+            text: inputValue || (language === 'vi' ? '📷 Đã gửi ảnh' : '📷 Sent images'),
             sender: 'user',
-            timestamp: new Date()
+            timestamp: new Date(),
+            images: selectedImages.length > 0 ? [...selectedImages] : undefined
         };
 
         const currentMessage = inputValue;
+        const currentImages = [...selectedImages];
+
         setMessages(prev => [...prev, userMessage]);
         setInputValue('');
+        setSelectedImages([]); // Clear selected images
         setIsTyping(true);
 
         try {
             // Call backend API with Gemini AI
-            const { message: botResponseText, recipes } = await sendMessageToAPI(currentMessage);
+            const { message: botResponseText, recipes } = await sendMessageToAPI(currentMessage, currentImages);
 
             const botResponse: Message = {
                 id: (Date.now() + 1).toString(),
@@ -345,6 +448,24 @@ const AIChatBot: React.FC = () => {
                                             ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white'
                                             : 'bg-gray-100 text-gray-800'
                                             }`}>
+                                            {/* Images */}
+                                            {message.images && message.images.length > 0 && (
+                                                <div className={`grid gap-2 mb-2 ${message.images.length === 1 ? 'grid-cols-1' :
+                                                        message.images.length === 2 ? 'grid-cols-2' :
+                                                            'grid-cols-2'
+                                                    }`}>
+                                                    {message.images.map((img, idx) => (
+                                                        <div key={idx} className="rounded-lg overflow-hidden">
+                                                            <img
+                                                                src={img}
+                                                                alt={`Uploaded ${idx + 1}`}
+                                                                className="w-full h-auto object-cover max-h-32"
+                                                            />
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+
                                             <div className="text-sm leading-relaxed">
                                                 {message.sender === 'bot' ? (
                                                     <div className="space-y-1">{formatMessage(message.text)}</div>
@@ -502,18 +623,60 @@ const AIChatBot: React.FC = () => {
 
                         {/* Input */}
                         <div className="p-4 border-t border-gray-200 flex-shrink-0">
+                            {/* Image Preview */}
+                            {selectedImages.length > 0 && (
+                                <div className="mb-3 flex flex-wrap gap-2">
+                                    {selectedImages.map((img, idx) => (
+                                        <div key={idx} className="relative group">
+                                            <img
+                                                src={img}
+                                                alt="Preview"
+                                                className="w-20 h-20 object-cover rounded-lg border border-gray-200"
+                                            />
+                                            <button
+                                                onClick={removeImage}
+                                                className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                                            >
+                                                ×
+                                            </button>
+                                        </div>
+                                    ))}
+
+                                </div>
+                            )}
+
                             <div className="flex space-x-2">
+                                {/* Hidden file input */}
+                                <input
+                                    ref={fileInputRef}
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleImageSelect}
+                                    className="hidden"
+                                />
+
+                                {/* Image upload button */}
+                                <button
+                                    onClick={() => fileInputRef.current?.click()}
+                                    disabled={selectedImages.length >= 1}
+                                    className="text-gray-500 hover:text-blue-500 p-2 rounded-lg hover:bg-gray-100 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+                                    title={language === 'vi' ? 'Đính kèm ảnh (1 ảnh)' : 'Attach image (1 image)'}
+                                >
+                                    <ImageIcon className="h-5 w-5" />
+                                </button>
+
                                 <input
                                     type="text"
                                     value={inputValue}
                                     onChange={(e) => setInputValue(e.target.value)}
                                     onKeyPress={handleKeyPress}
-                                    placeholder={language === 'vi' ? 'Nhập câu hỏi...' : 'Type your question...'}
+                                    onPaste={handlePaste}
+                                    placeholder={language === 'vi' ? 'Nhập câu hỏi hoặc dán ảnh...' : 'Type your question or paste image...'}
                                     className="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
                                 />
                                 <button
                                     onClick={handleSendMessage}
-                                    disabled={!inputValue.trim()}
+                                    disabled={!inputValue.trim() && selectedImages.length === 0}
                                     className="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-2 rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
                                 >
                                     <Send className="h-4 w-4" />
