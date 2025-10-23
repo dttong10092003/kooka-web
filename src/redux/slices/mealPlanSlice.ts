@@ -70,7 +70,7 @@ export const fetchMealPlansByUser = createAsyncThunk(
 // 🥗 Tạo meal plan mới
 export const createMealPlan = createAsyncThunk(
     "mealPlans/create",
-    async (data: { userId: string; plans: DayPlan[] }, { rejectWithValue }) => {
+    async (data: { userId: string; plans: DayPlan[]; startDate?: string }, { rejectWithValue }) => {
         try {
             const res = await axiosInstance.post(`/mealplans`, data, {
                 headers: { "Content-Type": "application/json" },

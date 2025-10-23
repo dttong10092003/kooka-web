@@ -35,6 +35,7 @@ const MealPlannerPage: React.FC = () => {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showStartDateModal, setShowStartDateModal] = useState(false);
   const [selectedStartDate, setSelectedStartDate] = useState<Date | null>(null);
+  const [startDateError, setStartDateError] = useState<string>('');
   const [viewMode, setViewMode] = useState<'browse' | 'viewing' | 'creating'>('browse');
   const [justCreatedPlanId, setJustCreatedPlanId] = useState<string | null>(null);
 
@@ -94,6 +95,38 @@ const MealPlannerPage: React.FC = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mealPlans, justCreatedPlanId]); // Thêm justCreatedPlanId vào dependencies
+
+  // Kiểm tra ngày bắt đầu có nằm trong vùng cấm không (±6 ngày của plan hiện có)
+  const isStartDateConflict = (newStartDate: Date): { hasConflict: boolean; conflictMessage?: string } => {
+    for (const existingPlan of sortedMealPlans) {
+      const existingStart = new Date(existingPlan.startDate);
+      
+      // Tính vùng cấm: từ (existingStart - 6 ngày) đến (existingStart + 6 ngày)
+      const forbiddenStart = new Date(existingStart);
+      forbiddenStart.setDate(existingStart.getDate() - 6);
+      
+      const forbiddenEnd = new Date(existingStart);
+      forbiddenEnd.setDate(existingStart.getDate() + 6);
+      
+      // Kiểm tra xem newStartDate có nằm trong vùng cấm không
+      if (newStartDate >= forbiddenStart && newStartDate <= forbiddenEnd) {
+        const formatDate = (date: Date) => {
+          const day = date.getDate().toString().padStart(2, '0');
+          const month = (date.getMonth() + 1).toString().padStart(2, '0');
+          const year = date.getFullYear();
+          return `${day}/${month}/${year}`;
+        };
+        
+        const message = language === 'vi' 
+          ? `Ngày bắt đầu (${formatDate(newStartDate)}) nằm trong vùng cấm (từ ${formatDate(forbiddenStart)} đến ${formatDate(forbiddenEnd)}) của kế hoạch bắt đầu ${formatDate(existingStart)}.`
+          : `Start date (${formatDate(newStartDate)}) is in the forbidden zone (from ${formatDate(forbiddenStart)} to ${formatDate(forbiddenEnd)}) of the plan starting ${formatDate(existingStart)}.`;
+        
+        return { hasConflict: true, conflictMessage: message };
+      }
+    }
+    
+    return { hasConflict: false };
+  };
 
   // Generate week dates based on mode
   const getWeekDates = (): Date[] => {
@@ -196,10 +229,31 @@ const MealPlannerPage: React.FC = () => {
 
   const startCreatingNewPlan = () => {
     setShowStartDateModal(true);
+    setStartDateError(''); // Reset error khi mở modal
+  };
+
+  // Handler để validate ngày khi người dùng chọn
+  const handleStartDateChange = (date: Date) => {
+    setSelectedStartDate(date);
+    
+    // Kiểm tra conflict ngay khi chọn ngày
+    const conflictCheck = isStartDateConflict(date);
+    if (conflictCheck.hasConflict) {
+      setStartDateError(conflictCheck.conflictMessage || '');
+    } else {
+      setStartDateError('');
+    }
   };
 
   const confirmStartDate = () => {
     if (!selectedStartDate) return;
+    
+    // Kiểm tra conflict lần cuối trước khi confirm
+    const conflictCheck = isStartDateConflict(selectedStartDate);
+    if (conflictCheck.hasConflict) {
+      setStartDateError(conflictCheck.conflictMessage || '');
+      return;
+    }
     
     const pendingPlans = sortedMealPlans.filter(p => p.status === 'pending');
     if (pendingPlans.length >= 3) {
@@ -208,6 +262,7 @@ const MealPlannerPage: React.FC = () => {
         : 'You already have 3 pending plans. Please complete or delete some before creating a new one.');
       setShowStartDateModal(false);
       setSelectedStartDate(null);
+      setStartDateError('');
       return;
     }
     
@@ -216,11 +271,13 @@ const MealPlannerPage: React.FC = () => {
     setEditingPlans([]);
     setHasUnsavedChanges(false);
     setShowStartDateModal(false);
+    setStartDateError('');
   };
 
   const cancelCreatingPlan = () => {
     setViewMode(sortedMealPlans.length > 0 ? 'viewing' : 'browse');
     setSelectedStartDate(null);
+    setStartDateError('');
     setEditingPlans([]);
     setHasUnsavedChanges(false);
     
@@ -336,9 +393,16 @@ const MealPlannerPage: React.FC = () => {
         setHasUnsavedChanges(false);
         alert(language === 'vi' ? 'Cập nhật thành công!' : 'Updated successfully!');
       } else {
+        // Khi tạo mới, phải gửi cả startDate lên backend
+        if (!selectedStartDate) {
+          alert(language === 'vi' ? 'Vui lòng chọn ngày bắt đầu' : 'Please select a start date');
+          return;
+        }
+        
         const newPlan = await dispatch(createMealPlan({
           userId: user._id,
-          plans: validPlans
+          plans: validPlans,
+          startDate: selectedStartDate.toISOString() // Gửi startDate theo ISO format
         })).unwrap();
         
         // Sau khi tạo thành công, LUÔN hiển thị plan vừa tạo
@@ -1015,14 +1079,22 @@ const MealPlannerPage: React.FC = () => {
                 tomorrow.setDate(tomorrow.getDate() + 1);
                 return tomorrow.toISOString().split('T')[0];
               })()}
-              onChange={(e) => setSelectedStartDate(new Date(e.target.value))}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent mb-4"
+              onChange={(e) => handleStartDateChange(new Date(e.target.value))}
+              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent mb-2 ${
+                startDateError ? 'border-red-500' : 'border-gray-300'
+              }`}
             />
+            {startDateError && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-sm text-red-600">{startDateError}</p>
+              </div>
+            )}
             <div className="flex space-x-3">
               <button
                 onClick={() => {
                   setShowStartDateModal(false);
                   setSelectedStartDate(null);
+                  setStartDateError('');
                 }}
                 className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors duration-200"
               >
@@ -1030,7 +1102,7 @@ const MealPlannerPage: React.FC = () => {
               </button>
               <button
                 onClick={confirmStartDate}
-                disabled={!selectedStartDate}
+                disabled={!selectedStartDate || !!startDateError}
                 className="flex-1 px-4 py-2 bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-lg hover:from-green-600 hover:to-blue-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {language === 'vi' ? 'Xác Nhận' : 'Confirm'}
