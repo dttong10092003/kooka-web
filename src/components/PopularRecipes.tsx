@@ -1,4 +1,4 @@
-import { useEffect } from "react"
+import { useEffect, useMemo } from "react"
 import { RecipeCard } from "./RecipeCard"
 
 import { useDispatch, useSelector } from "react-redux"
@@ -95,20 +95,26 @@ export default function PopularRecipes() {
     // ]
 
     const dispatch = useDispatch<AppDispatch>()
-    const { recipes} = useSelector((state: RootState) => state.recipes)
+    const { recipes, loading } = useSelector((state: RootState) => state.recipes)
     const user = useSelector((state: RootState) => state.auth.user)
+
+    // Memoize recipe IDs to prevent unnecessary recalculations
+    const displayedRecipeIds = useMemo(() => {
+        return recipes.slice(0, 6).map(recipe => recipe._id).join(',')
+    }, [recipes])
 
     useEffect(() => {
         dispatch(fetchRecipes())
     }, [dispatch])
 
     // Check favorites for all recipes when user is logged in
+    // Only run when user changes or displayed recipes change
     useEffect(() => {
-        if (user && recipes.length > 0) {
-            const recipeIds = recipes.slice(0, 6).map(recipe => recipe._id)
+        if (user && displayedRecipeIds) {
+            const recipeIds = displayedRecipeIds.split(',')
             dispatch(checkMultipleRecipes({ recipeIds }))
         }
-    }, [user, recipes, dispatch])
+    }, [user?._id, displayedRecipeIds, dispatch]) // eslint-disable-line react-hooks/exhaustive-deps
 
     console.log("PopularRecipes - recipes:", recipes)
 
@@ -126,33 +132,39 @@ export default function PopularRecipes() {
                 
 
                 {/* Recipe Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {recipes.slice(0, 6).map((recipe) => (
-                        <RecipeCard
-                            key={recipe._id}
-                            id={recipe._id}
-                            title={recipe.name}
-                            description={recipe.short}
-                            image={recipe.image}
-                            rating={recipe.rate}
-                            difficulty={recipe.difficulty}
-                            cookTime={`${recipe.time}m`}
-                            servings={recipe.size}
-                            cuisine={recipe.cuisine.name}
-                            ingredients={
-                                    Array.isArray(recipe.ingredients)
-                                        ? recipe.ingredients.slice(0, 3).map((ing) => ing.name)
-                                        : []
+                {loading ? (
+                    <div className="flex justify-center items-center py-12">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {recipes.slice(0, 6).map((recipe) => (
+                            <RecipeCard
+                                key={recipe._id}
+                                id={recipe._id}
+                                title={recipe.name}
+                                description={recipe.short}
+                                image={recipe.image}
+                                rating={recipe.rate}
+                                difficulty={recipe.difficulty}
+                                cookTime={`${recipe.time}m`}
+                                servings={recipe.size}
+                                cuisine={recipe.cuisine.name}
+                                ingredients={
+                                        Array.isArray(recipe.ingredients)
+                                            ? recipe.ingredients.slice(0, 3).map((ing) => ing.name)
+                                            : []
+                                    }
+                                moreIngredients={
+                                    Array.isArray(recipe.ingredients) && recipe.ingredients.length > 3
+                                        ? recipe.ingredients.length - 3
+                                        : 0
                                 }
-                            moreIngredients={
-                                Array.isArray(recipe.ingredients) && recipe.ingredients.length > 3
-                                    ? recipe.ingredients.length - 3
-                                    : 0
-                            }
-                            reviews={recipe.numberOfRate}
-                        />
-                    ))}
-                </div>
+                                reviews={recipe.numberOfRate}
+                            />
+                        ))}
+                    </div>
+                )}
             </div>
         </section>
     )
