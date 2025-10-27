@@ -1,168 +1,505 @@
-import { Link } from "react-router-dom"
-import { ChefHat, BookOpen, Users, Search, TrendingUp, Clock, Star, ArrowRight } from "lucide-react"
-import PopularRecipes from "../components/PopularRecipes"
+import { useState } from 'react';
+import { Heart, Info, Play, ChevronLeft, ChevronRight, Star, Clock, ChefHat, TrendingUp, Sparkles } from 'lucide-react';
+
+interface Recipe {
+  id: number;
+  title: string;
+  subtitle: string;
+  image: string;
+  duration: string;
+  difficulty: string;
+  rating?: number;
+  reviews?: number;
+  servings?: number;
+  cuisine?: string;
+  ingredients?: string[];
+}
 
 const Home = () => {
-    return (
-        <>
-            {/* Hero Section */}
-            <section className="relative bg-gradient-to-br from-orange-500 via-red-500 to-pink-500 text-white py-20 px-4 overflow-hidden">
-                {/* Background decoration */}
-                <div className="absolute inset-0 opacity-10">
-                    <div className="absolute top-10 left-10 w-64 h-64 bg-white rounded-full blur-3xl"></div>
-                    <div className="absolute bottom-10 right-10 w-96 h-96 bg-white rounded-full blur-3xl"></div>
+  const [selectedRecipeIndex, setSelectedRecipeIndex] = useState(0);
+
+  const featuredRecipes: Recipe[] = [
+    {
+      id: 0,
+      title: 'Phở Bò Hà Nội',
+      subtitle: 'Vietnamese Beef Noodle Soup',
+      image: 'https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43?w=1200&h=600&fit=crop',
+      duration: '45 phút',
+      difficulty: 'Trung bình',
+      rating: 4.8,
+      reviews: 256,
+      servings: 4,
+      cuisine: 'Việt Nam',
+      ingredients: ['thịt heo', 'nước mắm', 'bún', 'hành lá', 'ớt', 'chanh']
+    },
+    {
+      id: 1,
+      title: 'Bánh Mì Việt Nam',
+      subtitle: 'Vietnamese Baguette',
+      image: 'https://cdn-i2.congthuong.vn/stores/news_dataimages/2024/032024/16/09/top-1-mon-sandwich-ngon-nhat-the-gioi-goi-ten-banh-my-viet-nam1710498007-182420240316092132.jpg?rt=20240316092204?w=1200&h=600&fit=crop',
+      duration: '30 phút',
+      difficulty: 'Dễ',
+      rating: 4.6,
+      reviews: 189,
+      servings: 2,
+      cuisine: 'Việt Nam',
+      ingredients: ['bánh mì', 'thịt', 'pate', 'rau']
+    },
+    {
+      id: 2,
+      title: 'Bún Chả Hà Nội',
+      subtitle: 'Grilled Pork with Vermicelli',
+      image: 'https://cdn.tgdd.vn/2022/01/CookRecipe/Avatar/bun-cha-ha-noi-cong-thuc-chia-se-tu-nguoi-dung-thumbnail.jpg?w=1200&h=600&fit=crop',
+      duration: '1h 15p',
+      difficulty: 'Trung bình',
+      rating: 4.9,
+      reviews: 342,
+      servings: 4,
+      cuisine: 'Việt Nam',
+      ingredients: ['thịt heo', 'bún', 'nước mắm', 'rau']
+    },
+    {
+      id: 3,
+      title: 'Gỏi Cuốn Tôm Thịt',
+      subtitle: 'Fresh Spring Rolls',
+      image: 'https://i.ytimg.com/vi/w34Qnc-9KBU/hq720.jpg?sqp=-oaymwEhCK4FEIIDSFryq4qpAxMIARUAAAAAGAElAADIQj0AgKJD&rs=AOn4CLAzXE6ASDMpVme1qsjbkQx4v-KaYA?w=1200&h=600&fit=crop',
+      duration: '25 phút',
+      difficulty: 'Dễ',
+      rating: 4.7,
+      reviews: 215,
+      servings: 6,
+      cuisine: 'Việt Nam',
+      ingredients: ['bánh tráng', 'tôm', 'thịt', 'rau']
+    },
+    {
+      id: 4,
+      title: 'Cơm Tấm Sườn Nướng',
+      subtitle: 'Broken Rice with Grilled Pork',
+      image: 'https://i.ytimg.com/vi/cJu6tFJe_Gc/maxresdefault.jpg?w=1200&h=600&fit=crop',
+      duration: '50 phút',
+      difficulty: 'Trung bình',
+      rating: 4.5,
+      reviews: 178,
+      servings: 3,
+      cuisine: 'Việt Nam',
+      ingredients: ['cơm', 'sườn', 'nước mắm', 'dưa leo']
+    },
+    {
+      id: 5,
+      title: 'Bún Bò Huế',
+      subtitle: 'Spicy Beef Noodle Soup',
+      image: 'https://daivietourist.vn/wp-content/uploads/2025/04/quan-bun-bo-hue-1.jpg?w=1200&h=600&fit=crop',
+      duration: '1h 30p',
+      difficulty: 'Khó',
+      rating: 4.8,
+      reviews: 298,
+      servings: 4,
+      cuisine: 'Việt Nam',
+      ingredients: ['bún', 'thịt bò', 'sả', 'mắm ruốc', 'ớt']
+    }
+  ];
+
+  const featuredRecipe = featuredRecipes[selectedRecipeIndex];
+
+  const newRecipes: Recipe[] = [
+  {
+    id: 1,
+    title: 'Bánh Mì Việt Nam',
+    subtitle: 'Vietnamese Baguette',
+    image: 'https://daivietourist.vn/wp-content/uploads/2025/04/quan-bun-bo-hue-1.jpg?w=1200&h=600&fit=crop',
+    duration: '30 phút',
+    difficulty: 'Dễ',
+    rating: 4.6,
+    servings: 2,
+    cuisine: 'Việt Nam',
+    ingredients: ['bánh mì', 'thịt', 'pate', 'rau']
+  },
+  {
+    id: 2,
+    title: 'Bún Chả Hà Nội',
+    subtitle: 'Grilled Pork with Vermicelli',
+    image: 'https://daivietourist.vn/wp-content/uploads/2025/04/quan-bun-bo-hue-1.jpg?w=1200&h=600&fit=crop',
+    duration: '1h 15p',
+    difficulty: 'Trung bình',
+    rating: 4.9,
+    servings: 4,
+    cuisine: 'Việt Nam',
+    ingredients: ['thịt heo', 'bún', 'nước mắm', 'rau']
+  },
+  {
+    id: 3,
+    title: 'Gỏi Cuốn Tôm Thịt',
+    subtitle: 'Fresh Spring Rolls',
+    image: 'https://daivietourist.vn/wp-content/uploads/2025/04/quan-bun-bo-hue-1.jpg?w=1200&h=600&fit=crop',
+    duration: '25 phút',
+    difficulty: 'Dễ',
+    rating: 4.7,
+    servings: 6,
+    cuisine: 'Việt Nam',
+    ingredients: ['bánh tráng', 'tôm', 'thịt', 'rau']
+  },
+  {
+    id: 4,
+    title: 'Cơm Tấm Sườn Nướng',
+    subtitle: 'Broken Rice with Grilled Pork',
+    image: 'https://daivietourist.vn/wp-content/uploads/2025/04/quan-bun-bo-hue-1.jpg?w=1200&h=600&fit=crop',
+    duration: '50 phút',
+    difficulty: 'Trung bình',
+    rating: 4.5,
+    servings: 3,
+    cuisine: 'Việt Nam',
+    ingredients: ['cơm', 'sườn', 'nước mắm', 'dưa leo']
+  },
+  {
+    id: 5,
+    title: 'Bún Bò Huế',
+    subtitle: 'Spicy Beef Noodle Soup',
+    image: 'https://daivietourist.vn/wp-content/uploads/2025/04/quan-bun-bo-hue-1.jpg?w=1200&h=600&fit=crop',
+    duration: '1h 30p',
+    difficulty: 'Khó',
+    rating: 4.8,
+    servings: 4,
+    cuisine: 'Việt Nam',
+    ingredients: ['bún', 'thịt bò', 'sả', 'mắm ruốc', 'ớt']
+  }
+];
+
+
+  const popularRecipes: Recipe[] = [
+    {
+      id: 6,
+      title: 'Cà Ri Gà',
+      subtitle: 'Vietnamese Chicken Curry',
+      image: 'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=400&h=600&fit=crop',
+      duration: '1h',
+      difficulty: 'Trung bình',
+      rating: 4.7,
+      servings: 5,
+      cuisine: 'Việt Nam',
+      ingredients: ['gà', 'cà rốt', 'khoai tây', 'cà ri']
+    },
+    {
+      id: 7,
+      title: 'Bánh Xèo',
+      subtitle: 'Vietnamese Crispy Pancake',
+      image: 'https://images.unsplash.com/photo-1626804475297-41608ea09aeb?w=400&h=600&fit=crop',
+      duration: '45 phút',
+      difficulty: 'Trung bình',
+      rating: 4.6,
+      servings: 4,
+      cuisine: 'Việt Nam',
+      ingredients: ['bột', 'tôm', 'thịt', 'giá']
+    },
+    {
+      id: 8,
+      title: 'Chả Giò',
+      subtitle: 'Vietnamese Fried Spring Rolls',
+      image: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=400&h=600&fit=crop',
+      duration: '40 phút',
+      difficulty: 'Dễ',
+      rating: 4.8,
+      servings: 6,
+      cuisine: 'Việt Nam',
+      ingredients: ['bánh tráng', 'thịt', 'miến', 'nấm']
+    },
+    {
+      id: 9,
+      title: 'Hủ Tiếu Nam Vang',
+      subtitle: 'Cambodian-Vietnamese Noodle Soup',
+      image: 'https://images.unsplash.com/photo-1617093727343-374698b1b08d?w=400&h=600&fit=crop',
+      duration: '55 phút',
+      difficulty: 'Trung bình',
+      rating: 4.5,
+      servings: 4,
+      cuisine: 'Việt Nam',
+      ingredients: ['hủ tiếu', 'tôm', 'thịt', 'giá']
+    },
+    {
+      id: 10,
+      title: 'Canh Chua',
+      subtitle: 'Vietnamese Sweet and Sour Soup',
+      image: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=400&h=600&fit=crop',
+      duration: '35 phút',
+      difficulty: 'Dễ',
+      rating: 4.4,
+      servings: 4,
+      cuisine: 'Việt Nam',
+      ingredients: ['cá', 'me', 'thơm', 'rau']
+    }
+  ];
+
+  const scrollContainer = (direction: 'left' | 'right', containerId: string) => {
+    const container = document.getElementById(containerId);
+    if (container) {
+      const scrollAmount = direction === 'left' ? -400 : 400;
+      container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }
+  };
+
+  const RecipeCard = ({ recipe }: { recipe: Recipe }) => (
+    <div
+      className="relative group flex-shrink-0 w-[280px] cursor-pointer bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300"
+      onClick={() => console.log('Navigate to recipe:', recipe.id)}
+    >
+      {/* Image */}
+      <div className="relative h-[180px]">
+        <img
+          src={recipe.image}
+          alt={recipe.title}
+          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+        />
+        
+        {/* Rating badge */}
+        <div className="absolute top-3 left-3 flex items-center gap-1 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full">
+          <Star size={14} fill="#fbbf24" className="text-amber-400" />
+          <span className="text-sm font-medium">{recipe.rating}</span>
+        </div>
+
+        {/* Favorite button */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            console.log('Toggle favorite:', recipe.id);
+          }}
+          className="absolute top-3 right-3 p-2 bg-white/90 backdrop-blur-sm rounded-full hover:bg-white transition-colors"
+        >
+          <Heart size={18} className="text-gray-600 hover:text-red-500 transition-colors" />
+        </button>
+
+        {/* Difficulty badge */}
+        <div className={`absolute bottom-3 right-3 px-2 py-1 rounded-full text-xs font-medium ${
+          recipe.difficulty === 'Dễ' 
+            ? 'bg-green-100 text-green-800' 
+            : recipe.difficulty === 'Khó' 
+            ? 'bg-red-100 text-red-800' 
+            : 'bg-yellow-100 text-yellow-800'
+        }`}>
+          {recipe.difficulty}
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="p-4">
+        <h3 className="font-bold text-lg mb-2 text-gray-900 group-hover:text-orange-600 transition-colors line-clamp-1">
+          {recipe.title}
+        </h3>
+        <p className="text-gray-600 text-sm mb-3 line-clamp-2">{recipe.subtitle}</p>
+
+        {/* Meta Info */}
+        <div className="flex items-center gap-3 text-sm text-gray-500 mb-3">
+          <div className="flex items-center gap-1">
+            <Clock size={16} />
+            <span>{recipe.duration}</span>
+          </div>
+          <span className="text-gray-400">•</span>
+          <span>{recipe.servings} người</span>
+        </div>
+
+        {/* Action button */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            console.log('View recipe:', recipe.id);
+          }}
+          className="w-full bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+        >
+          Xem Công Thức
+        </button>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="bg-white min-h-screen relative overflow-hidden">
+      {/* Animated background elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-orange-100/40 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-yellow-100/40 rounded-full blur-3xl"></div>
+      </div>
+
+      {/* Hero Section - Redesigned */}
+      <div className="relative h-[700px] mb-16 overflow-hidden">
+        {/* Background image with parallax effect */}
+        <div className="absolute inset-0">
+          <img
+            src={featuredRecipe.image}
+            alt={featuredRecipe.title}
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/95 via-black/70 to-black/50"></div>
+        </div>
+        
+        {/* Content - Full width */}
+        <div className="relative h-full flex items-center">
+          <div className="w-full px-12 py-16">
+            <div className="max-w-2xl">
+              {/* Badge */}
+              <div className="inline-flex items-center gap-2 bg-yellow-400 text-black px-5 py-2 rounded-full font-bold text-sm mb-6">
+                <Sparkles size={18} />
+                CÔNG THỨC NỔI BẬT
+              </div>
+
+              <h1 className="text-white text-5xl font-bold mb-4 leading-tight">
+                {featuredRecipe.title}
+              </h1>
+              <p className="text-gray-200 text-lg mb-6">{featuredRecipe.subtitle}</p>
+              
+              {/* Ingredients Tags */}
+              <div className="flex flex-wrap gap-2 mb-6">
+                {featuredRecipe.ingredients?.slice(0, 4).map((ingredient, index) => (
+                  <span key={index} className="px-3 py-1.5 rounded-md text-sm bg-white/10 backdrop-blur-sm text-white border border-white/20">
+                    {ingredient}
+                  </span>
+                ))}
+                {(featuredRecipe.ingredients?.length || 0) > 4 && (
+                  <span className="px-3 py-1.5 rounded-md text-sm bg-white/10 backdrop-blur-sm text-white border border-white/20">
+                    +{(featuredRecipe.ingredients?.length || 0) - 4} more
+                  </span>
+                )}
+              </div>
+
+              <p className="text-gray-300 text-base leading-relaxed mb-6 max-w-2xl">
+                Tô phở nóng hổi với nước dùng trong vắt, thịt bò tươi ngon và bánh phở dai ngon. 
+                Hương vị đậm đà của quê hương trong từng thìa nước dùng.
+              </p>
+
+              {/* Meta info */}
+              <div className="flex items-center gap-6 mb-8">
+                <div className="flex items-center gap-2 text-white">
+                  <Star size={20} fill="#fbbf24" className="text-amber-400" />
+                  <span className="font-bold">{featuredRecipe.rating}</span>
                 </div>
-
-                <div className="max-w-7xl mx-auto relative z-10">
-                    <div className="grid md:grid-cols-2 gap-12 items-center">
-                        {/* Left Content */}
-                        <div className="text-center md:text-left">
-                            <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full mb-6">
-                                <ChefHat className="w-5 h-5" />
-                                <span className="text-sm font-medium">Nền tảng chia sẻ công thức nấu ăn</span>
-                            </div>
-                            
-                            <h1 className="text-5xl md:text-6xl font-bold mb-6 leading-tight">
-                                Khám phá nghệ thuật
-                                <span className="block mt-2">nấu nướng mỗi ngày</span>
-                            </h1>
-                            
-                            <p className="text-xl mb-8 text-white/90">
-                                Hàng nghìn công thức đa dạng từ các đầu bếp tài năng. 
-                                Tìm món ăn yêu thích và tạo bữa ăn hoàn hảo cho gia đình.
-                            </p>
-                            
-                            <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
-                                <Link
-                                    to="/recipes"
-                                    className="inline-flex items-center justify-center gap-2 bg-white text-orange-600 px-8 py-4 rounded-lg font-semibold hover:bg-gray-100 transition-all duration-200 shadow-lg hover:shadow-xl"
-                                >
-                                    <Search className="w-5 h-5" />
-                                    Tìm công thức ngay
-                                </Link>
-                                <Link
-                                    to="/about"
-                                    className="inline-flex items-center justify-center gap-2 bg-white/10 backdrop-blur-sm border-2 border-white text-white px-8 py-4 rounded-lg font-semibold hover:bg-white/20 transition-all duration-200"
-                                >
-                                    Tìm hiểu thêm
-                                    <ArrowRight className="w-5 h-5" />
-                                </Link>
-                            </div>
-                        </div>
-
-                        {/* Right Content - Stats */}
-                        <div className="grid grid-cols-2 gap-6">
-                            <div className="bg-white/10 backdrop-blur-sm p-6 rounded-2xl border border-white/20">
-                                <BookOpen className="w-10 h-10 mb-4" />
-                                <div className="text-4xl font-bold mb-2">10K+</div>
-                                <div className="text-white/80">Công thức</div>
-                            </div>
-                            <div className="bg-white/10 backdrop-blur-sm p-6 rounded-2xl border border-white/20">
-                                <Users className="w-10 h-10 mb-4" />
-                                <div className="text-4xl font-bold mb-2">50K+</div>
-                                <div className="text-white/80">Người dùng</div>
-                            </div>
-                            <div className="bg-white/10 backdrop-blur-sm p-6 rounded-2xl border border-white/20">
-                                <ChefHat className="w-10 h-10 mb-4" />
-                                <div className="text-4xl font-bold mb-2">1K+</div>
-                                <div className="text-white/80">Đầu bếp</div>
-                            </div>
-                            <div className="bg-white/10 backdrop-blur-sm p-6 rounded-2xl border border-white/20">
-                                <Star className="w-10 h-10 mb-4" />
-                                <div className="text-4xl font-bold mb-2">100K+</div>
-                                <div className="text-white/80">Đánh giá</div>
-                            </div>
-                        </div>
-                    </div>
+                <div className="flex items-center gap-2 text-white">
+                  <Clock size={20} />
+                  <span>{featuredRecipe.duration}</span>
                 </div>
-            </section>
-
-            {/* Features Section */}
-            <section className="py-20 px-4 bg-gray-50">
-                <div className="max-w-7xl mx-auto">
-                    <div className="text-center mb-16">
-                        <h2 className="text-4xl font-bold text-gray-900 mb-4">
-                            Tại sao chọn Kooka?
-                        </h2>
-                        <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-                            Chúng tôi mang đến trải nghiệm nấu ăn tuyệt vời với những tính năng độc đáo
-                        </p>
-                    </div>
-
-                    <div className="grid md:grid-cols-3 gap-8">
-                        {/* Feature 1 */}
-                        <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-200 group">
-                            <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-200">
-                                <Search className="w-8 h-8 text-white" />
-                            </div>
-                            <h3 className="text-2xl font-bold mb-4 text-gray-900">Tìm kiếm thông minh</h3>
-                            <p className="text-gray-600 leading-relaxed">
-                                Tìm công thức theo tên món ăn hoặc nguyên liệu có sẵn. 
-                                Hệ thống AI giúp bạn tìm món phù hợp nhất.
-                            </p>
-                        </div>
-
-                        {/* Feature 2 */}
-                        <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-200 group">
-                            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-200">
-                                <Clock className="w-8 h-8 text-white" />
-                            </div>
-                            <h3 className="text-2xl font-bold mb-4 text-gray-900">Lập kế hoạch bữa ăn</h3>
-                            <p className="text-gray-600 leading-relaxed">
-                                Tạo thực đơn tuần với các công thức yêu thích. 
-                                Quản lý bữa ăn dễ dàng và khoa học.
-                            </p>
-                        </div>
-
-                        {/* Feature 3 */}
-                        <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-200 group">
-                            <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-200">
-                                <Users className="w-8 h-8 text-white" />
-                            </div>
-                            <h3 className="text-2xl font-bold mb-4 text-gray-900">Cộng đồng sôi động</h3>
-                            <p className="text-gray-600 leading-relaxed">
-                                Chia sẻ công thức, đánh giá và học hỏi từ cộng đồng 
-                                yêu thích nấu ăn trên toàn quốc.
-                            </p>
-                        </div>
-                    </div>
+                <div className="flex items-center gap-2 text-white">
+                  <ChefHat size={20} />
+                  <span>{featuredRecipe.difficulty}</span>
                 </div>
-            </section>
+              </div>
 
-            {/* Popular Recipes */}
-            <PopularRecipes />
+              {/* Action buttons */}
+              <div className="flex gap-4">
+                <button className="bg-emerald-500 hover:bg-emerald-600 text-white pl-6 pr-8 py-3.5 rounded-full flex items-center gap-3 font-bold text-base transition-all duration-300 shadow-lg">
+                  <Play size={20} fill="white" />
+                  Xem Công Thức
+                </button>
+                <button className="bg-gray-800/60 backdrop-blur-sm hover:bg-gray-800/80 text-white p-3.5 rounded-full transition-all duration-300 border border-white/20">
+                  <Heart size={20} />
+                </button>
+                <button className="bg-gray-800/60 backdrop-blur-sm hover:bg-gray-800/80 text-white p-3.5 rounded-full transition-all duration-300 border border-white/20">
+                  <Info size={20} />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
 
-            {/* CTA Section */}
-            <section className="py-20 px-4 bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 text-white">
-                <div className="max-w-4xl mx-auto text-center">
-                    <TrendingUp className="w-16 h-16 mx-auto mb-6" />
-                    <h2 className="text-4xl md:text-5xl font-bold mb-6">
-                        Bắt đầu hành trình nấu nướng của bạn
-                    </h2>
-                    <p className="text-xl mb-8 text-white/90">
-                        Tham gia cộng đồng hàng nghìn người yêu thích nấu ăn. 
-                        Khám phá, chia sẻ và tạo nên những món ăn tuyệt vời.
-                    </p>
-                    <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                        <Link
-                            to="/register"
-                            className="inline-flex items-center justify-center gap-2 bg-white text-indigo-600 px-8 py-4 rounded-lg font-semibold hover:bg-gray-100 transition-all duration-200 shadow-lg hover:shadow-xl"
-                        >
-                            Đăng ký miễn phí
-                            <ArrowRight className="w-5 h-5" />
-                        </Link>
-                        <Link
-                            to="/recipes"
-                            className="inline-flex items-center justify-center gap-2 bg-white/10 backdrop-blur-sm border-2 border-white text-white px-8 py-4 rounded-lg font-semibold hover:bg-white/20 transition-all duration-200"
-                        >
-                            <Search className="w-5 h-5" />
-                            Khám phá công thức
-                        </Link>
-                    </div>
-                </div>
-            </section>
-        </>
-    );
+        {/* Thumbnail gallery at bottom right */}
+        <div className="absolute bottom-6 right-6 flex gap-2 z-10">
+          {featuredRecipes.map((recipe, index) => (
+            <div 
+              key={recipe.id}
+              onClick={() => setSelectedRecipeIndex(index)}
+              className={`w-20 h-14 rounded-md overflow-hidden cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-lg bg-black/20 backdrop-blur-sm ${
+                selectedRecipeIndex === index 
+                  ? 'border-2 border-yellow-400 scale-105' 
+                  : 'border-2 border-white/30'
+              }`}
+            >
+              <img 
+                src={recipe.image} 
+                alt={recipe.title}
+                className="w-full h-full object-cover opacity-90 hover:opacity-100 transition-opacity"
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* New Recipes Section */}
+      <div className="relative px-12 mb-20">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <Sparkles className="text-orange-500" size={28} />
+              <h2 className="text-gray-900 text-3xl font-bold">
+                Món Ăn Mới
+              </h2>
+            </div>
+            <p className="text-gray-600">Khám phá những công thức nấu ăn mới nhất</p>
+          </div>
+          <div className="flex gap-3">
+            <button
+              onClick={() => scrollContainer('left', 'new-recipes')}
+              className="bg-white text-gray-800 p-4 rounded-2xl hover:bg-gray-50 transition-all duration-300 shadow-lg border border-gray-200 transform hover:scale-110"
+            >
+              <ChevronLeft size={28} />
+            </button>
+            <button
+              onClick={() => scrollContainer('right', 'new-recipes')}
+              className="bg-white text-gray-800 p-4 rounded-2xl hover:bg-gray-50 transition-all duration-300 shadow-lg border border-gray-200 transform hover:scale-110"
+            >
+              <ChevronRight size={28} />
+            </button>
+          </div>
+        </div>
+        
+        <div
+          id="new-recipes"
+          className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide scroll-smooth"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        >
+          {newRecipes.map((recipe) => (
+            <RecipeCard key={recipe.id} recipe={recipe} />
+          ))}
+        </div>
+      </div>
+
+      {/* Popular Recipes Section */}
+      <div className="relative px-12 mb-20">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <TrendingUp className="text-pink-600" size={28} />
+              <h2 className="text-gray-900 text-3xl font-bold">
+                Món Ăn Phổ Biến
+              </h2>
+            </div>
+            <p className="text-gray-600">Những món ăn được yêu thích nhất</p>
+          </div>
+          <div className="flex gap-3">
+            <button
+              onClick={() => scrollContainer('left', 'popular-recipes')}
+              className="bg-white text-gray-800 p-4 rounded-2xl hover:bg-gray-50 transition-all duration-300 shadow-lg border border-gray-200 transform hover:scale-110"
+            >
+              <ChevronLeft size={28} />
+            </button>
+            <button
+              onClick={() => scrollContainer('right', 'popular-recipes')}
+              className="bg-white text-gray-800 p-4 rounded-2xl hover:bg-gray-50 transition-all duration-300 shadow-lg border border-gray-200 transform hover:scale-110"
+            >
+              <ChevronRight size={28} />
+            </button>
+          </div>
+        </div>
+        
+        <div
+          id="popular-recipes"
+          className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide scroll-smooth"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        >
+          {popularRecipes.map((recipe) => (
+            <RecipeCard key={recipe.id} recipe={recipe} />
+          ))}
+        </div>
+      </div>
+
+      {/* Footer decoration */}
+      <div className="h-32 bg-gradient-to-t from-gray-50 to-transparent"></div>
+    </div>
+  );
 };
 
 export default Home;
