@@ -6,149 +6,6 @@ import { useDispatch, useSelector } from "react-redux"
 import type { AppDispatch, RootState } from "../redux/store"
 import { fetchIngredients, type Ingredient } from "../redux/slices/recipeSlice"
 
-// Filter modal riêng cho tìm theo tên món (có cuisine)
-interface KeywordFilterModalProps {
-    isOpen: boolean
-    onClose: () => void
-    onApply: (filters: { selectedCategory: string; selectedTags: string[]; selectedCuisine: string }) => void
-    initialFilters?: { selectedCategory: string; selectedTags: string[]; selectedCuisine: string }
-}
-
-function KeywordFilterModal({ isOpen, onClose, onApply, initialFilters }: KeywordFilterModalProps) {
-    const [selectedCategory, setSelectedCategory] = useState(initialFilters?.selectedCategory || "")
-    const [selectedTags, setSelectedTags] = useState<string[]>(initialFilters?.selectedTags || [])
-    const [selectedCuisine, setSelectedCuisine] = useState(initialFilters?.selectedCuisine || "")
-    const modalRef = useRef<HTMLDivElement>(null)
-
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
-                onClose()
-            }
-        }
-        if (isOpen) {
-            document.addEventListener('mousedown', handleClickOutside)
-        }
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside)
-        }
-    }, [isOpen, onClose])
-
-    const categories = ["Buổi sáng", "Buổi trưa", "Ăn nhẹ", "Buổi tối"]
-    const tags = ["Món nước", "Món chay", "Món cay", "Món tráng miệng"]
-    const cuisines = ["Việt Nam", "Ý", "Nhật Bản", "Hàn Quốc", "Mỹ"]
-
-    const handleTagToggle = (tag: string) => {
-        setSelectedTags((prev) =>
-            prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
-        )
-    }
-
-    const handleApply = () => {
-        onApply({ selectedCategory, selectedTags, selectedCuisine })
-        onClose()
-    }
-
-    const handleClearFilters = () => {
-        setSelectedCategory("")
-        setSelectedTags([])
-        setSelectedCuisine("")
-        onApply({ selectedCategory: "", selectedTags: [], selectedCuisine: "" })
-    }
-
-    if (!isOpen) return null
-
-    return (
-        <div className="fixed inset-0 bg-gray-800/20 flex items-center justify-center z-50">
-            <div ref={modalRef} className="bg-white rounded-xl shadow-lg w-full max-w-lg p-6 relative">
-                <button onClick={onClose} className="absolute top-3 right-3 text-gray-500 hover:text-gray-700">
-                    <X className="w-5 h-5" />
-                </button>
-                <h2 className="text-xl font-bold mb-4">Bộ lọc tìm kiếm</h2>
-
-                <div className="mb-4 text-left">
-                    <p className="font-semibold mb-2">Tags</p>
-                    <div className="flex flex-wrap gap-2">
-                        {tags.map((tag) => (
-                            <button
-                                key={tag}
-                                className={`px-4 py-2 rounded-md border transition-colors ${selectedTags.includes(tag)
-                                        ? "bg-indigo-500 text-white border-indigo-500"
-                                        : "bg-white text-gray-700 border-gray-300 hover:border-indigo-500 hover:text-indigo-500"
-                                    }`}
-                                onClick={() => handleTagToggle(tag)}
-                            >
-                                {tag}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-
-                <div className="mb-4 text-left">
-                    <p className="font-semibold mb-2">Category</p>
-                    <div className="relative">
-                        <select
-                            value={selectedCategory}
-                            onChange={(e) => setSelectedCategory(e.target.value)}
-                            className="w-full px-4 py-3 bg-white border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-700 cursor-pointer shadow-sm"
-                        >
-                            <option value="">All Categories</option>
-                            {categories.map((cat) => (
-                                <option key={cat} value={cat}>
-                                    {cat}
-                                </option>
-                            ))}
-                        </select>
-                        <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-                            <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                            </svg>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="mb-4 text-left">
-                    <p className="font-semibold mb-2">Cuisine</p>
-                    <div className="relative">
-                        <select
-                            value={selectedCuisine}
-                            onChange={(e) => setSelectedCuisine(e.target.value)}
-                            className="w-full px-4 py-3 bg-white border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-700 cursor-pointer shadow-sm"
-                        >
-                            <option value="">All Cuisines</option>
-                            {cuisines.map((cuisine) => (
-                                <option key={cuisine} value={cuisine}>
-                                    {cuisine}
-                                </option>
-                            ))}
-                        </select>
-                        <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-                            <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                            </svg>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="flex gap-3">
-                    <button
-                        onClick={handleClearFilters}
-                        className="w-1/3 border border-gray-300 text-gray-700 hover:bg-gray-100 py-3 rounded-lg font-semibold transition-colors"
-                    >
-                        Clear Filters
-                    </button>
-                    <button
-                        onClick={handleApply}
-                        className="w-2/3 bg-gradient-to-r from-indigo-500 to-blue-500 hover:from-indigo-600 hover:to-blue-600 text-white py-3 rounded-lg font-semibold"
-                    >
-                        Apply Filters
-                    </button>
-                </div>
-            </div>
-        </div>
-    )
-}
-
 interface CombinedRecipeSearchProps {
     onSearch: (params: {
         keyword?: string
@@ -174,32 +31,17 @@ export default function CombinedRecipeSearch({ onSearch }: CombinedRecipeSearchP
     const [showSuggestions, setShowSuggestions] = useState(false)
     const [showNoMatch, setShowNoMatch] = useState(false)
 
-    const [keywordFilters, setKeywordFilters] = useState({
+    const [filters, setFilters] = useState({
         selectedCategory: "",
         selectedTags: [] as string[],
         selectedCuisine: "",
     })
 
-    const [ingredientFilters, setIngredientFilters] = useState({
-        selectedCategory: "",
-        selectedTags: [] as string[],
-        selectedCuisine: "",
-    })
-
-    const [isKeywordFilterOpen, setIsKeywordFilterOpen] = useState(false)
-    const [isIngredientFilterOpen, setIsIngredientFilterOpen] = useState(false)
+    const [isFilterOpen, setIsFilterOpen] = useState(false)
     const [isIngredientModalOpen, setIsIngredientModalOpen] = useState(false)
 
     const suggestionsRef = useRef<HTMLDivElement>(null)
     const searchInputRef = useRef<HTMLInputElement>(null)
-
-    // Reset search khi xóa hết keyword
-    useEffect(() => {
-        if (searchMode === "keyword" && !keyword.trim()) {
-            // Nếu đang ở mode keyword và keyword rỗng, reset về null
-            onSearch(null)
-        }
-    }, [keyword, searchMode]) // eslint-disable-line react-hooks/exhaustive-deps
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -259,13 +101,7 @@ export default function CombinedRecipeSearch({ onSearch }: CombinedRecipeSearchP
     }
 
     const handleRemoveIngredient = (ingredient: string) => {
-        const newIngredients = selectedIngredients.filter((item) => item !== ingredient)
-        setSelectedIngredients(newIngredients)
-        
-        // Nếu xóa hết ingredients, reset về null
-        if (newIngredients.length === 0) {
-            onSearch(null as any)
-        }
+        setSelectedIngredients(prev => prev.filter(item => item !== ingredient))
     }
 
     const handleIngredientSearchKeyDown = (e: React.KeyboardEvent) => {
@@ -290,13 +126,10 @@ export default function CombinedRecipeSearch({ onSearch }: CombinedRecipeSearchP
         if (keyword.trim()) {
             onSearch({
                 keyword,
-                cuisine: keywordFilters.selectedCuisine,
-                category: keywordFilters.selectedCategory,
-                tags: keywordFilters.selectedTags,
+                cuisine: filters.selectedCuisine,
+                category: filters.selectedCategory,
+                tags: filters.selectedTags,
             })
-        } else {
-            // Reset về null khi keyword rỗng
-            onSearch(null as any)
         }
     }
 
@@ -304,8 +137,9 @@ export default function CombinedRecipeSearch({ onSearch }: CombinedRecipeSearchP
         if (selectedIngredients.length > 0) {
             onSearch({
                 ingredients: selectedIngredients,
-                category: ingredientFilters.selectedCategory,
-                tags: ingredientFilters.selectedTags,
+                cuisine: filters.selectedCuisine,
+                category: filters.selectedCategory,
+                tags: filters.selectedTags,
             })
         }
     }
@@ -315,12 +149,8 @@ export default function CombinedRecipeSearch({ onSearch }: CombinedRecipeSearchP
         setIsIngredientModalOpen(false)
     }
 
-    const getKeywordFilterCount = () => {
-        return (keywordFilters.selectedCategory ? 1 : 0) + keywordFilters.selectedTags.length + (keywordFilters.selectedCuisine ? 1 : 0)
-    }
-
-    const getIngredientFilterCount = () => {
-        return (ingredientFilters.selectedCategory ? 1 : 0) + ingredientFilters.selectedTags.length
+    const getFilterCount = () => {
+        return (filters.selectedCategory ? 1 : 0) + filters.selectedTags.length + (filters.selectedCuisine ? 1 : 0)
     }
 
     return (
@@ -395,14 +225,14 @@ export default function CombinedRecipeSearch({ onSearch }: CombinedRecipeSearchP
                             </button>
                             <button
                                 type="button"
-                                onClick={() => setIsKeywordFilterOpen(true)}
+                                onClick={() => setIsFilterOpen(true)}
                                 className="h-12 px-6 bg-white border border-gray-300 rounded-lg flex items-center justify-center text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-500 transition-all duration-200 relative"
                             >
                                 <Filter className="w-4 h-4 mr-2" />
                                 Filter
-                                {getKeywordFilterCount() > 0 && (
+                                {getFilterCount() > 0 && (
                                     <span className="absolute -top-2 -right-2 bg-indigo-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                                        {getKeywordFilterCount()}
+                                        {getFilterCount()}
                                     </span>
                                 )}
                             </button>
@@ -429,7 +259,7 @@ export default function CombinedRecipeSearch({ onSearch }: CombinedRecipeSearchP
                                     <Search className="w-5 h-5 text-gray-400 absolute left-3 top-3.5" />
 
                                     {showNoMatch && (
-                                        <div className="absolute -bottom-8 left-0 text-sm text-red-500">
+                                        <div className="absolute -bottom-[4.5] left-0 text-sm text-red-500">
                                             Không tìm thấy nguyên liệu phù hợp
                                         </div>
                                     )}
@@ -467,14 +297,14 @@ export default function CombinedRecipeSearch({ onSearch }: CombinedRecipeSearchP
 
                                 <button
                                     type="button"
-                                    onClick={() => setIsIngredientFilterOpen(true)}
+                                    onClick={() => setIsFilterOpen(true)}
                                     className="h-12 px-6 bg-white border border-gray-300 rounded-lg flex items-center justify-center text-gray-700 hover:bg-orange-50 hover:text-orange-600 hover:border-orange-500 transition-all duration-200 relative"
                                 >
                                     <Filter className="w-4 h-4 mr-2" />
                                     Filter
-                                    {getIngredientFilterCount() > 0 && (
+                                    {getFilterCount() > 0 && (
                                         <span className="absolute -top-2 -right-2 bg-orange-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                                            {getIngredientFilterCount()}
+                                            {getFilterCount()}
                                         </span>
                                     )}
                                 </button>
@@ -535,24 +365,15 @@ export default function CombinedRecipeSearch({ onSearch }: CombinedRecipeSearchP
                 )}
             </div>
 
-            <KeywordFilterModal
-                isOpen={isKeywordFilterOpen}
-                onClose={() => setIsKeywordFilterOpen(false)}
-                onApply={(filters) => {
-                    setKeywordFilters(filters)
-                    setIsKeywordFilterOpen(false)
-                }}
-                initialFilters={keywordFilters}
-            />
-
             <FilterModal
-                isOpen={isIngredientFilterOpen}
-                onClose={() => setIsIngredientFilterOpen(false)}
-                onApply={(filters) => {
-                    setIngredientFilters(filters)
-                    setIsIngredientFilterOpen(false)
+                isOpen={isFilterOpen}
+                onClose={() => setIsFilterOpen(false)}
+                onApply={(newFilters) => {
+                    setFilters(newFilters)
+                    setIsFilterOpen(false)
                 }}
-                initialFilters={ingredientFilters}
+                initialFilters={filters}
+                colorScheme={searchMode === "keyword" ? "indigo" : "orange"}
             />
 
             <IngredientSelectorModal

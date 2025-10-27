@@ -1,5 +1,5 @@
 import React from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Search,
   Heart,
@@ -21,6 +21,7 @@ export default function Header() {
   const { t } = useLanguage();
   const dispatch = useDispatch<AppDispatch>();
   const location = useLocation();
+  const navigate = useNavigate();
 
   const { token, user } = useSelector((state: RootState) => state.auth);
   const { profile } = useSelector((state: RootState) => state.user);
@@ -54,6 +55,15 @@ export default function Header() {
   // 👉 Nếu đang ở trang Register, luôn hiển thị trạng thái chưa login
   const forceGuest = location.pathname === "/register";
 
+  // Handler để kiểm tra đăng nhập trước khi vào Meal Planner
+  const handleMealPlannerClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    if (!token || !user) {
+      e.preventDefault();
+      alert(t("header.loginRequired") || "Please login to access Meal Planner");
+      navigate("/login");
+    }
+  };
+
   return (
     <header className="bg-white border-b border-gray-200 px-4 py-3">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
@@ -77,7 +87,11 @@ export default function Header() {
           <Link to="/recipes" className="text-gray-600 hover:text-gray-900">
             {t("header.recipes")}
           </Link>
-          <Link to="/meal-planner" className="text-gray-600 hover:text-gray-900">
+          <Link 
+            to="/meal-planner" 
+            onClick={handleMealPlannerClick}
+            className="text-gray-600 hover:text-gray-900"
+          >
             {t("header.mealPlanner")}
           </Link>
           <Link to="/categories" className="text-gray-600 hover:text-gray-900">

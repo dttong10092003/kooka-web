@@ -6,6 +6,7 @@ interface FilterModalProps {
     onClose: () => void
     onApply: (filters: FilterData) => void
     initialFilters?: FilterData
+    colorScheme?: "orange" | "indigo"
 }
 
 export interface FilterData {
@@ -14,11 +15,29 @@ export interface FilterData {
     selectedCuisine: string
 }
 
-export default function FilterModal({ isOpen, onClose, onApply, initialFilters }: FilterModalProps) {
+export default function FilterModal({ isOpen, onClose, onApply, initialFilters, colorScheme = "orange" }: FilterModalProps) {
     // State for filters with initial values from props or defaults
     const [selectedCategory, setSelectedCategory] = useState(initialFilters?.selectedCategory || "")
     const [selectedTags, setSelectedTags] = useState<string[]>(initialFilters?.selectedTags || [])
     const [selectedCuisine, setSelectedCuisine] = useState(initialFilters?.selectedCuisine || "")
+
+    // Color classes based on colorScheme
+    const colors = {
+        orange: {
+            tagActive: "bg-orange-500 text-white border-orange-500",
+            tagHover: "hover:border-orange-500 hover:text-orange-500",
+            focusRing: "focus:ring-orange-500 focus:border-orange-500",
+            buttonGradient: "bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
+        },
+        indigo: {
+            tagActive: "bg-indigo-500 text-white border-indigo-500",
+            tagHover: "hover:border-indigo-500 hover:text-indigo-500",
+            focusRing: "focus:ring-indigo-500 focus:border-indigo-500",
+            buttonGradient: "bg-gradient-to-r from-indigo-500 to-blue-500 hover:from-indigo-600 hover:to-blue-600"
+        }
+    }
+
+    const currentColors = colors[colorScheme]
 
     // Function to clear all filters
     const handleClearFilters = () => {
@@ -96,8 +115,8 @@ export default function FilterModal({ isOpen, onClose, onApply, initialFilters }
                             <button
                                 key={tag}
                                 className={`px-4 py-2 rounded-md border transition-colors ${selectedTags.includes(tag)
-                                        ? "bg-orange-500 text-white border-orange-500"
-                                        : "bg-white text-gray-700 border-gray-300 hover:border-orange-500 hover:text-orange-500"
+                                        ? currentColors.tagActive
+                                        : `bg-white text-gray-700 border-gray-300 ${currentColors.tagHover}`
                                     }`}
                                 onClick={() => handleTagToggle(tag)}
                             >
@@ -114,7 +133,7 @@ export default function FilterModal({ isOpen, onClose, onApply, initialFilters }
                         <select 
                             value={selectedCategory}
                             onChange={(e) => setSelectedCategory(e.target.value)}
-                            className="w-full px-4 py-3 bg-white border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-700 cursor-pointer shadow-sm"
+                            className={`w-full px-4 py-3 bg-white border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-2 ${currentColors.focusRing} text-gray-700 cursor-pointer shadow-sm`}
                         >
                             <option value="">All Categories</option>
                             {categories.map((cat) => (
@@ -138,7 +157,7 @@ export default function FilterModal({ isOpen, onClose, onApply, initialFilters }
                         <select 
                             value={selectedCuisine}
                             onChange={(e) => setSelectedCuisine(e.target.value)}
-                            className="w-full px-4 py-3 bg-white border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-700 cursor-pointer shadow-sm"
+                            className={`w-full px-4 py-3 bg-white border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-2 ${currentColors.focusRing} text-gray-700 cursor-pointer shadow-sm`}
                         >
                             <option value="">All Cuisines</option>
                             {cuisines.map((cuisine) => (
@@ -165,7 +184,7 @@ export default function FilterModal({ isOpen, onClose, onApply, initialFilters }
                     </button>
                     <button
                         onClick={handleApply}
-                        className="w-2/3 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white py-3 rounded-lg font-semibold"
+                        className={`w-2/3 ${currentColors.buttonGradient} text-white py-3 rounded-lg font-semibold`}
                     >
                         Apply Filters
                     </button>
