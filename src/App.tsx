@@ -12,6 +12,7 @@ import RegisterPage from "./pages/RegisterPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import AdminDashboard from "./pages/AdminDashboard";
+import DataManagement from "./pages/DataManagement";
 import Footer from "./components/Footer";
 import Recipes from "./pages/Recipes";
 import RecipeDetail from "./pages/RecipeDetail";
@@ -70,6 +71,7 @@ function App() {
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/auth/google/callback" element={<GoogleCallback />} />
         <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/admin/data-management" element={<DataManagement />} />
         <Route path="/about" element={<About />} />
         <Route path="/meal-planner" element={<MealPlannerPage />} />
 

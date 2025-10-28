@@ -1,5 +1,8 @@
 import { X } from "lucide-react"
 import { useState, useRef, useEffect } from "react"
+import { useSelector, useDispatch } from "react-redux"
+import type { RootState, AppDispatch } from "../redux/store"
+import { fetchCategories, fetchTags, fetchCuisines } from "../redux/slices/recipeSlice"
 
 interface FilterModalProps {
     isOpen: boolean
@@ -16,10 +19,28 @@ export interface FilterData {
 }
 
 export default function FilterModal({ isOpen, onClose, onApply, initialFilters, colorScheme = "orange" }: FilterModalProps) {
+    const dispatch = useDispatch<AppDispatch>()
+    
+    // Get data from Redux
+    const { categories, tags, cuisines } = useSelector((state: RootState) => state.recipes)
+    
     // State for filters with initial values from props or defaults
     const [selectedCategory, setSelectedCategory] = useState(initialFilters?.selectedCategory || "")
     const [selectedTags, setSelectedTags] = useState<string[]>(initialFilters?.selectedTags || [])
     const [selectedCuisine, setSelectedCuisine] = useState(initialFilters?.selectedCuisine || "")
+
+    // Fetch data when component mounts if not already loaded
+    useEffect(() => {
+        if (categories.length === 0) {
+            dispatch(fetchCategories())
+        }
+        if (tags.length === 0) {
+            dispatch(fetchTags())
+        }
+        if (cuisines.length === 0) {
+            dispatch(fetchCuisines())
+        }
+    }, [dispatch, categories, tags, cuisines])
 
     // Color classes based on colorScheme
     const colors = {
@@ -73,10 +94,6 @@ export default function FilterModal({ isOpen, onClose, onApply, initialFilters, 
         }
     }, [isOpen, onClose])
 
-    const categories = ["Buổi sáng", "Buổi trưa", "Ăn nhẹ", "Buổi tối"]
-    const tags = ["Món nước", "Món chay", "Món cay", "Món tráng miệng"]
-    const cuisines = ["Việt Nam", "Ý", "Nhật Bản", "Hàn Quốc", "Mỹ"]
-
     const handleTagToggle = (tag: string) => {
         setSelectedTags((prev) =>
             prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
@@ -111,18 +128,22 @@ export default function FilterModal({ isOpen, onClose, onApply, initialFilters, 
                 <div className="mb-4 text-left">
                     <p className="font-semibold mb-2">Tags</p>
                     <div className="flex flex-wrap gap-2">
-                        {tags.map((tag) => (
-                            <button
-                                key={tag}
-                                className={`px-4 py-2 rounded-md border transition-colors ${selectedTags.includes(tag)
-                                        ? currentColors.tagActive
-                                        : `bg-white text-gray-700 border-gray-300 ${currentColors.tagHover}`
-                                    }`}
-                                onClick={() => handleTagToggle(tag)}
-                            >
-                                {tag}
-                            </button>
-                        ))}
+                        {tags.length > 0 ? (
+                            tags.map((tag) => (
+                                <button
+                                    key={tag._id}
+                                    className={`px-4 py-2 rounded-md border transition-colors ${selectedTags.includes(tag.name)
+                                            ? currentColors.tagActive
+                                            : `bg-white text-gray-700 border-gray-300 ${currentColors.tagHover}`
+                                        }`}
+                                    onClick={() => handleTagToggle(tag.name)}
+                                >
+                                    {tag.name}
+                                </button>
+                            ))
+                        ) : (
+                            <p className="text-sm text-gray-500">No tags available</p>
+                        )}
                     </div>
                 </div>
 
@@ -137,8 +158,8 @@ export default function FilterModal({ isOpen, onClose, onApply, initialFilters, 
                         >
                             <option value="">All Categories</option>
                             {categories.map((cat) => (
-                                <option key={cat} value={cat}>
-                                    {cat}
+                                <option key={cat._id} value={cat.name}>
+                                    {cat.name}
                                 </option>
                             ))}
                         </select>
@@ -161,8 +182,8 @@ export default function FilterModal({ isOpen, onClose, onApply, initialFilters, 
                         >
                             <option value="">All Cuisines</option>
                             {cuisines.map((cuisine) => (
-                                <option key={cuisine} value={cuisine}>
-                                    {cuisine}
+                                <option key={cuisine._id} value={cuisine.name}>
+                                    {cuisine.name}
                                 </option>
                             ))}
                         </select>

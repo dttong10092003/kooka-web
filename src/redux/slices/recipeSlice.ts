@@ -75,7 +75,8 @@ interface KeywordSearchPayload {
 
 // ==== State ====
 interface RecipeState {
-    recipes: Recipe[];
+    recipes: Recipe[]; // Tất cả recipes từ fetchRecipes
+    searchResults: Recipe[]; // Kết quả tìm kiếm từ searchRecipes/searchRecipesByKeyword
     ingredients: Ingredient[];
     ingredientTypes: IngredientType[];
     tags: Tag[];
@@ -87,6 +88,7 @@ interface RecipeState {
 
 const initialState: RecipeState = {
     recipes: [],
+    searchResults: [],
     ingredients: [],
     ingredientTypes: [],
     tags: [],
@@ -308,11 +310,11 @@ const recipeSlice = createSlice({
                 state.loading = false;
             })
             .addCase(searchRecipes.fulfilled, (state, action: PayloadAction<Recipe[]>) => {
-                state.recipes = action.payload;
+                state.searchResults = action.payload; // Lưu vào searchResults thay vì recipes
                 state.loading = false;
             })
             .addCase(searchRecipesByKeyword.fulfilled, (state, action: PayloadAction<Recipe[]>) => {
-                state.recipes = action.payload;
+                state.searchResults = action.payload; // Lưu vào searchResults thay vì recipes
                 state.loading = false;
             })
             .addCase(getRecipeById.fulfilled, (state, action: PayloadAction<Recipe>) => {

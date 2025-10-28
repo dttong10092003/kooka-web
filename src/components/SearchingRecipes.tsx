@@ -29,7 +29,7 @@ export default function SearchingRecipes({
     searchParams,
 }: SearchingRecipesProps) {
     const dispatch = useDispatch<AppDispatch>()
-    const { recipes, loading, error } = useSelector((state: RootState) => state.recipes)
+    const { searchResults, loading, error } = useSelector((state: RootState) => state.recipes)
     const user = useSelector((state: RootState) => state.auth.user)
 
     useEffect(() => {
@@ -73,13 +73,13 @@ export default function SearchingRecipes({
 
     // Check favorites for all recipes when user is logged in
     useEffect(() => {
-        if (user && recipes.length > 0) {
-            const recipeIds = recipes.map(recipe => recipe._id)
+        if (user && searchResults.length > 0) {
+            const recipeIds = searchResults.map(recipe => recipe._id)
             dispatch(checkMultipleRecipes({ recipeIds }))
         }
-    }, [user, recipes, dispatch])
+    }, [user, searchResults, dispatch])
 
-    console.log("SearchingRecipes - recipes:", recipes)
+    console.log("SearchingRecipes - searchResults:", searchResults)
     console.log("SearchingRecipes - loading:", loading)
     console.log("SearchingRecipes - error:", error)
 
@@ -102,8 +102,8 @@ export default function SearchingRecipes({
 
                 {/* Recipe Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {recipes.length > 0 ? (
-                        recipes.map((recipe) => (
+                    {searchResults.length > 0 ? (
+                        searchResults.map((recipe) => (
                             <RecipeCard
                                 key={recipe._id}
                                 id={recipe._id}
