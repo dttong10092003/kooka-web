@@ -1,7 +1,6 @@
 import React from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
-  Search,
   Heart,
   User,
   ChefHat,
@@ -104,19 +103,6 @@ export default function Header() {
 
         {/* Actions */}
         <div className="flex items-center gap-3">
-          <button
-            type="button"
-            className="text-gray-600 hover:text-orange-500 transition-colors duration-200"
-          >
-            <Search className="w-5 h-5" />
-          </button>
-          <button
-            type="button"
-            className="text-gray-600 hover:text-orange-500 transition-colors duration-200"
-          >
-            <Heart className="w-5 h-5" />
-          </button>
-
           {/* User state */}
           {!forceGuest && token && user && location.pathname !== "/login" ? (
             <div className="relative">
