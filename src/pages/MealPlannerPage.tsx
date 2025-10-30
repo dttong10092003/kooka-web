@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import type { RootState, AppDispatch } from '../redux/store';
 import { fetchRecipes } from '../redux/slices/recipeSlice';
@@ -14,10 +14,35 @@ import { Calendar, Plus, ChefHat, Clock, Users, Star, Edit, Trash2, ShoppingCart
 import type { Recipe } from '../redux/slices/recipeSlice';
 import { useLanguage } from '../contexts/LanguageContext';
 
+interface MealPlanDay {
+  morning?: {
+    recipeId: string;
+    recipeName: string;
+    recipeImage?: string;
+  };
+  noon?: {
+    recipeId: string;
+    recipeName: string;
+    recipeImage?: string;
+  };
+  evening?: {
+    recipeId: string;
+    recipeName: string;
+    recipeImage?: string;
+  };
+}
+
+interface AIGeneratedPlan {
+  mealPlanType: string;
+  duration: number;
+  plans: MealPlanDay[]; // Backend trả về plans array (7 ngày), không có date
+  totalRecipes: number;
+}
 
 const MealPlannerPage: React.FC = () => {
   const { language } = useLanguage();
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useDispatch<AppDispatch>();
   const { recipes, loading: recipesLoading } = useSelector((state: RootState) => state.recipes);
   const { mealPlans } = useSelector((state: RootState) => state.mealPlans);
@@ -40,6 +65,10 @@ const MealPlannerPage: React.FC = () => {
   const [justCreatedPlanId, setJustCreatedPlanId] = useState<string | null>(null);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [hoveredDate, setHoveredDate] = useState<Date | null>(null);
+  const [aiGeneratedPlans, setAiGeneratedPlans] = useState<MealPlanDay[] | null>(null); // Lưu tạm plans từ AI
+  
+  // Ref for auto-scroll to meal plan table
+  const mealPlanTableRef = useRef<HTMLDivElement>(null);
 
   // Load recipes and meal plans on mount
   useEffect(() => {
@@ -50,6 +79,61 @@ const MealPlannerPage: React.FC = () => {
       dispatch(fetchMealPlansByUser(user._id));
     }
   }, [dispatch, recipes.length, user]);
+
+  // Handle AI-generated meal plan from chatbot
+  useEffect(() => {
+    const state = location.state as { aiGeneratedPlan?: AIGeneratedPlan };
+    
+    if (state?.aiGeneratedPlan) {
+      console.log('🤖 Received AI-generated meal plan:', state.aiGeneratedPlan);
+      
+      // Check if user is logged in
+      if (!user?._id) {
+        alert(language === 'vi' 
+          ? 'Vui lòng đăng nhập để sử dụng tính năng này!' 
+          : 'Please login to use this feature!');
+        navigate('/login');
+        return;
+      }
+
+      // Check pending plans limit (max 3)
+      const pendingPlans = mealPlans.filter(p => p.status === 'pending');
+      if (pendingPlans.length >= 3) {
+        alert(language === 'vi' 
+          ? 'Bạn đã có 3 kế hoạch chưa hoàn thành. Vui lòng hoàn thành hoặc xóa bớt trước khi tạo mới.' 
+          : 'You already have 3 pending plans. Please complete or delete some before creating a new one.');
+        
+        // Clear navigation state
+        navigate('/meal-planner', { replace: true, state: {} });
+        return;
+      }
+
+      // Set view mode to creating
+      setViewMode('creating');
+      setCurrentMealPlanId(null);
+      
+      // Lưu tạm AI-generated plans (chưa có date)
+      setAiGeneratedPlans(state.aiGeneratedPlan.plans);
+      
+      // Chưa set editingPlans ở đây, sẽ set sau khi user chọn startDate
+      setEditingPlans([]);
+      setHasUnsavedChanges(false);
+      
+      // Open start date modal for user to select start date
+      setShowStartDateModal(true);
+      
+      // Auto-scroll to meal plan table for better UX
+      setTimeout(() => {
+        mealPlanTableRef.current?.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'start' 
+        });
+      }, 300); // Small delay to ensure modal is rendered
+      
+      // Clear navigation state to prevent re-triggering
+      navigate('/meal-planner', { replace: true, state: {} });
+    }
+  }, [location.state, user, mealPlans, language, navigate]);
 
   // Sort meal plans by startDate (pending first, then by date)
   const sortedMealPlans = [...mealPlans].sort((a, b) => {
@@ -279,10 +363,37 @@ const MealPlannerPage: React.FC = () => {
       return;
     }
     
+    // Nếu có AI-generated plans, thêm date vào mỗi plan
+    if (aiGeneratedPlans && aiGeneratedPlans.length > 0) {
+      const plansWithDate: DayPlan[] = aiGeneratedPlans.map((plan, index) => {
+        const date = new Date(selectedStartDate);
+        date.setDate(selectedStartDate.getDate() + index);
+        
+        // Format date without timezone issues
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const dateString = `${year}-${month}-${day}`;
+        
+        return {
+          date: dateString,
+          morning: plan.morning || {},
+          noon: plan.noon || {},
+          evening: plan.evening || {}
+        };
+      });
+      
+      setEditingPlans(plansWithDate);
+      setHasUnsavedChanges(true); // Có sẵn plans từ AI
+      setAiGeneratedPlans(null); // Clear AI plans đã dùng
+    } else {
+      // Tạo plan thủ công (không có AI)
+      setEditingPlans([]);
+      setHasUnsavedChanges(false);
+    }
+    
     setViewMode('creating');
     setCurrentMealPlanId(null);
-    setEditingPlans([]);
-    setHasUnsavedChanges(false);
     setShowStartDateModal(false);
     setStartDateError('');
   };
@@ -293,6 +404,7 @@ const MealPlannerPage: React.FC = () => {
     setStartDateError('');
     setEditingPlans([]);
     setHasUnsavedChanges(false);
+    setAiGeneratedPlans(null); // Clear AI plans nếu cancel
     
     if (sortedMealPlans.length > 0) {
       setCurrentMealPlanIndex(0);
@@ -306,9 +418,14 @@ const MealPlannerPage: React.FC = () => {
   };
 
   const getDayPlan = (date: string): DayPlan => {
-    const existing = editingPlans.find(plan => 
-      new Date(plan.date).toISOString().split('T')[0] === date
-    );
+    const existing = editingPlans.find(plan => {
+      // Format date without timezone issues
+      const planDate = new Date(plan.date);
+      const year = planDate.getFullYear();
+      const month = String(planDate.getMonth() + 1).padStart(2, '0');
+      const day = String(planDate.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}` === date;
+    });
     if (existing) return existing;
     
     return {
@@ -333,9 +450,14 @@ const MealPlannerPage: React.FC = () => {
     }
     
     setEditingPlans(prev => {
-      const existing = prev.find(plan => 
-        new Date(plan.date).toISOString().split('T')[0] === date
-      );
+      const existing = prev.find(plan => {
+        // Format date without timezone issues
+        const planDate = new Date(plan.date);
+        const year = planDate.getFullYear();
+        const month = String(planDate.getMonth() + 1).padStart(2, '0');
+        const day = String(planDate.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}` === date;
+      });
       
       const meal: Meal = {
         recipeId: recipe._id,
@@ -344,11 +466,16 @@ const MealPlannerPage: React.FC = () => {
       };
 
       if (existing) {
-        return prev.map(plan => 
-          new Date(plan.date).toISOString().split('T')[0] === date
+        return prev.map(plan => {
+          // Format date without timezone issues
+          const planDate = new Date(plan.date);
+          const year = planDate.getFullYear();
+          const month = String(planDate.getMonth() + 1).padStart(2, '0');
+          const day = String(planDate.getDate()).padStart(2, '0');
+          return `${year}-${month}-${day}` === date
             ? { ...plan, [mealType]: meal }
-            : plan
-        );
+            : plan;
+        });
       } else {
         return [...prev, {
           date,
@@ -370,11 +497,16 @@ const MealPlannerPage: React.FC = () => {
     }
     
     setEditingPlans(prev => 
-      prev.map(plan => 
-        new Date(plan.date).toISOString().split('T')[0] === date
+      prev.map(plan => {
+        // Format date without timezone issues
+        const planDate = new Date(plan.date);
+        const year = planDate.getFullYear();
+        const month = String(planDate.getMonth() + 1).padStart(2, '0');
+        const day = String(planDate.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}` === date
           ? { ...plan, [mealType]: {} }
-          : plan
-      ).filter(plan => plan.morning?.recipeId || plan.noon?.recipeId || plan.evening?.recipeId)
+          : plan;
+      }).filter(plan => plan.morning?.recipeId || plan.noon?.recipeId || plan.evening?.recipeId)
     );
     setHasUnsavedChanges(true);
   };
@@ -412,8 +544,11 @@ const MealPlannerPage: React.FC = () => {
           return;
         }
         
-        // Format startDate - use ISO string split at 'T' to get just the date part
-        const formattedStartDate = selectedStartDate.toISOString().split('T')[0];
+        // Format startDate - use local date format to avoid timezone issues
+        const year = selectedStartDate.getFullYear();
+        const month = String(selectedStartDate.getMonth() + 1).padStart(2, '0');
+        const day = String(selectedStartDate.getDate()).padStart(2, '0');
+        const formattedStartDate = `${year}-${month}-${day}`;
         
         const newPlan = await dispatch(createMealPlan({
           userId: user._id,
@@ -755,7 +890,7 @@ const MealPlannerPage: React.FC = () => {
                   <div className="w-10"></div>
                 )}
 
-                <div className="text-center flex-1">
+                <div ref={mealPlanTableRef} className="text-center flex-1">
                   <h2 className="text-xl font-bold text-gray-900">
                     {viewMode === 'viewing' && currentPlan ? (
                       <>
@@ -978,7 +1113,12 @@ const MealPlannerPage: React.FC = () => {
                                 </div>
                               </td>
                               {weekDates.map((date) => {
-                                const dateStr = date.toISOString().split('T')[0];
+                                // Format date without timezone issues
+                                const year = date.getFullYear();
+                                const month = String(date.getMonth() + 1).padStart(2, '0');
+                                const day = String(date.getDate()).padStart(2, '0');
+                                const dateStr = `${year}-${month}-${day}`;
+                                
                                 const dayPlan = getDayPlan(dateStr);
                                 const meal = dayPlan[mealType.id];
                                 const recipe = getRecipeFromMeal(meal);

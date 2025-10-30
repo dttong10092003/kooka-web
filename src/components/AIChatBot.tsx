@@ -21,6 +21,31 @@ interface Recipe {
     short?: string; // Mô tả ngắn
 }
 
+interface MealPlanDay {
+    morning?: {
+        recipeId: string;
+        recipeName: string;
+        recipeImage?: string;
+    };
+    noon?: {
+        recipeId: string;
+        recipeName: string;
+        recipeImage?: string;
+    };
+    evening?: {
+        recipeId: string;
+        recipeName: string;
+        recipeImage?: string;
+    };
+}
+
+interface MealPlan {
+    mealPlanType: string;
+    duration: number;
+    plans: MealPlanDay[]; // Backend trả về plans, không có date
+    totalRecipes: number;
+}
+
 interface Message {
     id: string;
     text: string;
@@ -28,6 +53,7 @@ interface Message {
     timestamp: Date;
     recipes?: Recipe[];
     images?: string[]; // Base64 images
+    mealPlan?: MealPlan; // AI-generated meal plan
 }
 
 const AIChatBot: React.FC = () => {
@@ -140,12 +166,17 @@ const AIChatBot: React.FC = () => {
     }, [isOpen, sessionId]);
 
     // Send message to backend API
-    const sendMessageToAPI = async (userMessage: string, images?: string[]): Promise<{ message: string; recipes: Recipe[] }> => {
+    const sendMessageToAPI = async (userMessage: string, images?: string[]): Promise<{ message: string; recipes: Recipe[]; mealPlan?: MealPlan }> => {
         try {
             setError('');
 
             // Backend expects imageBase64 (single string), not images array
-            const requestBody: any = {
+            const requestBody: {
+                message?: string;
+                sessionId: string;
+                userId: string | null;
+                imageBase64?: string;
+            } = {
                 message: userMessage || undefined,
                 sessionId: sessionId,
                 userId: user?._id || null
@@ -168,6 +199,7 @@ const AIChatBot: React.FC = () => {
                 // - Chỉ trả về recipe card khi có 1 món chi tiết (structuredData.recipe)
                 // - Nhiều món sẽ được hiển thị trong text response, không có cards (structuredData.recipes = [])
                 let recipes: Recipe[] = [];
+                let mealPlan: MealPlan | undefined = undefined;
                 
                 if (response.data.structuredData) {
                     // Chỉ hiển thị card khi có 1 recipe chi tiết
@@ -176,15 +208,21 @@ const AIChatBot: React.FC = () => {
                     }
                     // structuredData.recipes sẽ là [] khi có nhiều món
                     // Thông tin được hiển thị trong text response của chatbot
+                    
+                    // Handle meal plan data
+                    if (response.data.structuredData.generatedMealPlan) {
+                        mealPlan = response.data.structuredData.generatedMealPlan;
+                    }
                 }
                 
-                return { message, recipes };
+                return { message, recipes, mealPlan };
             } else {
                 throw new Error(response.data.error || 'Failed to get response');
             }
-        } catch (err: any) {
+        } catch (err) {
+            const error = err as Error;
             console.error('Error sending message to chatbot:', err);
-            setError(err.message || 'An error occurred');
+            setError(error.message || 'An error occurred');
 
             // Fallback response on error
             const errorMessage = language === 'vi'
@@ -302,14 +340,15 @@ const AIChatBot: React.FC = () => {
 
         try {
             // Call backend API with Gemini AI
-            const { message: botResponseText, recipes } = await sendMessageToAPI(currentMessage, currentImages);
+            const { message: botResponseText, recipes, mealPlan } = await sendMessageToAPI(currentMessage, currentImages);
 
             const botResponse: Message = {
                 id: (Date.now() + 1).toString(),
                 text: botResponseText,
                 sender: 'bot',
                 timestamp: new Date(),
-                recipes: recipes.length > 0 ? recipes : undefined
+                recipes: recipes.length > 0 ? recipes : undefined,
+                mealPlan: mealPlan
             };
             setMessages(prev => [...prev, botResponse]);
         } catch (err) {
@@ -608,6 +647,37 @@ const AIChatBot: React.FC = () => {
                                                             </div>
                                                         )
                                                     })}
+                                                </div>
+                                            )}
+
+                                            {/* Meal Plan Button - hiển thị khi có AI-generated meal plan */}
+                                            {message.sender === 'bot' && message.mealPlan && (
+                                                <div className="mt-3">
+                                                    <button
+                                                        onClick={() => {
+                                                            // Check if user is logged in
+                                                            if (!user) {
+                                                                alert(language === 'vi' 
+                                                                    ? 'Vui lòng đăng nhập để sử dụng tính năng này!' 
+                                                                    : 'Please login to use this feature!');
+                                                                return;
+                                                            }
+                                                            
+                                                            // Navigate to meal planner with meal plan data
+                                                            navigate('/meal-planner', {
+                                                                state: {
+                                                                    aiGeneratedPlan: message.mealPlan
+                                                                }
+                                                            });
+                                                            setIsOpen(false);
+                                                        }}
+                                                        className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-4 py-3 rounded-xl font-semibold text-sm shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 flex items-center justify-center gap-2"
+                                                    >
+                                                        <ChefHat className="h-4 w-4" />
+                                                        <span>
+                                                            {language === 'vi' ? '🎉 Xem Meal Plan' : '🎉 View Meal Plan'}
+                                                        </span>
+                                                    </button>
                                                 </div>
                                             )}
 
