@@ -7,15 +7,18 @@ import type { RootState } from '../redux/store';
 import { useNavigate } from 'react-router-dom';
 
 interface Recipe {
-    _id: string;
+    id: string;
     name: string;
     image?: string;
-    cookTime?: number;
-    prepTime?: number;
-    servings?: number;
+    time?: number; // Thời gian nấu (phút)
+    calories?: number; // Calo
+    size?: number; // Số người ăn
     difficulty?: string;
-    rate?: number; // Rating từ backend
-    numberOfRate?: number; // Số lượng đánh giá
+    rating?: number; // Rating từ backend
+    numberOfRatings?: number; // Số lượng đánh giá
+    cuisine?: string | null; // Quốc gia/ẩm thực
+    category?: string | null; // Danh mục
+    short?: string; // Mô tả ngắn
 }
 
 interface Message {
@@ -160,7 +163,21 @@ const AIChatBot: React.FC = () => {
             // Backend returns "message" not "response"
             if (response.data.success) {
                 const message = response.data.message || response.data.response || 'Không có phản hồi';
-                const recipes = response.data.data?.recipes || [];
+                
+                // Backend trả về structuredData với logic mới:
+                // - Chỉ trả về recipe card khi có 1 món chi tiết (structuredData.recipe)
+                // - Nhiều món sẽ được hiển thị trong text response, không có cards (structuredData.recipes = [])
+                let recipes: Recipe[] = [];
+                
+                if (response.data.structuredData) {
+                    // Chỉ hiển thị card khi có 1 recipe chi tiết
+                    if (response.data.structuredData.recipe) {
+                        recipes = [response.data.structuredData.recipe];
+                    }
+                    // structuredData.recipes sẽ là [] khi có nhiều món
+                    // Thông tin được hiển thị trong text response của chatbot
+                }
+                
                 return { message, recipes };
             } else {
                 throw new Error(response.data.error || 'Failed to get response');
@@ -474,26 +491,23 @@ const AIChatBot: React.FC = () => {
                                                 )}
                                             </div>
 
-                                            {/* Recipe Cards - hiển thị trong bubble của bot */}
-                                            {message.sender === 'bot' && message.recipes && message.recipes.length > 0 && (
-                                                <div className="mt-3 space-y-2">
-                                                    <p className="text-xs text-gray-500 mb-2">
-                                                        {language === 'vi' ? 'Các món ăn gợi ý:' : 'Suggested recipes:'}
-                                                    </p>
+                                            {/* Recipe Card - CHỈ hiển thị khi có 1 món chi tiết */}
+                                            {message.sender === 'bot' && message.recipes && message.recipes.length === 1 && (
+                                                <div className="mt-3">
                                                     {message.recipes.map((recipe) => {
-                                                        console.log('Recipe data:', recipe); // Debug
+                                                        console.log('Recipe card:', recipe); // Debug
                                                         return (
                                                             <div
-                                                                key={recipe._id}
+                                                                key={recipe.id}
                                                                 onClick={() => {
-                                                                    navigate(`/recipe/${recipe._id}`);
+                                                                    navigate(`/recipe/${recipe.id}`);
                                                                     setIsOpen(false);
                                                                 }}
-                                                                className="bg-white border border-gray-200 rounded-lg p-2.5 hover:shadow-md transition-all duration-200 cursor-pointer group"
+                                                                className="bg-white border border-gray-200 rounded-lg p-3 hover:shadow-md transition-all duration-200 cursor-pointer group"
                                                             >
-                                                                <div className="flex gap-2.5">
+                                                                <div className="flex gap-3">
                                                                     {/* Recipe Image */}
-                                                                    <div className="w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100">
+                                                                    <div className="w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100">
                                                                         {recipe.image ? (
                                                                             <img
                                                                                 src={recipe.image}
@@ -509,50 +523,86 @@ const AIChatBot: React.FC = () => {
 
                                                                     {/* Recipe Info */}
                                                                     <div className="flex-1 min-w-0">
-                                                                        <h4 className="font-semibold text-xs text-gray-900 group-hover:text-orange-600 transition-colors line-clamp-1 mb-1">
+                                                                        <h4 className="font-semibold text-sm text-gray-900 group-hover:text-orange-600 transition-colors line-clamp-2 mb-1.5">
                                                                             {recipe.name}
                                                                         </h4>
 
-                                                                        <div className="flex items-center gap-2 text-xs text-gray-600 mb-1">
+                                                                        {/* Short description */}
+                                                                        {recipe.short && (
+                                                                            <p className="text-xs text-gray-600 line-clamp-2 mb-2">
+                                                                                {recipe.short}
+                                                                            </p>
+                                                                        )}
+
+                                                                        <div className="flex items-center gap-2 text-xs text-gray-600 mb-2 flex-wrap">
                                                                             {/* Rating */}
-                                                                            {recipe.rate !== undefined && recipe.rate !== null && recipe.rate > 0 && (
+                                                                            {recipe.rating !== undefined && recipe.rating !== null && recipe.rating > 0 && (
                                                                                 <div className="flex items-center gap-0.5">
                                                                                     <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                                                                                    <span className="font-medium">{recipe.rate.toFixed(1)}</span>
-                                                                                    {recipe.numberOfRate && recipe.numberOfRate > 0 && (
-                                                                                        <span className="text-gray-400">({recipe.numberOfRate})</span>
+                                                                                    <span className="font-medium">{recipe.rating.toFixed(1)}</span>
+                                                                                    {recipe.numberOfRatings && recipe.numberOfRatings > 0 && (
+                                                                                        <span className="text-gray-400">({recipe.numberOfRatings})</span>
                                                                                     )}
                                                                                 </div>
                                                                             )}
 
                                                                             {/* Cook Time */}
-                                                                            {recipe.cookTime && (
+                                                                            {recipe.time && (
                                                                                 <div className="flex items-center gap-0.5">
                                                                                     <Clock className="h-3 w-3" />
-                                                                                    <span>{recipe.cookTime}{language === 'vi' ? 'p' : 'm'}</span>
+                                                                                    <span>{recipe.time}{language === 'vi' ? 'p' : 'm'}</span>
                                                                                 </div>
                                                                             )}
 
                                                                             {/* Servings */}
-                                                                            {recipe.servings && (
+                                                                            {recipe.size && (
                                                                                 <div className="flex items-center gap-0.5">
                                                                                     <Users className="h-3 w-3" />
-                                                                                    <span>{recipe.servings}</span>
+                                                                                    <span>{recipe.size} {language === 'vi' ? 'người' : 'servings'}</span>
+                                                                                </div>
+                                                                            )}
+
+                                                                            {/* Calories */}
+                                                                            {recipe.calories && (
+                                                                                <div className="flex items-center gap-0.5">
+                                                                                    <span className="text-xs">🔥 {recipe.calories} cal</span>
                                                                                 </div>
                                                                             )}
                                                                         </div>
 
-                                                                        {/* Difficulty */}
-                                                                        {recipe.difficulty && (
-                                                                            <span className={`inline-block px-1.5 py-0.5 text-xs rounded-full ${recipe.difficulty === 'Dễ' || recipe.difficulty === 'Easy'
-                                                                                ? 'bg-green-100 text-green-700'
-                                                                                : recipe.difficulty === 'Trung bình' || recipe.difficulty === 'Medium'
-                                                                                    ? 'bg-yellow-100 text-yellow-700'
-                                                                                    : 'bg-red-100 text-red-700'
-                                                                                }`}>
-                                                                                {recipe.difficulty}
-                                                                            </span>
-                                                                        )}
+                                                                        {/* Bottom row: Difficulty + Category/Cuisine */}
+                                                                        <div className="flex items-center gap-2 flex-wrap">
+                                                                            {/* Difficulty */}
+                                                                            {recipe.difficulty && (
+                                                                                <span className={`inline-block px-2 py-0.5 text-xs rounded-full font-medium ${recipe.difficulty === 'Dễ' || recipe.difficulty === 'Easy'
+                                                                                    ? 'bg-green-100 text-green-700'
+                                                                                    : recipe.difficulty === 'Trung bình' || recipe.difficulty === 'Medium'
+                                                                                        ? 'bg-yellow-100 text-yellow-700'
+                                                                                        : 'bg-red-100 text-red-700'
+                                                                                    }`}>
+                                                                                    {recipe.difficulty}
+                                                                                </span>
+                                                                            )}
+
+                                                                            {/* Category */}
+                                                                            {recipe.category && (
+                                                                                <span className="inline-block px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-700 font-medium">
+                                                                                    {recipe.category}
+                                                                                </span>
+                                                                            )}
+
+                                                                            {/* Cuisine */}
+                                                                            {recipe.cuisine && (
+                                                                                <span className="inline-block px-2 py-0.5 text-xs rounded-full bg-purple-100 text-purple-700 font-medium">
+                                                                                    {recipe.cuisine}
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
+
+                                                                        {/* Click to view detail hint */}
+                                                                        <p className="text-xs text-blue-600 mt-2 group-hover:text-blue-700">
+                                                                            👉 {language === 'vi' ? 'Nhấn để xem chi tiết' : 'Click to view details'}
+                                                                        </p>
                                                                     </div>
                                                                 </div>
                                                             </div>
