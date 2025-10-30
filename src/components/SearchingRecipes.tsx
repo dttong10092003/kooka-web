@@ -1,4 +1,4 @@
-import { useEffect } from "react"
+import { useEffect, useMemo, useRef } from "react"
 import { RecipeCard } from "./RecipeCard"
 import { useDispatch, useSelector } from "react-redux"
 import type { AppDispatch, RootState } from "../redux/store"
@@ -14,7 +14,8 @@ interface SearchingRecipesProps {
 
     // trường hợp tìm theo keyword
     searchParams?: {
-        keyword: string
+        keyword?: string
+        ingredients?: string[]
         cuisine?: string
         category?: string
         tags?: string[]
@@ -32,7 +33,23 @@ export default function SearchingRecipes({
     const { searchResults, loading, error } = useSelector((state: RootState) => state.recipes)
     const user = useSelector((state: RootState) => state.auth.user)
 
+    // Memoize các dependencies để tránh re-render không cần thiết
+    const ingredientsKey = useMemo(() => JSON.stringify(ingredients), [ingredients])
+    const tagsKey = useMemo(() => JSON.stringify(tags), [tags])
+    const searchParamsKey = useMemo(() => JSON.stringify(searchParams), [searchParams])
+
+    // Ref để track query đã dispatch, tránh dispatch trùng lặp
+    const lastQueryRef = useRef<string>("")
+
     useEffect(() => {
+        const currentQuery = searchParamsKey + ingredientsKey + cuisine + category + tagsKey;
+        
+        // Nếu query giống với lần trước, không dispatch nữa
+        if (lastQueryRef.current === currentQuery) {
+            console.log("SearchingRecipes - Query không thay đổi, skip dispatch");
+            return;
+        }
+
         console.log("SearchingRecipes useEffect triggered with:", {
             searchParams,
             ingredients,
@@ -40,6 +57,8 @@ export default function SearchingRecipes({
             category,
             tags
         });
+
+        lastQueryRef.current = currentQuery;
 
         if (searchParams?.keyword) {
             // tìm theo keyword
@@ -69,7 +88,7 @@ export default function SearchingRecipes({
                 })
             )
         }
-    }, [ingredients, cuisine, category, tags, searchParams, dispatch])
+    }, [dispatch, ingredientsKey, cuisine, category, tagsKey, searchParamsKey, searchParams, ingredients, tags])
 
     // Check favorites for all recipes when user is logged in
     useEffect(() => {

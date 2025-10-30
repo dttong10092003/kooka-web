@@ -28,12 +28,7 @@ const Recipes = () => {
 
             {searchParams ? (
                 <SearchingRecipes
-                    searchParams={searchParams.keyword ? { 
-                        keyword: searchParams.keyword, 
-                        cuisine: searchParams.cuisine, 
-                        category: searchParams.category, 
-                        tags: searchParams.tags 
-                    } : undefined}
+                    searchParams={searchParams.keyword ? searchParams : undefined}
                     ingredients={searchParams.ingredients}
                     cuisine={searchParams.cuisine}
                     category={searchParams.category}
