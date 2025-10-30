@@ -5,6 +5,9 @@ import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "./redux/store";
 import { loadUser } from "./redux/slices/authSlice";
 import { fetchProfile } from "./redux/slices/userSlice";
+import { fetchTopRatedRecipes, fetchTrendingRecipes } from "./redux/slices/recipeSlice";
+import { fetchTopComments, fetchNewestComments } from "./redux/slices/commentSlice";
+import { fetchMostFavorited } from "./redux/slices/favoriteSlice";
 import Home from "./pages/Home";
 import Header from "./components/Header";
 import LoginPage from "./pages/LoginPage";
@@ -33,6 +36,29 @@ function App() {
   const dispatch = useDispatch<AppDispatch>();
   const { token, user } = useSelector((state: RootState) => state.auth);
   const { profile } = useSelector((state: RootState) => state.user);
+  const { topRatedRecipes, trendingRecipes } = useSelector((state: RootState) => state.recipes);
+  const { topComments, newestComments } = useSelector((state: RootState) => state.comments);
+  const { mostFavorited } = useSelector((state: RootState) => state.favorites);
+
+  // Chỉ prefetch banner (top-rated recipes), trending, top comments, newest comments và most favorited để giảm tải bộ nhớ
+  // Newest và Popular recipes sẽ được lazy load khi user vào Home page
+  useEffect(() => {
+    if (topRatedRecipes.length === 0) {
+      dispatch(fetchTopRatedRecipes(6));
+    }
+    if (trendingRecipes.length === 0) {
+      dispatch(fetchTrendingRecipes());
+    }
+    if (topComments.length === 0) {
+      dispatch(fetchTopComments());
+    }
+    if (newestComments.length === 0) {
+      dispatch(fetchNewestComments());
+    }
+    if (mostFavorited.length === 0) {
+      dispatch(fetchMostFavorited());
+    }
+  }, [dispatch, topRatedRecipes.length, trendingRecipes.length, topComments.length, newestComments.length, mostFavorited.length]);
 
   // Auto-load user data khi có token nhưng chưa có user
   useEffect(() => {

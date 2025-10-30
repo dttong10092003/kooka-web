@@ -77,6 +77,10 @@ interface KeywordSearchPayload {
 interface RecipeState {
     recipes: Recipe[]; // Tất cả recipes từ fetchRecipes
     searchResults: Recipe[]; // Kết quả tìm kiếm từ searchRecipes/searchRecipesByKeyword
+    topRatedRecipes: Recipe[]; // Top-rated recipes cho banner
+    newestRecipes: Recipe[]; // Newest recipes cho section Món Ăn Mới
+    popularRecipes: Recipe[]; // Popular recipes cho section Món Ăn Phổ Biến
+    trendingRecipes: Recipe[]; // Trending recipes cho section Sôi Nổi Nhất
     ingredients: Ingredient[];
     ingredientTypes: IngredientType[];
     tags: Tag[];
@@ -89,6 +93,10 @@ interface RecipeState {
 const initialState: RecipeState = {
     recipes: [],
     searchResults: [],
+    topRatedRecipes: [],
+    newestRecipes: [],
+    popularRecipes: [],
+    trendingRecipes: [],
     ingredients: [],
     ingredientTypes: [],
     tags: [],
@@ -126,6 +134,26 @@ export const searchRecipesByKeyword = createAsyncThunk(
 // --- Recipes ---
 export const fetchRecipes = createAsyncThunk("recipes/fetchAll", async () => {
     const res = await axiosInstance.get(`/recipes`);
+    return res.data as Recipe[];
+});
+
+export const fetchTopRatedRecipes = createAsyncThunk("recipes/fetchTopRated", async (limit: number = 6) => {
+    const res = await axiosInstance.get(`/recipes/top-rated?limit=${limit}`);
+    return res.data as Recipe[];
+});
+
+export const fetchNewestRecipes = createAsyncThunk("recipes/fetchNewest", async () => {
+    const res = await axiosInstance.get(`/recipes/newest?limit=5`);
+    return res.data as Recipe[];
+});
+
+export const fetchPopularRecipes = createAsyncThunk("recipes/fetchPopular", async () => {
+    const res = await axiosInstance.get(`/recipes/popular?limit=5`);
+    return res.data as Recipe[];
+});
+
+export const fetchTrendingRecipes = createAsyncThunk("recipes/fetchTrending", async () => {
+    const res = await axiosInstance.get(`/recipes/trending`);
     return res.data as Recipe[];
 });
 
@@ -307,6 +335,22 @@ const recipeSlice = createSlice({
         builder
             .addCase(fetchRecipes.fulfilled, (state, action: PayloadAction<Recipe[]>) => {
                 state.recipes = action.payload;
+                state.loading = false;
+            })
+            .addCase(fetchTopRatedRecipes.fulfilled, (state, action: PayloadAction<Recipe[]>) => {
+                state.topRatedRecipes = action.payload;
+                state.loading = false;
+            })
+            .addCase(fetchNewestRecipes.fulfilled, (state, action: PayloadAction<Recipe[]>) => {
+                state.newestRecipes = action.payload;
+                state.loading = false;
+            })
+            .addCase(fetchPopularRecipes.fulfilled, (state, action: PayloadAction<Recipe[]>) => {
+                state.popularRecipes = action.payload;
+                state.loading = false;
+            })
+            .addCase(fetchTrendingRecipes.fulfilled, (state, action: PayloadAction<Recipe[]>) => {
+                state.trendingRecipes = action.payload;
                 state.loading = false;
             })
             .addCase(searchRecipes.fulfilled, (state, action: PayloadAction<Recipe[]>) => {
