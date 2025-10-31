@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import { useDispatch } from 'react-redux';
+import toast from 'react-hot-toast';
 import { addCategory } from '../redux/slices/recipeSlice';
 import type { AppDispatch } from '../redux/store';
 
@@ -12,24 +13,22 @@ interface AddCategoryModalProps {
 const AddCategoryModal: React.FC<AddCategoryModalProps> = ({ isOpen, onClose }) => {
   const dispatch = useDispatch<AppDispatch>();
   const [categoryName, setCategoryName] = useState('');
-  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!categoryName.trim()) {
-      setError('Category name is required');
+      toast.error('Tên danh mục không được để trống!');
       return;
     }
 
-    setError(null);
-
     try {
-      await dispatch(addCategory(categoryName));
+      await dispatch(addCategory(categoryName)).unwrap();
+      toast.success('Thêm danh mục thành công!');
       setCategoryName('');
       onClose();
-    } catch {
-      
-      setError('Failed to add category. Please try again.');
+    } catch (error: any) {
+      const errorMessage = error || 'Thêm danh mục thất bại!';
+      toast.error(errorMessage);
     }
   };
 
@@ -48,12 +47,6 @@ const AddCategoryModal: React.FC<AddCategoryModalProps> = ({ isOpen, onClose }) 
 
         {/* Content */}
         <div className="overflow-y-auto p-6 space-y-6">
-          {error && (
-            <div className="mb-4 p-3 bg-red-100 border border-red-300 text-red-700 rounded-lg">
-              {error}
-            </div>
-          )}
-
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <h3 className="text-md font-semibold text-gray-700 mb-3">

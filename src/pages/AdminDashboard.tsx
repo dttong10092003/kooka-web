@@ -312,6 +312,14 @@ const AdminDashboard: React.FC = () => {
     const handleEditModalClose = () => {
         setIsEditModalOpen(false)
         setSelectedRecipe(null)
+        // Refresh recipes list to ensure data consistency
+        dispatch(fetchRecipes())
+    }
+
+    const handleAddModalClose = () => {
+        setIsRecipeModalOpen(false)
+        // Refresh recipes list to ensure data consistency
+        dispatch(fetchRecipes())
     }
 
     return (
@@ -967,7 +975,7 @@ const AdminDashboard: React.FC = () => {
                 {/* Add Recipe Modal */}
                 <AddRecipeModal
                     isOpen={isRecipeModalOpen}
-                    onClose={() => setIsRecipeModalOpen(false)}
+                    onClose={handleAddModalClose}
                 />
 
                 {/* Edit Recipe Modal */}

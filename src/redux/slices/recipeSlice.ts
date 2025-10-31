@@ -162,23 +162,41 @@ export const getRecipeById = createAsyncThunk("recipes/fetchById", async (id: st
     return res.data as Recipe;
 });
 
-export const addRecipe = createAsyncThunk("recipes/add", async (recipe: Omit<Recipe, "_id">) => {
-    const res = await axiosInstance.post(`/recipes`, recipe);
-    return res.data as Recipe;
-});
-
-export const updateRecipe = createAsyncThunk(
-    "recipes/update",
-    async ({ id, recipe }: { id: string; recipe: Partial<Recipe> }) => {
-        const res = await axiosInstance.put(`/recipes/${id}`, recipe);
-        return res.data as Recipe;
+export const addRecipe = createAsyncThunk(
+    "recipes/add", 
+    async (recipe: Omit<Recipe, "_id">, { rejectWithValue }) => {
+        try {
+            const res = await axiosInstance.post(`/recipes`, recipe);
+            return res.data as Recipe;
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data?.error || 'Failed to add recipe');
+        }
     }
 );
 
-export const deleteRecipe = createAsyncThunk("recipes/delete", async (id: string) => {
-    await axiosInstance.delete(`/recipes/${id}`);
-    return id;
-});
+export const updateRecipe = createAsyncThunk(
+    "recipes/update",
+    async ({ id, recipe }: { id: string; recipe: Partial<Recipe> }, { rejectWithValue }) => {
+        try {
+            const res = await axiosInstance.put(`/recipes/${id}`, recipe);
+            return res.data as Recipe;
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data?.error || 'Failed to update recipe');
+        }
+    }
+);
+
+export const deleteRecipe = createAsyncThunk(
+    "recipes/delete", 
+    async (id: string, { rejectWithValue }) => {
+        try {
+            await axiosInstance.delete(`/recipes/${id}`);
+            return id;
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data?.error || 'Failed to delete recipe');
+        }
+    }
+);
 
 // --- Ingredients ---
 export const fetchIngredients = createAsyncThunk("ingredients/fetchAll", async () => {
@@ -198,24 +216,39 @@ export const getIngredientById = createAsyncThunk("ingredients/fetchById", async
 
 export const addIngredient = createAsyncThunk(
     "ingredients/add",
-    async ({ name, typeId }: { name: string; typeId: string }) => {
-        const res = await axiosInstance.post(`/ingredients`, { name, typeId });
-        return res.data as Ingredient;
+    async ({ name, typeId }: { name: string; typeId: string }, { rejectWithValue }) => {
+        try {
+            const res = await axiosInstance.post(`/ingredients`, { name, typeId });
+            return res.data as Ingredient;
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data?.error || 'Failed to add ingredient');
+        }
     }
 );
 
 export const updateIngredient = createAsyncThunk(
     "ingredients/update",
-    async ({ id, ingredient }: { id: string; ingredient: Partial<Ingredient> }) => {
-        const res = await axiosInstance.put(`/ingredients/${id}`, ingredient);
-        return res.data as Ingredient;
+    async ({ id, ingredient }: { id: string; ingredient: Partial<Ingredient> }, { rejectWithValue }) => {
+        try {
+            const res = await axiosInstance.put(`/ingredients/${id}`, ingredient);
+            return res.data as Ingredient;
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data?.error || 'Failed to update ingredient');
+        }
     }
 );
 
-export const deleteIngredient = createAsyncThunk("ingredients/delete", async (id: string) => {
-    await axiosInstance.delete(`/ingredients/${id}`);
-    return id;
-});
+export const deleteIngredient = createAsyncThunk(
+    "ingredients/delete", 
+    async (id: string, { rejectWithValue }) => {
+        try {
+            await axiosInstance.delete(`/ingredients/${id}`);
+            return id;
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data?.error || 'Failed to delete ingredient');
+        }
+    }
+);
 
 // --- Ingredient Types ---
 export const fetchIngredientTypes = createAsyncThunk("ingredientTypes/fetchAll", async () => {
@@ -228,23 +261,41 @@ export const getIngredientTypeById = createAsyncThunk("ingredientTypes/fetchById
     return res.data as IngredientType;
 });
 
-export const addIngredientType = createAsyncThunk("ingredientTypes/add", async (name: string) => {
-    const res = await axiosInstance.post(`/ingredient-types`, { name });
-    return res.data as IngredientType;
-});
-
-export const updateIngredientType = createAsyncThunk(
-    "ingredientTypes/update",
-    async ({ id, type }: { id: string; type: Partial<IngredientType> }) => {
-        const res = await axiosInstance.put(`/ingredient-types/${id}`, type);
-        return res.data as IngredientType;
+export const addIngredientType = createAsyncThunk(
+    "ingredientTypes/add", 
+    async (name: string, { rejectWithValue }) => {
+        try {
+            const res = await axiosInstance.post(`/ingredient-types`, { name });
+            return res.data as IngredientType;
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data?.error || 'Failed to add ingredient type');
+        }
     }
 );
 
-export const deleteIngredientType = createAsyncThunk("ingredientTypes/delete", async (id: string) => {
-    await axiosInstance.delete(`/ingredient-types/${id}`);
-    return id;
-});
+export const updateIngredientType = createAsyncThunk(
+    "ingredientTypes/update",
+    async ({ id, type }: { id: string; type: Partial<IngredientType> }, { rejectWithValue }) => {
+        try {
+            const res = await axiosInstance.put(`/ingredient-types/${id}`, type);
+            return res.data as IngredientType;
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data?.error || 'Failed to update ingredient type');
+        }
+    }
+);
+
+export const deleteIngredientType = createAsyncThunk(
+    "ingredientTypes/delete", 
+    async (id: string, { rejectWithValue }) => {
+        try {
+            await axiosInstance.delete(`/ingredient-types/${id}`);
+            return id;
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data?.error || 'Failed to delete ingredient type');
+        }
+    }
+);
 
 // --- Tags ---
 export const fetchTags = createAsyncThunk("tags/fetchAll", async () => {
@@ -257,20 +308,40 @@ export const getTagById = createAsyncThunk("tags/fetchById", async (id: string) 
     return res.data as Tag;
 });
 
-export const addTag = createAsyncThunk("tags/add", async (name: string) => {
-    const res = await axiosInstance.post(`/tags`, { name });
-    return res.data as Tag;
-});
+export const addTag = createAsyncThunk(
+    "tags/add", 
+    async (name: string, { rejectWithValue }) => {
+        try {
+            const res = await axiosInstance.post(`/tags`, { name });
+            return res.data as Tag;
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data?.error || 'Failed to add tag');
+        }
+    }
+);
 
-export const deleteTag = createAsyncThunk("tags/delete", async (id: string) => {
-    await axiosInstance.delete(`/tags/${id}`);
-    return id;
-});
+export const deleteTag = createAsyncThunk(
+    "tags/delete", 
+    async (id: string, { rejectWithValue }) => {
+        try {
+            await axiosInstance.delete(`/tags/${id}`);
+            return id;
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data?.error || 'Failed to delete tag');
+        }
+    }
+);
 
-export const updateTag = createAsyncThunk("tags/update", async ({ id, tag }: { id: string; tag: Partial<Tag> }) => {
-    const res = await axiosInstance.put(`/tags/${id}`, tag);
-    return res.data as Tag;
-}
+export const updateTag = createAsyncThunk(
+    "tags/update", 
+    async ({ id, tag }: { id: string; tag: Partial<Tag> }, { rejectWithValue }) => {
+        try {
+            const res = await axiosInstance.put(`/tags/${id}`, tag);
+            return res.data as Tag;
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data?.error || 'Failed to update tag');
+        }
+    }
 );
 
 // --- Cuisines ---
@@ -284,20 +355,41 @@ export const getCuisineById = createAsyncThunk("cuisines/fetchById", async (id: 
     return res.data as Cuisine;
 });
 
-export const addCuisine = createAsyncThunk("cuisines/add", async (name: string) => {
-    const res = await axiosInstance.post(`/cuisines`, { name });
-    return res.data as Cuisine;
-});
+export const addCuisine = createAsyncThunk(
+    "cuisines/add", 
+    async (name: string, { rejectWithValue }) => {
+        try {
+            const res = await axiosInstance.post(`/cuisines`, { name });
+            return res.data as Cuisine;
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data?.error || 'Failed to add cuisine');
+        }
+    }
+);
 
-export const deleteCuisine = createAsyncThunk("cuisines/delete", async (id: string) => {
-    await axiosInstance.delete(`/cuisines/${id}`);
-    return id;
-});
+export const deleteCuisine = createAsyncThunk(
+    "cuisines/delete", 
+    async (id: string, { rejectWithValue }) => {
+        try {
+            await axiosInstance.delete(`/cuisines/${id}`);
+            return id;
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data?.error || 'Failed to delete cuisine');
+        }
+    }
+);
 
-export const updateCuisine = createAsyncThunk("cuisines/update", async ({ id, cuisine }: { id: string; cuisine: Partial<Cuisine> }) => {
-    const res = await axiosInstance.put(`/cuisines/${id}`, cuisine);
-    return res.data as Cuisine;
-});
+export const updateCuisine = createAsyncThunk(
+    "cuisines/update", 
+    async ({ id, cuisine }: { id: string; cuisine: Partial<Cuisine> }, { rejectWithValue }) => {
+        try {
+            const res = await axiosInstance.put(`/cuisines/${id}`, cuisine);
+            return res.data as Cuisine;
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data?.error || 'Failed to update cuisine');
+        }
+    }
+);
 
 // --- Categories ---
 export const fetchCategories = createAsyncThunk("categories/fetchAll", async () => {
@@ -310,20 +402,41 @@ export const getCategoryById = createAsyncThunk("categories/fetchById", async (i
     return res.data as Category;
 });
 
-export const addCategory = createAsyncThunk("categories/add", async (name: string) => {
-    const res = await axiosInstance.post(`/categories`, { name });
-    return res.data as Category;
-});
+export const addCategory = createAsyncThunk(
+    "categories/add", 
+    async (name: string, { rejectWithValue }) => {
+        try {
+            const res = await axiosInstance.post(`/categories`, { name });
+            return res.data as Category;
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data?.error || 'Failed to add category');
+        }
+    }
+);
 
-export const deleteCategory = createAsyncThunk("categories/delete", async (id: string) => {
-    await axiosInstance.delete(`/categories/${id}`);
-    return id;
-});
+export const deleteCategory = createAsyncThunk(
+    "categories/delete", 
+    async (id: string, { rejectWithValue }) => {
+        try {
+            await axiosInstance.delete(`/categories/${id}`);
+            return id;
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data?.error || 'Failed to delete category');
+        }
+    }
+);
 
-export const updateCategory = createAsyncThunk("categories/update", async ({ id, category }: { id: string; category: Partial<Category> }) => {
-    const res = await axiosInstance.put(`/categories/${id}`, category);
-    return res.data as Category;
-});
+export const updateCategory = createAsyncThunk(
+    "categories/update", 
+    async ({ id, category }: { id: string; category: Partial<Category> }, { rejectWithValue }) => {
+        try {
+            const res = await axiosInstance.put(`/categories/${id}`, category);
+            return res.data as Category;
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data?.error || 'Failed to update category');
+        }
+    }
+);
 
 // ==== Slice ====
 const recipeSlice = createSlice({

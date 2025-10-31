@@ -97,8 +97,9 @@ const DataManagement: React.FC = () => {
             toast.success('Cập nhật thành công!');
             setEditingId(null);
             setEditingName('');
-        } catch {
-            toast.error('Cập nhật thất bại!');
+        } catch (error: any) {
+            const errorMessage = error || 'Cập nhật thất bại!';
+            toast.error(errorMessage);
         }
     };
 
@@ -130,8 +131,10 @@ const DataManagement: React.FC = () => {
             }
             toast.success('Xóa thành công!');
             setDeleteConfirm(null);
-        } catch {
-            toast.error('Xóa thất bại! Có thể dữ liệu đang được sử dụng.');
+        } catch (error: any) {
+            const errorMessage = error || 'Xóa thất bại! Có thể dữ liệu đang được sử dụng.';
+            toast.error(errorMessage);
+            setDeleteConfirm(null);
         }
     };
 
