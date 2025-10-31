@@ -1,11 +1,13 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Heart, Info, Play, ChevronLeft, ChevronRight, Star, Clock, ChefHat, TrendingUp, Sparkles, MessageSquare, Flame, ThumbsUp, TrendingDown, User } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import type { AppDispatch, RootState } from '../redux/store';
 import { fetchNewestRecipes, fetchPopularRecipes } from '../redux/slices/recipeSlice';
+import { toggleFavorite, checkMultipleRecipes } from '../redux/slices/favoriteSlice';
 
 interface Recipe {
-  id: number;
+  id: string;
   title: string;
   image: string;
   duration: string;
@@ -18,17 +20,16 @@ interface Recipe {
 }
 
 const Home = () => {
+  const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
   const { topRatedRecipes, newestRecipes, popularRecipes: popularRecipesData, trendingRecipes, loading } = useSelector((state: RootState) => state.recipes);
   const { topComments, newestComments } = useSelector((state: RootState) => state.comments);
-  const { mostFavorited } = useSelector((state: RootState) => state.favorites);
+  const { mostFavorited, favoriteRecipeIds } = useSelector((state: RootState) => state.favorites);
+  const { user } = useSelector((state: RootState) => state.auth);
   
   const [selectedRecipeIndex, setSelectedRecipeIndex] = useState(0);
   const [canScrollLeft, setCanScrollLeft] = useState<{ [key: string]: boolean }>({});
   const [canScrollRight, setCanScrollRight] = useState<{ [key: string]: boolean }>({});
-  const [isDragging, setIsDragging] = useState(false);
-  const [startX, setStartX] = useState(0);
-  const [scrollLeft, setScrollLeft] = useState(0);
 
   // Lazy load newest và popular recipes khi component mount
   useEffect(() => {
@@ -40,11 +41,27 @@ const Home = () => {
     }
   }, [dispatch, newestRecipes.length, popularRecipesData.length]);
 
+  // Check favorites for displayed recipes when user is logged in
+  useEffect(() => {
+    if (user && (topRatedRecipes.length > 0 || newestRecipes.length > 0 || popularRecipesData.length > 0)) {
+      const allRecipeIds = [
+        ...topRatedRecipes.map(r => r._id),
+        ...newestRecipes.map(r => r._id),
+        ...popularRecipesData.map(r => r._id)
+      ];
+      // Remove duplicates
+      const uniqueIds = Array.from(new Set(allRecipeIds));
+      if (uniqueIds.length > 0) {
+        dispatch(checkMultipleRecipes({ recipeIds: uniqueIds }));
+      }
+    }
+  }, [user?._id, topRatedRecipes.length, newestRecipes.length, popularRecipesData.length, dispatch]);
+
   // Convert Redux recipes to local Recipe format
   // useMemo để tránh re-convert mỗi lần render
   const featuredRecipes: Recipe[] = useMemo(() => {
-    return topRatedRecipes.map((recipe, index) => ({
-      id: index,
+    return topRatedRecipes.map((recipe) => ({
+      id: recipe._id,
       title: recipe.name,
       image: recipe.image,
       duration: `${recipe.time} phút`,
@@ -59,8 +76,8 @@ const Home = () => {
 
   // Convert newest recipes from Redux
   const newRecipes: Recipe[] = useMemo(() => {
-    return newestRecipes.map((recipe, index) => ({
-      id: index,
+    return newestRecipes.map((recipe) => ({
+      id: recipe._id,
       title: recipe.name,
       image: recipe.image,
       duration: `${recipe.time} phút`,
@@ -75,8 +92,8 @@ const Home = () => {
 
   // Convert popular recipes from Redux
   const popularRecipes: Recipe[] = useMemo(() => {
-    return popularRecipesData.map((recipe, index) => ({
-      id: index,
+    return popularRecipesData.map((recipe) => ({
+      id: recipe._id,
       title: recipe.name,
       image: recipe.image,
       duration: `${recipe.time} phút`,
@@ -144,141 +161,125 @@ const Home = () => {
     }
   };
 
-  // Drag to scroll handlers
-  const handleMouseDown = (e: React.MouseEvent, containerId: string) => {
-    const container = document.getElementById(containerId);
-    if (container) {
-      setIsDragging(true);
-      setStartX(e.pageX - container.offsetLeft);
-      setScrollLeft(container.scrollLeft);
-      container.style.cursor = 'grabbing';
-    }
-  };
-
-  const handleMouseMove = (e: React.MouseEvent, containerId: string) => {
-    if (!isDragging) return;
+  const handleFavoriteClick = async (e: React.MouseEvent, recipeId: string) => {
     e.preventDefault();
-    const container = document.getElementById(containerId);
-    if (container) {
-      const x = e.pageX - container.offsetLeft;
-      const walk = (x - startX) * 2;
-      container.scrollLeft = scrollLeft - walk;
+    e.stopPropagation();
+    
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    
+    try {
+      await dispatch(toggleFavorite({ recipeId })).unwrap();
+    } catch (error) {
+      console.error('Failed to toggle favorite:', error);
     }
   };
 
-  const handleMouseUp = (containerId: string) => {
-    setIsDragging(false);
-    const container = document.getElementById(containerId);
-    if (container) {
-      container.style.cursor = 'grab';
-      checkScrollPosition(containerId);
-    }
-  };
+  const RecipeCard = ({ recipe }: { recipe: Recipe }) => {
+    const isFavorited = favoriteRecipeIds.includes(recipe.id);
 
-  const handleMouseLeave = (containerId: string) => {
-    if (isDragging) {
-      setIsDragging(false);
-      const container = document.getElementById(containerId);
-      if (container) {
-        container.style.cursor = 'grab';
-      }
-    }
-  };
+    return (
+      <div
+        className="relative group flex-shrink-0 w-[280px] cursor-pointer bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300"
+        onClick={() => navigate(`/recipe/${recipe.id}`)}
+      >
+        {/* Image */}
+        <div className="relative h-[180px]">
+          <img
+            src={recipe.image}
+            alt={recipe.title}
+            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+          />
 
-  const RecipeCard = ({ recipe }: { recipe: Recipe }) => (
-    <div
-      className="relative group flex-shrink-0 w-[280px] cursor-pointer bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300"
-      onClick={() => console.log('Navigate to recipe:', recipe.id)}
-    >
-      {/* Image */}
-      <div className="relative h-[180px]">
-        <img
-          src={recipe.image}
-          alt={recipe.title}
-          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-        />
-
-        {/* Rating badge */}
-        <div className="absolute top-3 left-3 flex items-center gap-1 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full">
-          <Star size={14} fill="#fbbf24" className="text-amber-400" />
-          <span className="text-sm font-medium">{recipe.rating}</span>
-        </div>
-
-        {/* Favorite button */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            console.log('Toggle favorite:', recipe.id);
-          }}
-          className="absolute top-3 right-3 p-2 bg-white/90 backdrop-blur-sm rounded-full hover:bg-white transition-colors"
-        >
-          <Heart size={18} className="text-gray-600 hover:text-red-500 transition-colors" />
-        </button>
-
-        {/* Difficulty badge */}
-        <div className={`absolute bottom-3 right-3 px-2 py-1 rounded-full text-xs font-medium ${recipe.difficulty === 'Dễ'
-            ? 'bg-green-100 text-green-800'
-            : recipe.difficulty === 'Khó'
-              ? 'bg-red-100 text-red-800'
-              : 'bg-yellow-100 text-yellow-800'
-          }`}>
-          {recipe.difficulty}
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="p-4">
-        <h3 className="font-bold text-lg mb-2 text-gray-900 group-hover:text-orange-600 transition-colors line-clamp-1">
-          {recipe.title}
-        </h3>
-
-        {/* Meta Info */}
-        <div className="flex items-center gap-3 text-sm text-gray-500 mb-3">
-          <div className="flex items-center gap-1">
-            <Clock size={16} />
-            <span>{recipe.duration}</span>
+          {/* Rating badge */}
+          <div className="absolute top-3 left-3 flex items-center gap-1 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full">
+            <Star size={14} fill="#fbbf24" className="text-amber-400" />
+            <span className="text-sm font-medium">{recipe.rating}</span>
           </div>
-          <span className="text-gray-400">•</span>
-          <span>{recipe.servings} người</span>
-        </div>
 
-        {/* Ingredients */}
-        {recipe.ingredients && recipe.ingredients.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mb-3">
-            {recipe.ingredients.slice(0, 4).map((ingredient, index) => (
-              <span
-                key={index}
-                className="px-2 py-0.5 bg-gray-100 text-gray-700 text-xs rounded-md"
-              >
-                {ingredient}
-              </span>
-            ))}
-            {recipe.ingredients.length > 4 && (
-              <span className="px-2 py-0.5 bg-gray-100 text-gray-700 text-xs rounded-md">
-                +{recipe.ingredients.length - 4} more
-              </span>
-            )}
-          </div>
-        )}
-
-        {/* Rating and Action button */}
-        <div className="flex items-center justify-between gap-2">
-          <div className="text-sm text-gray-600">
-            {recipe.reviews ? `${recipe.reviews} đánh giá` : '0 đánh giá'}
-          </div>
+          {/* Favorite button */}
           <button
-            onClick={(e) => {
-              e.stopPropagation();
-              console.log('View recipe:', recipe.id);
-            }}
-            className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+            type="button"
+            onClick={(e) => handleFavoriteClick(e, recipe.id)}
+            className="absolute top-3 right-3 p-2 bg-white/90 backdrop-blur-sm rounded-full hover:bg-white transition-all duration-200 z-20 hover:scale-110 active:scale-95"
+            aria-label={isFavorited ? "Bỏ yêu thích" : "Yêu thích"}
           >
-            View Recipe
+            <Heart 
+              size={18} 
+              className={`transition-all duration-200 ${
+                isFavorited ? 'fill-red-500 text-red-500' : 'text-gray-600 hover:text-red-500'
+              }`} 
+            />
           </button>
+
+          {/* Difficulty badge */}
+          <div className={`absolute bottom-3 right-3 px-2 py-1 rounded-full text-xs font-medium ${recipe.difficulty === 'Dễ'
+              ? 'bg-green-100 text-green-800'
+              : recipe.difficulty === 'Khó'
+                ? 'bg-red-100 text-red-800'
+                : 'bg-yellow-100 text-yellow-800'
+            }`}>
+            {recipe.difficulty}
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="p-4">
+          <h3 className="font-bold text-lg mb-2 text-gray-900 group-hover:text-orange-600 transition-colors line-clamp-1">
+            {recipe.title}
+          </h3>
+
+          {/* Meta Info */}
+          <div className="flex items-center gap-3 text-sm text-gray-500 mb-3">
+            <div className="flex items-center gap-1">
+              <Clock size={16} />
+              <span>{recipe.duration}</span>
+            </div>
+            <span className="text-gray-400">•</span>
+            <span>{recipe.servings} người</span>
+          </div>
+
+          {/* Ingredients */}
+          {recipe.ingredients && recipe.ingredients.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mb-3">
+              {recipe.ingredients.slice(0, 4).map((ingredient, index) => (
+                <span
+                  key={index}
+                  className="px-2 py-0.5 bg-gray-100 text-gray-700 text-xs rounded-md"
+                >
+                  {ingredient}
+                </span>
+              ))}
+              {recipe.ingredients.length > 4 && (
+                <span className="px-2 py-0.5 bg-gray-100 text-gray-700 text-xs rounded-md">
+                  +{recipe.ingredients.length - 4} more
+                </span>
+              )}
+            </div>
+          )}
+
+          {/* Rating and Action button */}
+          <div className="flex items-center justify-between gap-2">
+            <div className="text-sm text-gray-600">
+              {recipe.reviews ? `${recipe.reviews} đánh giá` : '0 đánh giá'}
+            </div>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/recipe/${recipe.id}`);
+              }}
+              className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+            >
+              View Recipe
+            </button>
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div className="bg-white min-h-screen relative overflow-hidden">
@@ -291,13 +292,69 @@ const Home = () => {
       {/* Hero Section - Redesigned */}
       <div className="relative h-[660px] mb-16 overflow-hidden">
         {loading || featuredRecipes.length === 0 ? (
-          // Loading state
-          <div className="absolute inset-0 bg-gradient-to-br from-orange-50 to-yellow-50 flex items-center justify-center">
-            <div className="text-center">
-              <div className="relative inline-block">
-                <div className="animate-spin rounded-full h-20 w-20 border-4 border-orange-200"></div>
-                <div className="animate-spin rounded-full h-20 w-20 border-t-4 border-orange-500 absolute top-0 left-0"></div>
+          // Loading state với skeleton UI
+          <div className="absolute inset-0 bg-gradient-to-br from-orange-50 via-yellow-50 to-orange-50 animate-gradient">
+            {/* Animated background */}
+            <div className="absolute inset-0 overflow-hidden">
+              <div className="absolute top-20 left-20 w-72 h-72 bg-orange-200/30 rounded-full blur-3xl animate-pulse"></div>
+              <div className="absolute bottom-20 right-20 w-96 h-96 bg-yellow-200/30 rounded-full blur-3xl animate-pulse delay-700"></div>
+            </div>
+            
+            <div className="relative h-full flex items-center px-12">
+              <div className="w-full max-w-2xl space-y-6 animate-pulse">
+                {/* Badge skeleton */}
+                <div className="inline-block h-9 w-48 bg-gradient-to-r from-orange-300/40 to-yellow-300/40 rounded-full"></div>
+                
+                {/* Title skeleton */}
+                <div className="space-y-3">
+                  <div className="h-12 bg-gradient-to-r from-gray-300/60 to-gray-200/60 rounded-lg w-3/4"></div>
+                  <div className="h-12 bg-gradient-to-r from-gray-300/60 to-gray-200/60 rounded-lg w-2/3"></div>
+                </div>
+                
+                {/* Ingredients skeleton */}
+                <div className="flex gap-2">
+                  {[...Array(4)].map((_, i) => (
+                    <div key={i} className="h-8 w-24 bg-gradient-to-r from-gray-200/60 to-gray-300/60 rounded-md"></div>
+                  ))}
+                </div>
+                
+                {/* Description skeleton */}
+                <div className="space-y-2">
+                  <div className="h-4 bg-gradient-to-r from-gray-200/50 to-gray-300/50 rounded w-full"></div>
+                  <div className="h-4 bg-gradient-to-r from-gray-200/50 to-gray-300/50 rounded w-5/6"></div>
+                </div>
+                
+                {/* Meta info skeleton */}
+                <div className="flex gap-6">
+                  {[...Array(3)].map((_, i) => (
+                    <div key={i} className="h-6 w-20 bg-gradient-to-r from-gray-300/60 to-gray-200/60 rounded"></div>
+                  ))}
+                </div>
+                
+                {/* Buttons skeleton */}
+                <div className="flex gap-4 pt-2">
+                  <div className="h-14 w-48 bg-gradient-to-r from-emerald-400/60 to-emerald-500/60 rounded-full"></div>
+                  <div className="h-14 w-14 bg-gradient-to-r from-gray-400/40 to-gray-500/40 rounded-full"></div>
+                  <div className="h-14 w-14 bg-gradient-to-r from-gray-400/40 to-gray-500/40 rounded-full"></div>
+                </div>
               </div>
+              
+              {/* Spinner */}
+              <div className="absolute top-1/2 right-12 -translate-y-1/2">
+                <div className="relative">
+                  <ChefHat className="w-16 h-16 text-orange-400 animate-bounce" />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-24 h-24 border-4 border-orange-200 border-t-orange-500 rounded-full animate-spin"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Thumbnail gallery skeleton */}
+            <div className="absolute bottom-6 right-6 flex gap-2">
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="w-20 h-14 bg-gradient-to-br from-gray-300/50 to-gray-400/50 rounded-md animate-pulse" style={{ animationDelay: `${i * 100}ms` }}></div>
+              ))}
             </div>
           </div>
         ) : featuredRecipe ? (
@@ -362,14 +419,26 @@ const Home = () => {
 
                   {/* Action buttons */}
                   <div className="flex gap-4">
-                    <button className="bg-emerald-500 hover:bg-emerald-600 text-white pl-6 pr-8 py-3.5 rounded-full flex items-center gap-3 font-bold text-base transition-all duration-300 shadow-lg">
+                    <button 
+                      onClick={() => navigate(`/recipe/${featuredRecipe.id}`)}
+                      className="bg-emerald-500 hover:bg-emerald-600 text-white pl-6 pr-8 py-3.5 rounded-full flex items-center gap-3 font-bold text-base transition-all duration-300 shadow-lg"
+                    >
                       <Play size={20} fill="white" />
                       Xem Công Thức
                     </button>
-                    <button className="bg-gray-800/60 backdrop-blur-sm hover:bg-gray-800/80 text-white p-3.5 rounded-full transition-all duration-300 border border-white/20">
-                      <Heart size={20} />
+                    <button 
+                      onClick={(e) => handleFavoriteClick(e, featuredRecipe.id)}
+                      className="bg-gray-800/60 backdrop-blur-sm hover:bg-gray-800/80 text-white p-3.5 rounded-full transition-all duration-300 border border-white/20"
+                    >
+                      <Heart 
+                        size={20} 
+                        className={favoriteRecipeIds.includes(featuredRecipe.id) ? 'fill-red-500 text-red-500' : ''}
+                      />
                     </button>
-                    <button className="bg-gray-800/60 backdrop-blur-sm hover:bg-gray-800/80 text-white p-3.5 rounded-full transition-all duration-300 border border-white/20">
+                    <button 
+                      onClick={() => navigate(`/recipe/${featuredRecipe.id}`)}
+                      className="bg-gray-800/60 backdrop-blur-sm hover:bg-gray-800/80 text-white p-3.5 rounded-full transition-all duration-300 border border-white/20"
+                    >
                       <Info size={20} />
                     </button>
                   </div>
@@ -382,11 +451,16 @@ const Home = () => {
               {featuredRecipes.map((recipe, index) => (
                 <div
                   key={recipe.id}
-                  onClick={() => setSelectedRecipeIndex(index)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedRecipeIndex(index);
+                  }}
+                  onDoubleClick={() => navigate(`/recipe/${recipe.id}`)}
                   className={`w-20 h-14 rounded-md overflow-hidden cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-lg bg-black/20 backdrop-blur-sm ${selectedRecipeIndex === index
                       ? 'border-2 border-yellow-400 scale-105'
                       : 'border-2 border-white/30'
                     }`}
+                  title={recipe.title}
                 >
                   <img
                     src={recipe.image}
@@ -412,39 +486,66 @@ const Home = () => {
         </div>
 
         <div className="relative">
-          {/* Left Arrow */}
-          {canScrollLeft['new-recipes'] && (
-            <button
-              onClick={() => scrollContainer('left', 'new-recipes')}
-              className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-6 z-10 bg-white text-gray-800 p-3 rounded-full hover:bg-gray-50 transition-all duration-300 shadow-lg border border-gray-200 hover:scale-110"
-            >
-              <ChevronLeft size={24} />
-            </button>
-          )}
+          {loading ? (
+            // Loading skeleton
+            <div className="flex gap-4 overflow-hidden">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="flex-shrink-0 w-[280px] animate-pulse">
+                  <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div className="h-[180px] bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 animate-shimmer"></div>
+                    <div className="p-4 space-y-3">
+                      <div className="h-6 bg-gray-200 rounded w-3/4"></div>
+                      <div className="flex gap-3">
+                        <div className="h-4 bg-gray-200 rounded w-20"></div>
+                        <div className="h-4 bg-gray-200 rounded w-20"></div>
+                      </div>
+                      <div className="flex gap-2">
+                        <div className="h-6 bg-gray-100 rounded w-16"></div>
+                        <div className="h-6 bg-gray-100 rounded w-16"></div>
+                        <div className="h-6 bg-gray-100 rounded w-16"></div>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <div className="h-4 bg-gray-200 rounded w-24"></div>
+                        <div className="h-10 bg-orange-200 rounded-lg w-28"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <>
+              {/* Left Arrow */}
+              {canScrollLeft['new-recipes'] && (
+                <button
+                  onClick={() => scrollContainer('left', 'new-recipes')}
+                  className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-6 z-10 bg-white text-gray-800 p-3 rounded-full hover:bg-gray-50 transition-all duration-300 shadow-lg border border-gray-200 hover:scale-110"
+                >
+                  <ChevronLeft size={24} />
+                </button>
+              )}
 
-          {/* Scrollable Container */}
-          <div
-            id="new-recipes"
-            className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide scroll-smooth cursor-grab active:cursor-grabbing"
-            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-            onMouseDown={(e) => handleMouseDown(e, 'new-recipes')}
-            onMouseMove={(e) => handleMouseMove(e, 'new-recipes')}
-            onMouseUp={() => handleMouseUp('new-recipes')}
-            onMouseLeave={() => handleMouseLeave('new-recipes')}
-          >
-            {newRecipes.map((recipe) => (
-              <RecipeCard key={recipe.id} recipe={recipe} />
-            ))}
-          </div>
+              {/* Scrollable Container */}
+              <div
+                id="new-recipes"
+                className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide scroll-smooth"
+                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+              >
+                {newRecipes.map((recipe) => (
+                  <RecipeCard key={recipe.id} recipe={recipe} />
+                ))}
+              </div>
 
-          {/* Right Arrow */}
-          {canScrollRight['new-recipes'] && (
-            <button
-              onClick={() => scrollContainer('right', 'new-recipes')}
-              className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-6 z-10 bg-white text-gray-800 p-3 rounded-full hover:bg-gray-50 transition-all duration-300 shadow-lg border border-gray-200 hover:scale-110"
-            >
-              <ChevronRight size={24} />
-            </button>
+              {/* Right Arrow */}
+              {canScrollRight['new-recipes'] && (
+                <button
+                  onClick={() => scrollContainer('right', 'new-recipes')}
+                  className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-6 z-10 bg-white text-gray-800 p-3 rounded-full hover:bg-gray-50 transition-all duration-300 shadow-lg border border-gray-200 hover:scale-110"
+                >
+                  <ChevronRight size={24} />
+                </button>
+              )}
+            </>
           )}
         </div>
       </div>
@@ -461,39 +562,66 @@ const Home = () => {
         </div>
 
         <div className="relative">
-          {/* Left Arrow */}
-          {canScrollLeft['popular-recipes'] && (
-            <button
-              onClick={() => scrollContainer('left', 'popular-recipes')}
-              className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-6 z-10 bg-white text-gray-800 p-3 rounded-full hover:bg-gray-50 transition-all duration-300 shadow-lg border border-gray-200 hover:scale-110"
-            >
-              <ChevronLeft size={24} />
-            </button>
-          )}
+          {loading ? (
+            // Loading skeleton
+            <div className="flex gap-4 overflow-hidden">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="flex-shrink-0 w-[280px] animate-pulse" style={{ animationDelay: `${i * 100}ms` }}>
+                  <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div className="h-[180px] bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 animate-shimmer"></div>
+                    <div className="p-4 space-y-3">
+                      <div className="h-6 bg-gray-200 rounded w-3/4"></div>
+                      <div className="flex gap-3">
+                        <div className="h-4 bg-gray-200 rounded w-20"></div>
+                        <div className="h-4 bg-gray-200 rounded w-20"></div>
+                      </div>
+                      <div className="flex gap-2">
+                        <div className="h-6 bg-gray-100 rounded w-16"></div>
+                        <div className="h-6 bg-gray-100 rounded w-16"></div>
+                        <div className="h-6 bg-gray-100 rounded w-16"></div>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <div className="h-4 bg-gray-200 rounded w-24"></div>
+                        <div className="h-10 bg-pink-200 rounded-lg w-28"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <>
+              {/* Left Arrow */}
+              {canScrollLeft['popular-recipes'] && (
+                <button
+                  onClick={() => scrollContainer('left', 'popular-recipes')}
+                  className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-6 z-10 bg-white text-gray-800 p-3 rounded-full hover:bg-gray-50 transition-all duration-300 shadow-lg border border-gray-200 hover:scale-110"
+                >
+                  <ChevronLeft size={24} />
+                </button>
+              )}
 
-          {/* Scrollable Container */}
-          <div
-            id="popular-recipes"
-            className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide scroll-smooth cursor-grab active:cursor-grabbing"
-            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-            onMouseDown={(e) => handleMouseDown(e, 'popular-recipes')}
-            onMouseMove={(e) => handleMouseMove(e, 'popular-recipes')}
-            onMouseUp={() => handleMouseUp('popular-recipes')}
-            onMouseLeave={() => handleMouseLeave('popular-recipes')}
-          >
-            {popularRecipes.map((recipe) => (
-              <RecipeCard key={recipe.id} recipe={recipe} />
-            ))}
-          </div>
+              {/* Scrollable Container */}
+              <div
+                id="popular-recipes"
+                className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide scroll-smooth"
+                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+              >
+                {popularRecipes.map((recipe) => (
+                  <RecipeCard key={recipe.id} recipe={recipe} />
+                ))}
+              </div>
 
-          {/* Right Arrow */}
-          {canScrollRight['popular-recipes'] && (
-            <button
-              onClick={() => scrollContainer('right', 'popular-recipes')}
-              className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-6 z-10 bg-white text-gray-800 p-3 rounded-full hover:bg-gray-50 transition-all duration-300 shadow-lg border border-gray-200 hover:scale-110"
-            >
-              <ChevronRight size={24} />
-            </button>
+              {/* Right Arrow */}
+              {canScrollRight['popular-recipes'] && (
+                <button
+                  onClick={() => scrollContainer('right', 'popular-recipes')}
+                  className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-6 z-10 bg-white text-gray-800 p-3 rounded-full hover:bg-gray-50 transition-all duration-300 shadow-lg border border-gray-200 hover:scale-110"
+                >
+                  <ChevronRight size={24} />
+                </button>
+              )}
+            </>
           )}
         </div>
       </div>
@@ -519,12 +647,8 @@ const Home = () => {
           {/* Scrollable Container */}
           <div
             id="top-comments"
-            className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide scroll-smooth cursor-grab active:cursor-grabbing"
+            className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide scroll-smooth"
             style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-            onMouseDown={(e) => handleMouseDown(e, 'top-comments')}
-            onMouseMove={(e) => handleMouseMove(e, 'top-comments')}
-            onMouseUp={() => handleMouseUp('top-comments')}
-            onMouseLeave={() => handleMouseLeave('top-comments')}
           >
             {topComments.length === 0 ? (
               <div className="w-full text-center py-8 text-gray-500">
@@ -532,7 +656,11 @@ const Home = () => {
               </div>
             ) : (
               topComments.map((comment) => (
-                <div key={comment._id} className="flex-shrink-0 w-[300px] bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer border border-gray-200">
+                <div 
+                  key={comment._id} 
+                  onClick={() => comment.recipe?._id && navigate(`/recipe/${comment.recipe._id}`)}
+                  className="flex-shrink-0 w-[300px] bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer border border-gray-200"
+                >
                   <div className="relative h-[180px]">
                     <img 
                       src={comment.recipe?.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&h=360&fit=crop'} 
@@ -617,7 +745,11 @@ const Home = () => {
                     const trending = index < 2 ? 'up' : index === 2 ? 'same' : 'down';
                     
                     return (
-                      <div key={recipe._id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
+                      <div 
+                        key={recipe._id} 
+                        onClick={() => navigate(`/recipe/${recipe._id}`)}
+                        className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+                      >
                         <span className="text-xl font-bold text-gray-500 w-6">{index + 1}.</span>
                         {trending === 'up' ? (
                           <TrendingUp size={18} className="text-green-500" />
@@ -662,7 +794,11 @@ const Home = () => {
                     const trending = index < 2 ? 'up' : index === 2 ? 'same' : 'down';
                     
                     return (
-                      <div key={recipe._id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
+                      <div 
+                        key={recipe._id} 
+                        onClick={() => navigate(`/recipe/${recipe._id}`)}
+                        className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+                      >
                         <span className="text-xl font-bold text-gray-500 w-6">{index + 1}.</span>
                         {trending === 'up' ? (
                           <TrendingUp size={18} className="text-green-500" />
@@ -705,7 +841,11 @@ const Home = () => {
                 </div>
               ) : (
                 newestComments.slice(0, 5).map((comment) => (
-                  <div key={comment._id} className="flex gap-3 p-2 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
+                  <div 
+                    key={comment._id} 
+                    onClick={() => comment.recipe?._id && navigate(`/recipe/${comment.recipe._id}`)}
+                    className="flex gap-3 p-2 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+                  >
                     <div className="relative flex-shrink-0">
                       {comment.userAvatar ? (
                         <img 
