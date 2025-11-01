@@ -34,10 +34,10 @@ const Home = () => {
   // Lazy load newest và popular recipes khi component mount
   useEffect(() => {
     if (newestRecipes.length === 0) {
-      dispatch(fetchNewestRecipes());
+      dispatch(fetchNewestRecipes(5));
     }
     if (popularRecipesData.length === 0) {
-      dispatch(fetchPopularRecipes());
+      dispatch(fetchPopularRecipes(5));
     }
   }, [dispatch, newestRecipes.length, popularRecipesData.length]);
 
@@ -477,11 +477,20 @@ const Home = () => {
       {/* New Recipes Section */}
       <div className="relative px-12 mb-20">
         <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <Sparkles className="text-orange-500" size={28} />
-            <h2 className="text-gray-900 text-3xl font-bold">
-              Món Ăn Mới
-            </h2>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-3">
+              <Sparkles className="text-orange-500" size={28} />
+              <h2 className="text-gray-900 text-3xl font-bold">
+                Món Ăn Mới
+              </h2>
+            </div>
+            <button
+              onClick={() => navigate('/recipes/new')}
+              className="text-orange-600 hover:text-orange-700 font-semibold text-sm flex items-center gap-1 transition-colors"
+            >
+              Xem thêm
+              <ChevronRight size={18} />
+            </button>
           </div>
         </div>
 
@@ -553,11 +562,20 @@ const Home = () => {
       {/* Popular Recipes Section */}
       <div className="relative px-12 mb-20">
         <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <TrendingUp className="text-pink-600" size={28} />
-            <h2 className="text-gray-900 text-3xl font-bold">
-              Món Ăn Phổ Biến
-            </h2>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-3">
+              <TrendingUp className="text-pink-600" size={28} />
+              <h2 className="text-gray-900 text-3xl font-bold">
+                Món Ăn Phổ Biến
+              </h2>
+            </div>
+            <button
+              onClick={() => navigate('/recipes/popular')}
+              className="text-pink-600 hover:text-pink-700 font-semibold text-sm flex items-center gap-1 transition-colors"
+            >
+              Xem thêm
+              <ChevronRight size={18} />
+            </button>
           </div>
         </div>
 

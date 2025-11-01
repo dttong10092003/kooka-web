@@ -137,33 +137,50 @@ export default function PopularRecipes() {
                         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {recipes.slice(0, 6).map((recipe) => (
-                            <RecipeCard
-                                key={recipe._id}
-                                id={recipe._id}
-                                title={recipe.name}
-                                description={recipe.short}
-                                image={recipe.image}
-                                rating={recipe.rate}
-                                difficulty={recipe.difficulty}
-                                cookTime={`${recipe.time}m`}
-                                servings={recipe.size}
-                                cuisine={recipe.cuisine.name}
-                                ingredients={
-                                        Array.isArray(recipe.ingredients)
-                                            ? recipe.ingredients.slice(0, 3).map((ing) => ing.name)
-                                            : []
+                    <>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+                            {recipes.slice(0, 6).map((recipe) => (
+                                <RecipeCard
+                                    key={recipe._id}
+                                    id={recipe._id}
+                                    title={recipe.name}
+                                    description={recipe.short}
+                                    image={recipe.image}
+                                    rating={recipe.rate}
+                                    difficulty={recipe.difficulty}
+                                    cookTime={`${recipe.time}m`}
+                                    servings={recipe.size}
+                                    cuisine={recipe.cuisine.name}
+                                    ingredients={
+                                            Array.isArray(recipe.ingredients)
+                                                ? recipe.ingredients.slice(0, 3).map((ing) => ing.name)
+                                                : []
+                                        }
+                                    moreIngredients={
+                                        Array.isArray(recipe.ingredients) && recipe.ingredients.length > 3
+                                            ? recipe.ingredients.length - 3
+                                            : 0
                                     }
-                                moreIngredients={
-                                    Array.isArray(recipe.ingredients) && recipe.ingredients.length > 3
-                                        ? recipe.ingredients.length - 3
-                                        : 0
-                                }
-                                reviews={recipe.numberOfRate}
-                            />
-                        ))}
-                    </div>
+                                    reviews={recipe.numberOfRate}
+                                />
+                            ))}
+                        </div>
+
+                        {/* View All Button */}
+                        {recipes.length > 6 && (
+                            <div className="text-center">
+                                <a
+                                    href="/recipes/all"
+                                    className="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-8 py-3 rounded-lg font-semibold transition-all shadow-md hover:shadow-lg"
+                                >
+                                    <span>Xem tất cả món ăn</span>
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                    </svg>
+                                </a>
+                            </div>
+                        )}
+                    </>
                 )}
             </div>
         </section>

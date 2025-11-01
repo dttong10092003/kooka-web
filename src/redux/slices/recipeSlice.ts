@@ -142,13 +142,15 @@ export const fetchTopRatedRecipes = createAsyncThunk("recipes/fetchTopRated", as
     return res.data as Recipe[];
 });
 
-export const fetchNewestRecipes = createAsyncThunk("recipes/fetchNewest", async () => {
-    const res = await axiosInstance.get(`/recipes/newest?limit=5`);
+export const fetchNewestRecipes = createAsyncThunk("recipes/fetchNewest", async (limit?: number) => {
+    const endpoint = limit ? `/recipes/newest?limit=${limit}` : `/recipes/newest`;
+    const res = await axiosInstance.get(endpoint);
     return res.data as Recipe[];
 });
 
-export const fetchPopularRecipes = createAsyncThunk("recipes/fetchPopular", async () => {
-    const res = await axiosInstance.get(`/recipes/popular?limit=5`);
+export const fetchPopularRecipes = createAsyncThunk("recipes/fetchPopular", async (limit?: number) => {
+    const endpoint = limit ? `/recipes/popular?limit=${limit}` : `/recipes/popular`;
+    const res = await axiosInstance.get(endpoint);
     return res.data as Recipe[];
 });
 

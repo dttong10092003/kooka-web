@@ -19,6 +19,7 @@ import DataManagement from "./pages/DataManagement";
 import Footer from "./components/Footer";
 import Recipes from "./pages/Recipes";
 import RecipeDetail from "./pages/RecipeDetail";
+import AllRecipes from "./pages/AllRecipes";
 
 // USer
 import ProfilePage from "./pages/ProfilePage";
@@ -89,6 +90,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/recipes" element={<Recipes />} />
+        <Route path="/recipes/:type" element={<AllRecipes />} />
         <Route path="/recipe/:id" element={<RecipeDetail />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
