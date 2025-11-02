@@ -53,6 +53,8 @@ export interface Recipe {
     category: Category;
     rate: number;
     numberOfRate: number;
+    createdAt?: string;
+    updatedAt?: string;
 }
 
 // --- Search Recipes ---

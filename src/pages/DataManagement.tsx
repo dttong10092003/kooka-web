@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
 import type { AppDispatch, RootState } from '../redux/store';
 import {
     fetchCategories,
@@ -19,7 +18,7 @@ import {
     updateIngredient,
     updateIngredientType,
 } from '../redux/slices/recipeSlice';
-import { Edit, Trash2, Plus, Search, X, Check, ArrowLeft } from 'lucide-react';
+import { Edit, Trash2, Plus, Search, X, Check } from 'lucide-react';
 import toast from 'react-hot-toast';
 import AddCategoryModal from '../components/AddCategoryModal';
 import AddCuisineModal from '../components/AddCuisineModal';
@@ -28,7 +27,6 @@ import AddIngredientModal from '../components/AddIngredientModal';
 
 const DataManagement: React.FC = () => {
     const dispatch = useDispatch<AppDispatch>();
-    const navigate = useNavigate();
     const { categories, cuisines, tags, ingredients, ingredientTypes } = useSelector(
         (state: RootState) => state.recipes
     );
@@ -227,49 +225,33 @@ const DataManagement: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 py-8">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                {/* Header */}
-                <div className="mb-8">
-                    <button
-                        onClick={() => navigate('/admin')}
-                        className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4 transition-colors"
-                    >
-                        <ArrowLeft size={20} />
-                        <span>Quay lại Dashboard</span>
-                    </button>
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">Quản lý dữ liệu</h1>
-                    <p className="text-gray-600">
-                        Quản lý danh mục, ẩm thực, thẻ, nguyên liệu và loại nguyên liệu
-                    </p>
+        <div className="space-y-6">
+            {/* Tabs */}
+            <div className="bg-white rounded-lg shadow-sm">
+                <div className="border-b border-gray-200">
+                    <nav className="flex space-x-8 px-6" aria-label="Tabs">
+                        {['categories', 'cuisines', 'tags', 'ingredients'].map((tab) => (
+                            <button
+                                key={tab}
+                                onClick={() => {
+                                    setActiveTab(tab as 'categories' | 'cuisines' | 'tags' | 'ingredients');
+                                    setSearchQuery('');
+                                }}
+                                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                                    activeTab === tab
+                                        ? 'border-orange-500 text-orange-600'
+                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                }`}
+                            >
+                                {getTabLabel(tab)}
+                            </button>
+                        ))}
+                    </nav>
                 </div>
+            </div>
 
-                {/* Tabs */}
-                <div className="bg-white rounded-lg shadow-sm mb-6">
-                    <div className="border-b border-gray-200">
-                        <nav className="flex space-x-8 px-6" aria-label="Tabs">
-                            {['categories', 'cuisines', 'tags', 'ingredients'].map((tab) => (
-                                <button
-                                    key={tab}
-                                    onClick={() => {
-                                        setActiveTab(tab as 'categories' | 'cuisines' | 'tags' | 'ingredients');
-                                        setSearchQuery('');
-                                    }}
-                                    className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                                        activeTab === tab
-                                            ? 'border-orange-500 text-orange-600'
-                                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                                    }`}
-                                >
-                                    {getTabLabel(tab)}
-                                </button>
-                            ))}
-                        </nav>
-                    </div>
-                </div>
-
-                {/* Search and Add */}
-                <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+            {/* Search and Add */}
+            <div className="bg-white rounded-lg shadow-sm p-6">
                     <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
                         <div className="relative flex-1 w-full">
                             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
@@ -291,8 +273,8 @@ const DataManagement: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Data Table */}
-                <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+            {/* Data Table */}
+            <div className="bg-white rounded-lg shadow-sm overflow-hidden">
                     <div className="overflow-x-auto">
                         {isHierarchical ? (
                             // Hierarchical view for ingredients
@@ -576,7 +558,6 @@ const DataManagement: React.FC = () => {
                         </p>
                     </div>
                 </div>
-            </div>
 
             {/* Modals */}
             <AddCategoryModal

@@ -6,6 +6,7 @@ import type { AppDispatch, RootState } from '../redux/store';
 import { getRecipeById } from '../redux/slices/recipeSlice';
 import { toggleFavorite, checkUserFavorited } from '../redux/slices/favoriteSlice';
 import CommentSection from '../components/CommentSection';
+import axiosInstance from '../utils/axiosInstance';
 
 export default function RecipeDetail() {
     const { id } = useParams<{ id: string }>();
@@ -26,6 +27,26 @@ export default function RecipeDetail() {
     useEffect(() => {
         if (id) {
             dispatch(getRecipeById(id));
+            
+            // Increment view count when user visits recipe detail
+            const incrementView = async () => {
+                try {
+                    // Get or create sessionId for anti-spam
+                    let sessionId = sessionStorage.getItem('sessionId');
+                    if (!sessionId) {
+                        sessionId = `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                        sessionStorage.setItem('sessionId', sessionId);
+                    }
+                    
+                    await axiosInstance.post(`/views/${id}/increment`, {
+                        sessionId
+                    });
+                } catch (error) {
+                    console.error('Failed to increment view:', error);
+                }
+            };
+            
+            incrementView();
         }
     }, [dispatch, id]);
 

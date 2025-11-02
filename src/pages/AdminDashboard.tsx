@@ -3,7 +3,7 @@ import { useState, useEffect } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { useNavigate } from "react-router-dom"
 import type { AppDispatch, RootState } from "../redux/store"
-import { fetchRecipes, deleteRecipe } from "../redux/slices/recipeSlice"
+import { fetchRecipes, deleteRecipe, fetchNewestRecipes } from "../redux/slices/recipeSlice"
 import type { Recipe } from "../redux/slices/recipeSlice"
 import {
     BarChart3,
@@ -24,10 +24,12 @@ import {
     ArrowLeft,
     ChevronLeft,
     ChevronRight,
+    Database,
 } from "lucide-react"
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import AddRecipeModal from "../components/AddRecipeModal";
 import EditRecipeModal from "../components/EditRecipeModal";
+import DataManagement from "./DataManagement";
 import toast from "react-hot-toast";
 import axiosInstance from "../utils/axiosInstance";
 
@@ -51,16 +53,19 @@ const AdminDashboard: React.FC = () => {
     })
     const [loadingStats, setLoadingStats] = useState(true)
     const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false)
+    const [recipePerformanceData, setRecipePerformanceData] = useState<any[]>([])
 
     const navigate = useNavigate()
     const dispatch = useDispatch<AppDispatch>()
-    const { recipes, loading, error } = useSelector((state: RootState) => state.recipes)
+    const { recipes, loading, error, newestRecipes } = useSelector((state: RootState) => state.recipes)
 
     useEffect(() => {
         dispatch(fetchRecipes())
+        dispatch(fetchNewestRecipes(4))
         fetchDashboardStats()
         fetchRecentUsers()
         fetchWeeklyUserActivity(selectedYear, selectedMonth)
+        fetchRecipePerformance()
     }, [dispatch])
 
     useEffect(() => {
@@ -70,21 +75,23 @@ const AdminDashboard: React.FC = () => {
     const fetchDashboardStats = async () => {
         try {
             setLoadingStats(true)
-            const [recipesRes, usersRes, reviewsRes] = await Promise.all([
+            
+            // Get current month and year
+            const currentDate = new Date()
+            const currentYear = currentDate.getFullYear()
+            const currentMonth = currentDate.getMonth() + 1
+
+            const [recipesRes, usersRes, reviewsRes, monthlyViewsRes] = await Promise.all([
                 axiosInstance.get("/recipes"),
                 axiosInstance.get("/user/profile/count"),
                 axiosInstance.get("/reviews/count"),
+                axiosInstance.get(`/views/monthly/total?year=${currentYear}&month=${currentMonth}`),
             ])
-
-            // Tính tổng views từ tất cả recipes (nếu có field views)
-            const totalViews = recipesRes.data.reduce((sum: number, recipe: any) =>
-                sum + (recipe.views || 0), 0
-            )
 
             setDashboardStats({
                 totalRecipes: recipesRes.data.length || 0,
                 activeUsers: usersRes.data.count || 0,
-                recipeViews: totalViews,
+                recipeViews: monthlyViewsRes.data.totalViews || 0,
                 userReviews: reviewsRes.data.count || 0,
             })
         } catch (error) {
@@ -133,6 +140,36 @@ const AdminDashboard: React.FC = () => {
         } catch (error) {
             console.error("Error fetching weekly user activity:", error)
             setWeeklyData([])
+        }
+    }
+
+    const fetchRecipePerformance = async () => {
+        try {
+            // Fetch recipes and views data
+            const recipesRes = await axiosInstance.get("/recipes")
+            const recipes = recipesRes.data
+            
+            // Get view counts for top 10 recipes
+            const recipeIds = recipes.map((r: any) => r._id).slice(0, 10)
+            const viewsRes = await axiosInstance.post("/views/batch", { recipeIds })
+            const viewsData = viewsRes.data || {}
+
+            // Combine data for top 10 recipes
+            const performanceData = recipes.slice(0, 10).map((recipe: any) => {
+                const recipeViews = viewsData[recipe._id] || 0
+                return {
+                    name: recipe.name.length > 15 ? recipe.name.substring(0, 15) + "..." : recipe.name,
+                    views: recipeViews,
+                    reviews: recipe.numberOfRate || 0,
+                    // favorites: Get from favorites API if available
+                    favorites: Math.floor(recipeViews * 0.3) // Temporary calculation
+                }
+            })
+
+            setRecipePerformanceData(performanceData)
+        } catch (error) {
+            console.error("Error fetching recipe performance:", error)
+            setRecipePerformanceData([])
         }
     }
 
@@ -199,7 +236,7 @@ const AdminDashboard: React.FC = () => {
             color: "from-green-500 to-green-600",
         },
         {
-            title: "Recipe Views",
+            title: "Recipe Views (This Month)",
             value: loadingStats ? "..." : formatNumber(dashboardStats.recipeViews),
             change: "+23%",
             trend: "up",
@@ -216,49 +253,14 @@ const AdminDashboard: React.FC = () => {
         },
     ]
 
-    const recentRecipes = [
-        {
-            id: 1,
-            title: "Spicy Thai Basil Chicken",
-            author: "Chef Maria",
-            status: "Published",
-            views: "2.3K",
-            rating: 4.8,
-            date: "2025-01-15",
-        },
-        {
-            id: 2,
-            title: "Classic French Onion Soup",
-            author: "Chef Pierre",
-            status: "Draft",
-            views: "1.8K",
-            rating: 4.6,
-            date: "2025-01-14",
-        },
-        {
-            id: 3,
-            title: "Vegan Buddha Bowl",
-            author: "Chef Sarah",
-            status: "Published",
-            views: "3.1K",
-            rating: 4.9,
-            date: "2025-01-13",
-        },
-        {
-            id: 4,
-            title: "Chocolate Lava Cake",
-            author: "Chef David",
-            status: "Review",
-            views: "4.2K",
-            rating: 4.7,
-            date: "2025-01-12",
-        },
-    ]
+    // Get 4 most recent recipes from Redux store
+    const recentRecipes = newestRecipes
 
     const tabs = [
         { id: "overview", label: "Overview", icon: BarChart3 },
         { id: "recipes", label: "Recipes", icon: ChefHat },
         { id: "users", label: "Users", icon: Users },
+        { id: "data", label: "Data Management", icon: Database },
         { id: "analytics", label: "Analytics", icon: TrendingUp },
         { id: "settings", label: "Settings", icon: Settings },
     ]
@@ -368,15 +370,6 @@ const AdminDashboard: React.FC = () => {
                         )
                     })}
 
-                    {/* Data Management Link */}
-                    <button
-                        onClick={() => navigate('/admin/data-management')}
-                        className="w-full flex items-center space-x-3 px-4 py-3 text-gray-600 hover:bg-gray-100 hover:text-gray-900 rounded-xl transition-all duration-200 cursor-pointer"
-                    >
-                        <Settings className="h-5 w-5" />
-                        <span className="font-medium">Data Management</span>
-                    </button>
-
                     {/* thêm logout trực tiếp */}
                     <button
                         onClick={() => setLogoutConfirmOpen(true)}
@@ -456,12 +449,66 @@ const AdminDashboard: React.FC = () => {
                                             <Download className="h-5 w-5" />
                                         </button>
                                     </div>
-                                    <div className="h-64 bg-gradient-to-br from-orange-50 to-red-50 rounded-xl flex items-center justify-center">
-                                        <div className="text-center">
-                                            <BarChart3 className="h-16 w-16 text-orange-400 mx-auto mb-4" />
-                                            <p className="text-gray-600">Chart visualization would go here</p>
+                                    {recipePerformanceData.length > 0 ? (
+                                        <div className="h-64">
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <BarChart data={recipePerformanceData}>
+                                                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                                                    <XAxis 
+                                                        dataKey="name" 
+                                                        stroke="#9ca3af"
+                                                        style={{ fontSize: '11px' }}
+                                                        angle={-15}
+                                                        textAnchor="end"
+                                                        height={60}
+                                                    />
+                                                    <YAxis 
+                                                        stroke="#9ca3af"
+                                                        style={{ fontSize: '12px' }}
+                                                        allowDecimals={false}
+                                                    />
+                                                    <Tooltip
+                                                        contentStyle={{
+                                                            backgroundColor: '#fff',
+                                                            border: '1px solid #e5e7eb',
+                                                            borderRadius: '8px',
+                                                            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                                                        }}
+                                                        cursor={{ fill: 'rgba(249, 115, 22, 0.1)' }}
+                                                    />
+                                                    <Legend 
+                                                        wrapperStyle={{ fontSize: '12px' }}
+                                                        iconType="circle"
+                                                    />
+                                                    <Bar 
+                                                        dataKey="views" 
+                                                        fill="#8b5cf6" 
+                                                        name="Views"
+                                                        radius={[8, 8, 0, 0]}
+                                                    />
+                                                    <Bar 
+                                                        dataKey="reviews" 
+                                                        fill="#f97316" 
+                                                        name="Reviews"
+                                                        radius={[8, 8, 0, 0]}
+                                                    />
+                                                    <Bar 
+                                                        dataKey="favorites" 
+                                                        fill="#ef4444" 
+                                                        name="Favorites"
+                                                        radius={[8, 8, 0, 0]}
+                                                    />
+                                                </BarChart>
+                                            </ResponsiveContainer>
                                         </div>
-                                    </div>
+                                    ) : (
+                                        <div className="h-64 bg-gradient-to-br from-orange-50 to-red-50 rounded-xl flex items-center justify-center">
+                                            <div className="text-center">
+                                                <BarChart3 className="h-16 w-16 text-orange-400 mx-auto mb-4" />
+                                                <p className="text-gray-600">No recipe performance data available</p>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* User Activity Chart - Weekly */}
@@ -556,35 +603,44 @@ const AdminDashboard: React.FC = () => {
                                         <button className="text-orange-600 hover:text-orange-700 text-sm font-medium">View All</button>
                                     </div>
                                     <div className="space-y-4">
-                                        {recentRecipes.map((recipe) => (
-                                            <div
-                                                key={recipe.id}
-                                                className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors duration-200"
-                                            >
-                                                <div className="flex-1">
-                                                    <h4 className="font-medium text-gray-900">{recipe.title}</h4>
-                                                    <p className="text-sm text-gray-600">by {recipe.author}</p>
-                                                    <div className="flex items-center space-x-4 mt-2">
-                                                        <span className="flex items-center text-sm text-gray-500">
-                                                            <Eye className="h-4 w-4 mr-1" />
-                                                            {recipe.views}
+                                        {recentRecipes.length > 0 ? (
+                                            recentRecipes.map((recipe) => (
+                                                <div
+                                                    key={recipe._id}
+                                                    className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors duration-200"
+                                                >
+                                                    <div className="flex-1">
+                                                        <h4 className="font-medium text-gray-900">{recipe.name}</h4>
+                                                        <p className="text-sm text-gray-600">{recipe.cuisine?.name || "Various Cuisine"}</p>
+                                                        <div className="flex items-center space-x-4 mt-2">
+                                                            <span className="flex items-center text-sm text-gray-500">
+                                                                <ChefHat className="h-4 w-4 mr-1" />
+                                                                {recipe.difficulty || "Normal"}
+                                                            </span>
+                                                            <span className="flex items-center text-sm text-gray-500">
+                                                                <Star className="h-4 w-4 mr-1 text-yellow-400" />
+                                                                {recipe.rate?.toFixed(1) || "0.0"}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                            Published
                                                         </span>
-                                                        <span className="flex items-center text-sm text-gray-500">
-                                                            <Star className="h-4 w-4 mr-1 text-yellow-400" />
-                                                            {recipe.rating}
-                                                        </span>
+                                                        <p className="text-xs text-gray-500 mt-1">
+                                                            {recipe.createdAt 
+                                                                ? new Date(recipe.createdAt).toLocaleDateString('vi-VN')
+                                                                : "N/A"
+                                                            }
+                                                        </p>
                                                     </div>
                                                 </div>
-                                                <div className="text-right">
-                                                    <span
-                                                        className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(recipe.status)}`}
-                                                    >
-                                                        {recipe.status}
-                                                    </span>
-                                                    <p className="text-xs text-gray-500 mt-1">{recipe.date}</p>
-                                                </div>
+                                            ))
+                                        ) : (
+                                            <div className="text-center py-8 text-gray-500">
+                                                No recent recipes available
                                             </div>
-                                        ))}
+                                        )}
                                     </div>
                                 </div>
 
@@ -849,6 +905,11 @@ const AdminDashboard: React.FC = () => {
                                 </div>
                             </div>
                         </div>
+                    )}
+
+                    {/* Data Management Tab */}
+                    {activeTab === "data" && (
+                        <DataManagement />
                     )}
 
                     {/* Settings Tab */}
