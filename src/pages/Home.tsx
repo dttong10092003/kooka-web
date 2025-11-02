@@ -28,8 +28,16 @@ const Home = () => {
   const { user } = useSelector((state: RootState) => state.auth);
   
   const [selectedRecipeIndex, setSelectedRecipeIndex] = useState(0);
-  const [canScrollLeft, setCanScrollLeft] = useState<{ [key: string]: boolean }>({});
-  const [canScrollRight, setCanScrollRight] = useState<{ [key: string]: boolean }>({});
+  const [canScrollLeft, setCanScrollLeft] = useState<{ [key: string]: boolean }>({
+    'new-recipes': false,
+    'popular-recipes': false,
+    'top-comments': false
+  });
+  const [canScrollRight, setCanScrollRight] = useState<{ [key: string]: boolean }>({
+    'new-recipes': true,
+    'popular-recipes': true,
+    'top-comments': true
+  });
 
   // Lazy load newest và popular recipes khi component mount
   useEffect(() => {
@@ -134,15 +142,20 @@ const Home = () => {
   // Initialize scroll position check
   useEffect(() => {
     const containers = ['new-recipes', 'popular-recipes'];
-    containers.forEach(id => {
-      checkScrollPosition(id);
-      const container = document.getElementById(id);
-      if (container) {
-        container.addEventListener('scroll', () => checkScrollPosition(id));
-      }
-    });
+    
+    // Delay to ensure DOM is ready
+    const timer = setTimeout(() => {
+      containers.forEach(id => {
+        checkScrollPosition(id);
+        const container = document.getElementById(id);
+        if (container) {
+          container.addEventListener('scroll', () => checkScrollPosition(id));
+        }
+      });
+    }, 100);
 
     return () => {
+      clearTimeout(timer);
       containers.forEach(id => {
         const container = document.getElementById(id);
         if (container) {
@@ -151,6 +164,18 @@ const Home = () => {
       });
     };
   }, []);
+
+  // Re-check scroll position when recipes data changes (after loading)
+  useEffect(() => {
+    if (!loading) {
+      const timer = setTimeout(() => {
+        checkScrollPosition('new-recipes');
+        checkScrollPosition('popular-recipes');
+      }, 200);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [loading, newRecipes.length, popularRecipes.length]);
 
   const scrollContainer = (direction: 'left' | 'right', containerId: string) => {
     const container = document.getElementById(containerId);
@@ -477,19 +502,21 @@ const Home = () => {
       {/* New Recipes Section */}
       <div className="relative px-12 mb-20">
         <div className="mb-8">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-3">
-              <Sparkles className="text-orange-500" size={28} />
-              <h2 className="text-gray-900 text-3xl font-bold">
-                Món Ăn Mới
-              </h2>
-            </div>
+          <div className="flex items-center gap-4 mb-2">
+            <Sparkles className="text-orange-500" size={28} />
+            <h2 className="text-gray-900 text-3xl font-bold">
+              Món Ăn Mới
+            </h2>
             <button
               onClick={() => navigate('/recipes/new')}
-              className="text-orange-600 hover:text-orange-700 font-semibold text-sm flex items-center gap-1 transition-colors"
+              className="group flex items-center gap-2 transition-all duration-300"
             >
-              Xem thêm
-              <ChevronRight size={18} />
+              <span className="text-sm font-medium text-black-600 whitespace-nowrap overflow-hidden max-w-0 opacity-0 group-hover:max-w-[100px] group-hover:opacity-100 transition-all duration-300 ease-out">
+                Xem thêm
+              </span>
+              <div className="w-9 h-9 rounded-full bg-white border border-gray-300 group-hover:bg-gray-100 flex items-center justify-center transition-all duration-300 flex-shrink-0 shadow-sm">
+                <ChevronRight size={18} className="text-gray-900" />
+              </div>
             </button>
           </div>
         </div>
@@ -525,10 +552,13 @@ const Home = () => {
           ) : (
             <>
               {/* Left Arrow */}
-              {canScrollLeft['new-recipes'] && (
+              {(canScrollLeft['new-recipes'] || newRecipes.length > 4) && (
                 <button
                   onClick={() => scrollContainer('left', 'new-recipes')}
-                  className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-6 z-10 bg-white text-gray-800 p-3 rounded-full hover:bg-gray-50 transition-all duration-300 shadow-lg border border-gray-200 hover:scale-110"
+                  disabled={!canScrollLeft['new-recipes']}
+                  className={`absolute left-0 top-1/2 -translate-y-1/2 -translate-x-6 z-10 bg-white text-gray-800 p-3 rounded-full transition-all duration-300 shadow-lg border border-gray-200 ${
+                    canScrollLeft['new-recipes'] ? 'hover:bg-gray-50 hover:scale-110 cursor-pointer' : 'opacity-30 cursor-not-allowed'
+                  }`}
                 >
                   <ChevronLeft size={24} />
                 </button>
@@ -541,15 +571,20 @@ const Home = () => {
                 style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
               >
                 {newRecipes.map((recipe) => (
-                  <RecipeCard key={recipe.id} recipe={recipe} />
+                  <div key={recipe.id} className="flex-shrink-0 w-[280px]">
+                    <RecipeCard recipe={recipe} />
+                  </div>
                 ))}
               </div>
 
               {/* Right Arrow */}
-              {canScrollRight['new-recipes'] && (
+              {(canScrollRight['new-recipes'] || newRecipes.length > 4) && (
                 <button
                   onClick={() => scrollContainer('right', 'new-recipes')}
-                  className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-6 z-10 bg-white text-gray-800 p-3 rounded-full hover:bg-gray-50 transition-all duration-300 shadow-lg border border-gray-200 hover:scale-110"
+                  disabled={!canScrollRight['new-recipes']}
+                  className={`absolute right-0 top-1/2 -translate-y-1/2 translate-x-6 z-10 bg-white text-gray-800 p-3 rounded-full transition-all duration-300 shadow-lg border border-gray-200 ${
+                    canScrollRight['new-recipes'] ? 'hover:bg-gray-50 hover:scale-110 cursor-pointer' : 'opacity-30 cursor-not-allowed'
+                  }`}
                 >
                   <ChevronRight size={24} />
                 </button>
@@ -562,19 +597,21 @@ const Home = () => {
       {/* Popular Recipes Section */}
       <div className="relative px-12 mb-20">
         <div className="mb-8">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-3">
-              <TrendingUp className="text-pink-600" size={28} />
-              <h2 className="text-gray-900 text-3xl font-bold">
-                Món Ăn Phổ Biến
-              </h2>
-            </div>
+          <div className="flex items-center gap-4 mb-2">
+            <TrendingUp className="text-pink-600" size={28} />
+            <h2 className="text-gray-900 text-3xl font-bold">
+              Món Ăn Phổ Biến
+            </h2>
             <button
               onClick={() => navigate('/recipes/popular')}
-              className="text-pink-600 hover:text-pink-700 font-semibold text-sm flex items-center gap-1 transition-colors"
+              className="group flex items-center gap-2 transition-all duration-300"
             >
-              Xem thêm
-              <ChevronRight size={18} />
+              <span className="text-sm font-medium text-black-600 whitespace-nowrap overflow-hidden max-w-0 opacity-0 group-hover:max-w-[100px] group-hover:opacity-100 transition-all duration-300 ease-out">
+                Xem thêm
+              </span>
+              <div className="w-9 h-9 rounded-full bg-white border border-gray-300 group-hover:bg-gray-100 flex items-center justify-center transition-all duration-300 flex-shrink-0 shadow-sm">
+                <ChevronRight size={18} className="text-gray-900" />
+              </div>
             </button>
           </div>
         </div>
@@ -610,10 +647,13 @@ const Home = () => {
           ) : (
             <>
               {/* Left Arrow */}
-              {canScrollLeft['popular-recipes'] && (
+              {(canScrollLeft['popular-recipes'] || popularRecipes.length > 4) && (
                 <button
                   onClick={() => scrollContainer('left', 'popular-recipes')}
-                  className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-6 z-10 bg-white text-gray-800 p-3 rounded-full hover:bg-gray-50 transition-all duration-300 shadow-lg border border-gray-200 hover:scale-110"
+                  disabled={!canScrollLeft['popular-recipes']}
+                  className={`absolute left-0 top-1/2 -translate-y-1/2 -translate-x-6 z-10 bg-white text-gray-800 p-3 rounded-full transition-all duration-300 shadow-lg border border-gray-200 ${
+                    canScrollLeft['popular-recipes'] ? 'hover:bg-gray-50 hover:scale-110 cursor-pointer' : 'opacity-30 cursor-not-allowed'
+                  }`}
                 >
                   <ChevronLeft size={24} />
                 </button>
@@ -622,19 +662,24 @@ const Home = () => {
               {/* Scrollable Container */}
               <div
                 id="popular-recipes"
-                className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide scroll-smooth"
+                className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide scroll-smooth items-stretch"
                 style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
               >
                 {popularRecipes.map((recipe) => (
-                  <RecipeCard key={recipe.id} recipe={recipe} />
+                  <div key={recipe.id} className="flex-shrink-0 w-[280px] h-full">
+                    <RecipeCard recipe={recipe} />
+                  </div>
                 ))}
               </div>
 
               {/* Right Arrow */}
-              {canScrollRight['popular-recipes'] && (
+              {(canScrollRight['popular-recipes'] || popularRecipes.length > 4) && (
                 <button
                   onClick={() => scrollContainer('right', 'popular-recipes')}
-                  className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-6 z-10 bg-white text-gray-800 p-3 rounded-full hover:bg-gray-50 transition-all duration-300 shadow-lg border border-gray-200 hover:scale-110"
+                  disabled={!canScrollRight['popular-recipes']}
+                  className={`absolute right-0 top-1/2 -translate-y-1/2 translate-x-6 z-10 bg-white text-gray-800 p-3 rounded-full transition-all duration-300 shadow-lg border border-gray-200 ${
+                    canScrollRight['popular-recipes'] ? 'hover:bg-gray-50 hover:scale-110 cursor-pointer' : 'opacity-30 cursor-not-allowed'
+                  }`}
                 >
                   <ChevronRight size={24} />
                 </button>
