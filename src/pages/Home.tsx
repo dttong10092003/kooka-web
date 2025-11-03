@@ -207,11 +207,11 @@ const Home = () => {
 
     return (
       <div
-        className="relative group flex-shrink-0 w-[280px] cursor-pointer bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300"
+        className="relative group flex-shrink-0 w-full cursor-pointer bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300"
         onClick={() => navigate(`/recipe/${recipe.id}`)}
       >
         {/* Image */}
-        <div className="relative h-[180px]">
+        <div className="relative h-[160px] sm:h-[180px]">
           <img
             src={recipe.image}
             alt={recipe.title}
@@ -268,18 +268,19 @@ const Home = () => {
 
           {/* Ingredients */}
           {recipe.ingredients && recipe.ingredients.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 mb-3">
-              {recipe.ingredients.slice(0, 4).map((ingredient, index) => (
+            <div className="flex gap-1.5 mb-3 overflow-hidden">
+              {recipe.ingredients.slice(0, 3).map((ingredient, index) => (
                 <span
                   key={index}
-                  className="px-2 py-0.5 bg-gray-100 text-gray-700 text-xs rounded-md"
+                  className="px-2 py-0.5 bg-gray-100 text-gray-700 text-xs rounded-md truncate flex-shrink-0 max-w-[75px]"
+                  title={ingredient}
                 >
                   {ingredient}
                 </span>
               ))}
-              {recipe.ingredients.length > 4 && (
-                <span className="px-2 py-0.5 bg-gray-100 text-gray-700 text-xs rounded-md">
-                  +{recipe.ingredients.length - 4} more
+              {recipe.ingredients.length > 3 && (
+                <span className="px-2 py-0.5 bg-gray-100 text-gray-700 text-xs rounded-md whitespace-nowrap flex-shrink-0">
+                  +{recipe.ingredients.length - 3} more
                 </span>
               )}
             </div>
@@ -315,7 +316,7 @@ const Home = () => {
       </div>
 
       {/* Hero Section - Redesigned */}
-      <div className="relative h-[660px] mb-16 overflow-hidden">
+      <div className="relative h-[400px] sm:h-[500px] md:h-[600px] lg:h-[660px] mb-6 sm:mb-8 overflow-hidden">
         {loading || featuredRecipes.length === 0 ? (
           // Loading state với skeleton UI
           <div className="absolute inset-0 bg-gradient-to-br from-orange-50 via-yellow-50 to-orange-50 animate-gradient">
@@ -325,7 +326,7 @@ const Home = () => {
               <div className="absolute bottom-20 right-20 w-96 h-96 bg-yellow-200/30 rounded-full blur-3xl animate-pulse delay-700"></div>
             </div>
             
-            <div className="relative h-full flex items-center px-12">
+            <div className="relative h-full flex items-center px-4 sm:px-6 md:px-8 lg:px-12">
               <div className="w-full max-w-2xl space-y-6 animate-pulse">
                 {/* Badge skeleton */}
                 <div className="inline-block h-9 w-48 bg-gradient-to-r from-orange-300/40 to-yellow-300/40 rounded-full"></div>
@@ -396,75 +397,81 @@ const Home = () => {
 
             {/* Content - Full width */}
             <div className="relative h-full flex items-center">
-              <div className="w-full px-12 py-16">
+              <div className="w-full px-4 sm:px-6 md:px-8 lg:px-12 py-8 sm:py-12 md:py-16">
                 <div className="max-w-2xl">
                   {/* Badge */}
-                  <div className="inline-flex items-center gap-2 bg-yellow-400 text-black px-5 py-2 rounded-full font-bold text-sm mb-6">
-                    <Sparkles size={18} />
-                    CÔNG THỨC NỔI BẬT
+                  <div className="inline-flex items-center gap-2 bg-yellow-400 text-black px-3 sm:px-4 md:px-5 py-1.5 sm:py-2 rounded-full font-bold text-xs sm:text-sm mb-4 sm:mb-6">
+                    <Sparkles size={16} className="sm:w-[18px] sm:h-[18px]" />
+                    <span className="hidden sm:inline">CÔNG THỨC NỔI BẬT</span>
+                    <span className="sm:hidden">NỔI BẬT</span>
                   </div>
 
-                  <h1 className="text-white text-5xl font-bold mb-4 leading-tight">
+                  <h1 className="text-white text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-3 sm:mb-4 leading-tight line-clamp-2">
                     {featuredRecipe.title}
                   </h1>
 
                   {/* Ingredients Tags */}
-                  <div className="flex flex-wrap gap-2 mb-6">
-                    {featuredRecipe.ingredients?.slice(0, 4).map((ingredient, index) => (
-                      <span key={index} className="px-3 py-1.5 rounded-md text-sm bg-white/10 backdrop-blur-sm text-white border border-white/20">
+                  <div className="flex gap-1.5 sm:gap-2 mb-4 sm:mb-6 overflow-hidden flex-wrap">
+                    {featuredRecipe.ingredients?.slice(0, 3).map((ingredient, index) => (
+                      <span 
+                        key={index} 
+                        className="px-2 sm:px-3 py-1 sm:py-1.5 rounded-md text-xs sm:text-sm bg-white/10 backdrop-blur-sm text-white border border-white/20 max-w-[100px] sm:max-w-[140px] truncate flex-shrink-0"
+                        title={ingredient}
+                      >
                         {ingredient}
                       </span>
                     ))}
-                    {(featuredRecipe.ingredients?.length || 0) > 4 && (
-                      <span className="px-3 py-1.5 rounded-md text-sm bg-white/10 backdrop-blur-sm text-white border border-white/20">
-                        +{(featuredRecipe.ingredients?.length || 0) - 4}
+                    {(featuredRecipe.ingredients?.length || 0) > 3 && (
+                      <span className="px-2 sm:px-3 py-1 sm:py-1.5 rounded-md text-xs sm:text-sm bg-white/10 backdrop-blur-sm text-white border border-white/20 whitespace-nowrap flex-shrink-0">
+                        +{(featuredRecipe.ingredients?.length || 0) - 3} more
                       </span>
                     )}
                   </div>
 
-                  <p className="text-gray-300 text-base leading-relaxed mb-6 max-w-2xl">
+                  <p className="text-gray-300 text-sm sm:text-base leading-relaxed mb-4 sm:mb-6 max-w-2xl line-clamp-2 sm:line-clamp-none">
                     {featuredRecipe.title} - Một trong những món ăn được đánh giá cao nhất với hương vị đậm đà và cách làm tuyệt vời.
                   </p>
 
                   {/* Meta info */}
-                  <div className="flex items-center gap-6 mb-8">
-                    <div className="flex items-center gap-2 text-white">
-                      <Star size={20} fill="#fbbf24" className="text-amber-400" />
-                      <span className="font-bold">{featuredRecipe.rating?.toFixed(1)}</span>
+                  <div className="flex items-center gap-3 sm:gap-4 md:gap-6 mb-6 sm:mb-8">
+                    <div className="flex items-center gap-1.5 sm:gap-2 text-white">
+                      <Star size={16} fill="#fbbf24" className="text-amber-400 sm:w-5 sm:h-5" />
+                      <span className="font-bold text-sm sm:text-base">{featuredRecipe.rating?.toFixed(1)}</span>
                     </div>
-                    <div className="flex items-center gap-2 text-white">
-                      <Clock size={20} />
-                      <span>{featuredRecipe.duration}</span>
+                    <div className="flex items-center gap-1.5 sm:gap-2 text-white">
+                      <Clock size={16} className="sm:w-5 sm:h-5" />
+                      <span className="text-sm sm:text-base">{featuredRecipe.duration}</span>
                     </div>
-                    <div className="flex items-center gap-2 text-white">
-                      <ChefHat size={20} />
-                      <span>{featuredRecipe.difficulty}</span>
+                    <div className="flex items-center gap-1.5 sm:gap-2 text-white">
+                      <ChefHat size={16} className="sm:w-5 sm:h-5" />
+                      <span className="text-sm sm:text-base">{featuredRecipe.difficulty}</span>
                     </div>
                   </div>
 
                   {/* Action buttons */}
-                  <div className="flex gap-4">
+                  <div className="flex gap-2 sm:gap-3 md:gap-4">
                     <button 
                       onClick={() => navigate(`/recipe/${featuredRecipe.id}`)}
-                      className="bg-emerald-500 hover:bg-emerald-600 text-white pl-6 pr-8 py-3.5 rounded-full flex items-center gap-3 font-bold text-base transition-all duration-300 shadow-lg"
+                      className="bg-emerald-500 hover:bg-emerald-600 text-white pl-4 sm:pl-6 pr-5 sm:pr-8 py-2.5 sm:py-3.5 rounded-full flex items-center gap-2 sm:gap-3 font-bold text-sm sm:text-base transition-all duration-300 shadow-lg"
                     >
-                      <Play size={20} fill="white" />
-                      Xem Công Thức
+                      <Play size={16} fill="white" className="sm:w-5 sm:h-5" />
+                      <span className="hidden sm:inline">Xem Công Thức</span>
+                      <span className="sm:hidden">Xem</span>
                     </button>
                     <button 
                       onClick={(e) => handleFavoriteClick(e, featuredRecipe.id)}
-                      className="bg-gray-800/60 backdrop-blur-sm hover:bg-gray-800/80 text-white p-3.5 rounded-full transition-all duration-300 border border-white/20"
+                      className="bg-gray-800/60 backdrop-blur-sm hover:bg-gray-800/80 text-white p-2.5 sm:p-3.5 rounded-full transition-all duration-300 border border-white/20"
                     >
                       <Heart 
-                        size={20} 
-                        className={favoriteRecipeIds.includes(featuredRecipe.id) ? 'fill-red-500 text-red-500' : ''}
+                        size={18} 
+                        className={`sm:w-5 sm:h-5 ${favoriteRecipeIds.includes(featuredRecipe.id) ? 'fill-red-500 text-red-500' : ''}`}
                       />
                     </button>
                     <button 
                       onClick={() => navigate(`/recipe/${featuredRecipe.id}`)}
-                      className="bg-gray-800/60 backdrop-blur-sm hover:bg-gray-800/80 text-white p-3.5 rounded-full transition-all duration-300 border border-white/20"
+                      className="bg-gray-800/60 backdrop-blur-sm hover:bg-gray-800/80 text-white p-2.5 sm:p-3.5 rounded-full transition-all duration-300 border border-white/20 hidden sm:block"
                     >
-                      <Info size={20} />
+                      <Info size={18} className="sm:w-5 sm:h-5" />
                     </button>
                   </div>
                 </div>
@@ -472,7 +479,37 @@ const Home = () => {
             </div>
 
             {/* Thumbnail gallery at bottom right */}
-            <div className="absolute bottom-6 right-6 flex gap-2 z-10">
+            <div className="absolute bottom-3 sm:bottom-4 md:bottom-6 right-3 sm:right-4 md:right-6 flex gap-1.5 sm:gap-2 z-10">
+              {/* Mobile: show 3 thumbnails */}
+              {featuredRecipes.slice(0, 3).map((recipe, index) => (
+                <div
+                  key={recipe.id}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedRecipeIndex(index);
+                  }}
+                  onDoubleClick={() => navigate(`/recipe/${recipe.id}`)}
+                  className={`w-12 h-10 sm:w-16 sm:h-12 md:hidden rounded-md overflow-hidden cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-lg bg-black/20 backdrop-blur-sm ${selectedRecipeIndex === index
+                      ? 'border-2 border-yellow-400 scale-105'
+                      : 'border-2 border-white/30'
+                    }`}
+                  title={recipe.title}
+                >
+                  <img
+                    src={recipe.image}
+                    alt={recipe.title}
+                    className="w-full h-full object-cover opacity-90 hover:opacity-100 transition-opacity"
+                  />
+                </div>
+              ))}
+              {/* Show more indicator on mobile */}
+              {featuredRecipes.length > 3 && (
+                <div className="w-12 h-10 sm:w-16 sm:h-12 md:hidden rounded-md bg-black/40 backdrop-blur-sm border-2 border-white/30 flex items-center justify-center text-white text-xs font-bold">
+                  +{featuredRecipes.length - 3}
+                </div>
+              )}
+              
+              {/* Desktop: show all thumbnails */}
               {featuredRecipes.map((recipe, index) => (
                 <div
                   key={recipe.id}
@@ -481,7 +518,7 @@ const Home = () => {
                     setSelectedRecipeIndex(index);
                   }}
                   onDoubleClick={() => navigate(`/recipe/${recipe.id}`)}
-                  className={`w-20 h-14 rounded-md overflow-hidden cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-lg bg-black/20 backdrop-blur-sm ${selectedRecipeIndex === index
+                  className={`hidden md:block w-20 h-14 rounded-md overflow-hidden cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-lg bg-black/20 backdrop-blur-sm ${selectedRecipeIndex === index
                       ? 'border-2 border-yellow-400 scale-105'
                       : 'border-2 border-white/30'
                     }`}
@@ -500,11 +537,11 @@ const Home = () => {
       </div>
 
       {/* New Recipes Section */}
-      <div className="relative px-12 mb-20">
-        <div className="mb-8">
-          <div className="flex items-center gap-4 mb-2">
-            <Sparkles className="text-orange-500" size={28} />
-            <h2 className="text-gray-900 text-3xl font-bold">
+      <div className="relative px-4 sm:px-6 md:px-8 lg:px-12 mb-8 sm:mb-10">
+        <div className="mb-6 sm:mb-8">
+          <div className="flex items-center gap-3 sm:gap-4 mb-2">
+            <Sparkles className="text-orange-500" size={24} />
+            <h2 className="text-gray-900 text-2xl sm:text-3xl font-bold">
               Món Ăn Mới
             </h2>
             <button
@@ -556,7 +593,7 @@ const Home = () => {
                 <button
                   onClick={() => scrollContainer('left', 'new-recipes')}
                   disabled={!canScrollLeft['new-recipes']}
-                  className={`absolute left-0 top-1/2 -translate-y-1/2 -translate-x-6 z-10 bg-white text-gray-800 p-3 rounded-full transition-all duration-300 shadow-lg border border-gray-200 ${
+                  className={`hidden sm:block absolute left-0 top-1/2 -translate-y-1/2 -translate-x-6 z-10 bg-white text-gray-800 p-3 rounded-full transition-all duration-300 shadow-lg border border-gray-200 ${
                     canScrollLeft['new-recipes'] ? 'hover:bg-gray-50 hover:scale-110 cursor-pointer' : 'opacity-30 cursor-not-allowed'
                   }`}
                 >
@@ -567,11 +604,11 @@ const Home = () => {
               {/* Scrollable Container */}
               <div
                 id="new-recipes"
-                className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide scroll-smooth"
+                className="flex gap-3 sm:gap-4 overflow-x-auto pb-4 scrollbar-hide scroll-smooth"
                 style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
               >
                 {newRecipes.map((recipe) => (
-                  <div key={recipe.id} className="flex-shrink-0 w-[280px]">
+                  <div key={recipe.id} className="flex-shrink-0 w-[240px] sm:w-[260px] md:w-[280px]">
                     <RecipeCard recipe={recipe} />
                   </div>
                 ))}
@@ -582,7 +619,7 @@ const Home = () => {
                 <button
                   onClick={() => scrollContainer('right', 'new-recipes')}
                   disabled={!canScrollRight['new-recipes']}
-                  className={`absolute right-0 top-1/2 -translate-y-1/2 translate-x-6 z-10 bg-white text-gray-800 p-3 rounded-full transition-all duration-300 shadow-lg border border-gray-200 ${
+                  className={`hidden sm:block absolute right-0 top-1/2 -translate-y-1/2 translate-x-6 z-10 bg-white text-gray-800 p-3 rounded-full transition-all duration-300 shadow-lg border border-gray-200 ${
                     canScrollRight['new-recipes'] ? 'hover:bg-gray-50 hover:scale-110 cursor-pointer' : 'opacity-30 cursor-not-allowed'
                   }`}
                 >
@@ -595,11 +632,11 @@ const Home = () => {
       </div>
 
       {/* Popular Recipes Section */}
-      <div className="relative px-12 mb-20">
-        <div className="mb-8">
-          <div className="flex items-center gap-4 mb-2">
-            <TrendingUp className="text-pink-600" size={28} />
-            <h2 className="text-gray-900 text-3xl font-bold">
+      <div className="relative px-4 sm:px-6 md:px-8 lg:px-12 mb-8 sm:mb-10">
+        <div className="mb-6 sm:mb-8">
+          <div className="flex items-center gap-3 sm:gap-4 mb-2">
+            <TrendingUp className="text-pink-600" size={24} />
+            <h2 className="text-gray-900 text-2xl sm:text-3xl font-bold">
               Món Ăn Phổ Biến
             </h2>
             <button
@@ -651,7 +688,7 @@ const Home = () => {
                 <button
                   onClick={() => scrollContainer('left', 'popular-recipes')}
                   disabled={!canScrollLeft['popular-recipes']}
-                  className={`absolute left-0 top-1/2 -translate-y-1/2 -translate-x-6 z-10 bg-white text-gray-800 p-3 rounded-full transition-all duration-300 shadow-lg border border-gray-200 ${
+                  className={`hidden sm:block absolute left-0 top-1/2 -translate-y-1/2 -translate-x-6 z-10 bg-white text-gray-800 p-3 rounded-full transition-all duration-300 shadow-lg border border-gray-200 ${
                     canScrollLeft['popular-recipes'] ? 'hover:bg-gray-50 hover:scale-110 cursor-pointer' : 'opacity-30 cursor-not-allowed'
                   }`}
                 >
@@ -662,11 +699,11 @@ const Home = () => {
               {/* Scrollable Container */}
               <div
                 id="popular-recipes"
-                className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide scroll-smooth items-stretch"
+                className="flex gap-3 sm:gap-4 overflow-x-auto pb-4 scrollbar-hide scroll-smooth items-stretch"
                 style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
               >
                 {popularRecipes.map((recipe) => (
-                  <div key={recipe.id} className="flex-shrink-0 w-[280px] h-full">
+                  <div key={recipe.id} className="flex-shrink-0 w-[240px] sm:w-[260px] md:w-[280px] h-full">
                     <RecipeCard recipe={recipe} />
                   </div>
                 ))}
@@ -677,7 +714,7 @@ const Home = () => {
                 <button
                   onClick={() => scrollContainer('right', 'popular-recipes')}
                   disabled={!canScrollRight['popular-recipes']}
-                  className={`absolute right-0 top-1/2 -translate-y-1/2 translate-x-6 z-10 bg-white text-gray-800 p-3 rounded-full transition-all duration-300 shadow-lg border border-gray-200 ${
+                  className={`hidden sm:block absolute right-0 top-1/2 -translate-y-1/2 translate-x-6 z-10 bg-white text-gray-800 p-3 rounded-full transition-all duration-300 shadow-lg border border-gray-200 ${
                     canScrollRight['popular-recipes'] ? 'hover:bg-gray-50 hover:scale-110 cursor-pointer' : 'opacity-30 cursor-not-allowed'
                   }`}
                 >
@@ -690,10 +727,10 @@ const Home = () => {
       </div>
 
       {/* TOP BÌNH LUẬN Section - Full Width Scrollable */}
-      <div className="relative px-12 mb-12">
+      <div className="relative px-4 sm:px-6 md:px-8 lg:px-12 mb-8 sm:mb-10">
         <div className="flex items-center gap-3 mb-6">
-          <MessageSquare className="text-green-500" size={28} />
-          <h3 className="text-gray-900 text-2xl font-bold">TOP BÌNH LUẬN</h3>
+          <MessageSquare className="text-green-500" size={24} />
+          <h3 className="text-gray-900 text-xl sm:text-2xl font-bold">TOP BÌNH LUẬN</h3>
         </div>
 
         <div className="relative">
@@ -701,7 +738,7 @@ const Home = () => {
           {canScrollLeft['top-comments'] && (
             <button
               onClick={() => scrollContainer('left', 'top-comments')}
-              className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-6 z-10 bg-white text-gray-800 p-3 rounded-full hover:bg-gray-50 transition-all duration-300 shadow-lg border border-gray-200 hover:scale-110"
+              className="hidden sm:block absolute left-0 top-1/2 -translate-y-1/2 -translate-x-6 z-10 bg-white text-gray-800 p-3 rounded-full hover:bg-gray-50 transition-all duration-300 shadow-lg border border-gray-200 hover:scale-110"
             >
               <ChevronLeft size={24} />
             </button>
@@ -710,7 +747,7 @@ const Home = () => {
           {/* Scrollable Container */}
           <div
             id="top-comments"
-            className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide scroll-smooth"
+            className="flex gap-3 sm:gap-4 overflow-x-auto pb-4 scrollbar-hide scroll-smooth"
             style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
           >
             {topComments.length === 0 ? (
@@ -722,7 +759,7 @@ const Home = () => {
                 <div 
                   key={comment._id} 
                   onClick={() => comment.recipe?._id && navigate(`/recipe/${comment.recipe._id}`)}
-                  className="flex-shrink-0 w-[300px] bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer border border-gray-200"
+                  className="flex-shrink-0 w-[260px] sm:w-[280px] md:w-[300px] bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer border border-gray-200"
                 >
                   <div className="relative h-[180px]">
                     <img 
@@ -777,7 +814,7 @@ const Home = () => {
           {canScrollRight['top-comments'] && (
             <button
               onClick={() => scrollContainer('right', 'top-comments')}
-              className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-6 z-10 bg-white text-gray-800 p-3 rounded-full hover:bg-gray-50 transition-all duration-300 shadow-lg border border-gray-200 hover:scale-110"
+              className="hidden sm:block absolute right-0 top-1/2 -translate-y-1/2 translate-x-6 z-10 bg-white text-gray-800 p-3 rounded-full hover:bg-gray-50 transition-all duration-300 shadow-lg border border-gray-200 hover:scale-110"
             >
               <ChevronRight size={24} />
             </button>
@@ -786,14 +823,14 @@ const Home = () => {
       </div>
 
       {/* Three Columns Section */}
-      <div className="relative px-12 mb-20">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="relative px-4 sm:px-6 md:px-8 lg:px-12 mb-10 sm:mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
 
           {/* SỐI NỔI NHẤT */}
-          <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-200">
-            <div className="flex items-center gap-3 mb-6">
-              <Flame className="text-green-500" size={24} />
-              <h3 className="text-gray-900 text-xl font-bold">SỐI NỔI NHẤT</h3>
+          <div className="bg-white rounded-xl p-4 sm:p-6 shadow-lg border border-gray-200">
+            <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+              <Flame className="text-green-500" size={20} />
+              <h3 className="text-gray-900 text-lg sm:text-xl font-bold">SỐI NỔI NHẤT</h3>
             </div>
 
             <div className="space-y-3">
@@ -839,10 +876,10 @@ const Home = () => {
           </div>
 
           {/* YÊU THÍCH NHẤT */}
-          <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-200">
-            <div className="flex items-center gap-3 mb-6">
-              <ThumbsUp className="text-blue-500" size={24} />
-              <h3 className="text-gray-900 text-xl font-bold">YÊU THÍCH NHẤT</h3>
+          <div className="bg-white rounded-xl p-4 sm:p-6 shadow-lg border border-gray-200">
+            <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+              <ThumbsUp className="text-blue-500" size={20} />
+              <h3 className="text-gray-900 text-lg sm:text-xl font-bold">YÊU THÍCH NHẤT</h3>
             </div>
 
             <div className="space-y-3">
@@ -891,10 +928,10 @@ const Home = () => {
           </div>
 
           {/* BÌNH LUẬN MỚI */}
-          <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-200">
-            <div className="flex items-center gap-3 mb-6">
-              <Sparkles className="text-purple-500" size={24} />
-              <h3 className="text-gray-900 text-xl font-bold">BÌNH LUẬN MỚI</h3>
+          <div className="bg-white rounded-xl p-4 sm:p-6 shadow-lg border border-gray-200">
+            <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+              <Sparkles className="text-purple-500" size={20} />
+              <h3 className="text-gray-900 text-lg sm:text-xl font-bold">BÌNH LUẬN MỚI</h3>
             </div>
 
             <div className="space-y-4">
