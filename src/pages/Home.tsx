@@ -211,7 +211,7 @@ const Home = () => {
         onClick={() => navigate(`/recipe/${recipe.id}`)}
       >
         {/* Image */}
-        <div className="relative h-[160px] sm:h-[180px]">
+        <div className="relative h-[140px] sm:h-[160px] lg:h-[180px]">
           <img
             src={recipe.image}
             alt={recipe.title}
@@ -219,28 +219,28 @@ const Home = () => {
           />
 
           {/* Rating badge */}
-          <div className="absolute top-3 left-3 flex items-center gap-1 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full">
-            <Star size={14} fill="#fbbf24" className="text-amber-400" />
-            <span className="text-sm font-medium">{recipe.rating}</span>
+          <div className="absolute top-2 sm:top-3 left-2 sm:left-3 flex items-center gap-0.5 sm:gap-1 bg-white/90 backdrop-blur-sm px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full">
+            <Star size={12} fill="#fbbf24" className="text-amber-400 sm:w-[14px] sm:h-[14px]" />
+            <span className="text-xs sm:text-sm font-medium">{recipe.rating}</span>
           </div>
 
           {/* Favorite button */}
           <button
             type="button"
             onClick={(e) => handleFavoriteClick(e, recipe.id)}
-            className="absolute top-3 right-3 p-2 bg-white/90 backdrop-blur-sm rounded-full hover:bg-white transition-all duration-200 z-20 hover:scale-110 active:scale-95"
+            className="absolute top-2 sm:top-3 right-2 sm:right-3 p-1.5 sm:p-2 bg-white/90 backdrop-blur-sm rounded-full hover:bg-white transition-all duration-200 z-20 hover:scale-110 active:scale-95"
             aria-label={isFavorited ? "Bỏ yêu thích" : "Yêu thích"}
           >
             <Heart 
-              size={18} 
-              className={`transition-all duration-200 ${
+              size={14} 
+              className={`sm:w-[18px] sm:h-[18px] transition-all duration-200 ${
                 isFavorited ? 'fill-red-500 text-red-500' : 'text-gray-600 hover:text-red-500'
               }`} 
             />
           </button>
 
           {/* Difficulty badge */}
-          <div className={`absolute bottom-3 right-3 px-2 py-1 rounded-full text-xs font-medium ${recipe.difficulty === 'Dễ'
+          <div className={`absolute bottom-2 sm:bottom-3 right-2 sm:right-3 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-medium ${recipe.difficulty === 'Dễ'
               ? 'bg-green-100 text-green-800'
               : recipe.difficulty === 'Khó'
                 ? 'bg-red-100 text-red-800'
@@ -251,44 +251,58 @@ const Home = () => {
         </div>
 
         {/* Content */}
-        <div className="p-4">
-          <h3 className="font-bold text-lg mb-2 text-gray-900 group-hover:text-orange-600 transition-colors line-clamp-1">
+        <div className="p-2.5 sm:p-3 lg:p-4">
+          <h3 className="font-bold text-sm sm:text-base lg:text-lg mb-1.5 sm:mb-2 text-gray-900 group-hover:text-orange-600 transition-colors line-clamp-1">
             {recipe.title}
           </h3>
 
           {/* Meta Info */}
-          <div className="flex items-center gap-3 text-sm text-gray-500 mb-3">
-            <div className="flex items-center gap-1">
-              <Clock size={16} />
-              <span>{recipe.duration}</span>
+          <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-3 text-xs sm:text-sm text-gray-500 mb-2 sm:mb-3">
+            <div className="flex items-center gap-0.5 sm:gap-1">
+              <Clock size={12} className="sm:w-[14px] sm:h-[14px] lg:w-4 lg:h-4" />
+              <span className="truncate">{recipe.duration}</span>
             </div>
             <span className="text-gray-400">•</span>
-            <span>{recipe.servings} người</span>
+            <span className="truncate">{recipe.servings} người</span>
           </div>
 
           {/* Ingredients */}
           {recipe.ingredients && recipe.ingredients.length > 0 && (
-            <div className="flex gap-1.5 mb-3 overflow-hidden">
-              {recipe.ingredients.slice(0, 3).map((ingredient, index) => (
-                <span
-                  key={index}
-                  className="px-2 py-0.5 bg-gray-100 text-gray-700 text-xs rounded-md truncate flex-shrink-0 max-w-[75px]"
-                  title={ingredient}
-                >
-                  {ingredient}
-                </span>
-              ))}
-              {recipe.ingredients.length > 3 && (
-                <span className="px-2 py-0.5 bg-gray-100 text-gray-700 text-xs rounded-md whitespace-nowrap flex-shrink-0">
-                  +{recipe.ingredients.length - 3} more
-                </span>
+            <div className="flex gap-1 sm:gap-1.5 mb-2 sm:mb-3 overflow-hidden">
+              {recipe.ingredients.length <= 3 ? (
+                // Nếu có 3 nguyên liệu trở xuống, hiển thị tất cả
+                recipe.ingredients.map((ingredient, index) => (
+                  <span
+                    key={index}
+                    className="px-1.5 sm:px-2 py-0.5 bg-gray-100 text-gray-700 text-[10px] sm:text-xs rounded-md truncate flex-shrink-0 max-w-[50px] sm:max-w-[60px] lg:max-w-[75px]"
+                    title={ingredient}
+                  >
+                    {ingredient}
+                  </span>
+                ))
+              ) : (
+                // Nếu có nhiều hơn 3, hiển thị 2 nguyên liệu + "+X more"
+                <>
+                  {recipe.ingredients.slice(0, 2).map((ingredient, index) => (
+                    <span
+                      key={index}
+                      className="px-1.5 sm:px-2 py-0.5 bg-gray-100 text-gray-700 text-[10px] sm:text-xs rounded-md truncate flex-shrink-0 max-w-[50px] sm:max-w-[60px] lg:max-w-[75px]"
+                      title={ingredient}
+                    >
+                      {ingredient}
+                    </span>
+                  ))}
+                  <span className="px-1.5 sm:px-2 py-0.5 bg-gray-100 text-gray-700 text-[10px] sm:text-xs rounded-md whitespace-nowrap flex-shrink-0">
+                    +{recipe.ingredients.length - 2}
+                  </span>
+                </>
               )}
             </div>
           )}
 
           {/* Rating and Action button */}
-          <div className="flex items-center justify-between gap-2">
-            <div className="text-sm text-gray-600">
+          <div className="flex items-center justify-between gap-1.5 sm:gap-2">
+            <div className="text-[10px] sm:text-xs lg:text-sm text-gray-600 truncate">
               {recipe.reviews ? `${recipe.reviews} đánh giá` : '0 đánh giá'}
             </div>
             <button
@@ -297,9 +311,10 @@ const Home = () => {
                 e.stopPropagation();
                 navigate(`/recipe/${recipe.id}`);
               }}
-              className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+              className="bg-orange-500 hover:bg-orange-600 text-white px-2 sm:px-3 lg:px-4 py-1.5 sm:py-1.5 lg:py-2 rounded-lg text-[10px] sm:text-xs lg:text-sm font-medium transition-colors whitespace-nowrap"
             >
-              View Recipe
+              <span className="hidden sm:inline">View Recipe</span>
+              <span className="sm:hidden">View</span>
             </button>
           </div>
         </div>
@@ -604,11 +619,11 @@ const Home = () => {
               {/* Scrollable Container */}
               <div
                 id="new-recipes"
-                className="flex gap-3 sm:gap-4 overflow-x-auto pb-4 scrollbar-hide scroll-smooth"
+                className="flex gap-3 sm:gap-4 overflow-x-auto pb-4 scrollbar-hide scroll-smooth pr-4 sm:pr-6 md:pr-8 lg:pr-0"
                 style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
               >
                 {newRecipes.map((recipe) => (
-                  <div key={recipe.id} className="flex-shrink-0 w-[240px] sm:w-[260px] md:w-[280px]">
+                  <div key={recipe.id} className="flex-shrink-0 w-[calc(50%-6px)] sm:w-[calc(33.333%-11px)] lg:w-[calc(25%-12px)]">
                     <RecipeCard recipe={recipe} />
                   </div>
                 ))}
@@ -699,11 +714,11 @@ const Home = () => {
               {/* Scrollable Container */}
               <div
                 id="popular-recipes"
-                className="flex gap-3 sm:gap-4 overflow-x-auto pb-4 scrollbar-hide scroll-smooth items-stretch"
+                className="flex gap-3 sm:gap-4 overflow-x-auto pb-4 scrollbar-hide scroll-smooth items-stretch pr-4 sm:pr-6 md:pr-8 lg:pr-0"
                 style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
               >
                 {popularRecipes.map((recipe) => (
-                  <div key={recipe.id} className="flex-shrink-0 w-[240px] sm:w-[260px] md:w-[280px] h-full">
+                  <div key={recipe.id} className="flex-shrink-0 w-[calc(50%-6px)] sm:w-[calc(33.333%-11px)] lg:w-[calc(25%-12px)] h-full">
                     <RecipeCard recipe={recipe} />
                   </div>
                 ))}
@@ -759,7 +774,7 @@ const Home = () => {
                 <div 
                   key={comment._id} 
                   onClick={() => comment.recipe?._id && navigate(`/recipe/${comment.recipe._id}`)}
-                  className="flex-shrink-0 w-[260px] sm:w-[280px] md:w-[300px] bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer border border-gray-200"
+                  className="flex-shrink-0 w-[calc(50%-6px)] sm:w-[calc(33.333%-11px)] lg:w-[calc(25%-12px)] bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer border border-gray-200"
                 >
                   <div className="relative h-[180px]">
                     <img 

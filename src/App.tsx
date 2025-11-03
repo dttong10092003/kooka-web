@@ -30,7 +30,9 @@ import MyFavourite from "./pages/MyFavourite";
 import GoogleCallback from "./pages/GoogleCallback";
 import About from "./pages/About";
 import MealPlannerPage from "./pages/MealPlannerPage";
+import Categories from "./pages/Categories";
 import AIChatBot from "./components/AIChatBot";
+import ScrollToTop from "./components/ScrollToTop";
 
 function App() {
   const location = useLocation();
@@ -101,6 +103,7 @@ function App() {
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/admin/data-management" element={<DataManagement />} />
         <Route path="/about" element={<About />} />
+        <Route path="/categories" element={<Categories />} />
         <Route path="/meal-planner" element={<MealPlannerPage />} />
 
 
@@ -113,6 +116,7 @@ function App() {
         </Route>
       </Routes>
       {!hideHeader && <Footer />}
+      <ScrollToTop />
       <AIChatBot />
     </>
   );

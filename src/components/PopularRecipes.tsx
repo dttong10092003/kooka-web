@@ -125,12 +125,10 @@ export default function PopularRecipes() {
                 <div className="text-center mb-12">
                     <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Công thức phổ biến</h2>
                     <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                        Khám phá những công thức được yêu thích nhất từ cộng đồng đầu bếp tại gia của chúng tôi
+                        Khám phá những công thức nấu ăn yêu thích nhất từ cộng đồng đầu bếp tại gia!
                     </p>
                 </div>
-
                 
-
                 {/* Recipe Grid */}
                 {loading ? (
                     <div className="flex justify-center items-center py-12">

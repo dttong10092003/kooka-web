@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { Heart, Star, Clock, Sparkles, TrendingUp, ChevronLeft, ChevronRight, Filter, ChefHat } from 'lucide-react';
 import type { AppDispatch, RootState } from '../redux/store';
 import { fetchNewestRecipes, fetchPopularRecipes, fetchRecipes, fetchTags, fetchCuisines, fetchCategories } from '../redux/slices/recipeSlice';
@@ -24,6 +24,7 @@ interface Recipe {
 const AllRecipes = () => {
   const navigate = useNavigate();
   const { type } = useParams<{ type: 'new' | 'popular' | 'all' }>();
+  const location = useLocation();
   const dispatch = useDispatch<AppDispatch>();
   const { newestRecipes, popularRecipes, recipes: allRecipes, loading } = useSelector((state: RootState) => state.recipes);
   const { favoriteRecipeIds } = useSelector((state: RootState) => state.favorites);
@@ -31,8 +32,11 @@ const AllRecipes = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 12;
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  
+  // Initialize filters with category from navigation state if available
+  const initialCategoryId = (location.state as { categoryId?: string })?.categoryId || "";
   const [filters, setFilters] = useState({
-    selectedCategory: "",
+    selectedCategory: initialCategoryId,
     selectedTags: [] as string[],
     selectedCuisine: "",
   });
@@ -290,16 +294,8 @@ const AllRecipes = () => {
   return (
     <div className="bg-white min-h-screen">
       {/* Header Section */}
-      <div className="py-8 border-b border-gray-200">
+      <div className="py-8">
         <div className="px-12">
-          <button
-            onClick={() => navigate('/')}
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 transition-colors"
-          >
-            <ChevronLeft size={20} />
-            <span>Quay lại trang chủ</span>
-          </button>
-          
           <div className="flex items-center gap-3 mb-3">
             <Icon className={config.iconColor} size={36} />
             <h1 className="text-4xl font-bold text-gray-900">{config.title}</h1>

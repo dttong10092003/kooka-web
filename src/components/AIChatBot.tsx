@@ -429,7 +429,7 @@ const AIChatBot: React.FC = () => {
 
                         {/* Tooltip with Animation */}
                         {showTooltip && (
-                            <div className="absolute right-full top-1/2 -translate-y-1/2 mr-3">
+                            <div className="absolute right-full top-1/2 -translate-y-1/2 mr-3 pointer-events-none">
                                 <div className="bg-white text-gray-800 px-3 py-2 rounded-lg text-xs shadow-md border border-gray-300 whitespace-nowrap">
                                     {language === 'vi' ? (
                                         <>Nhấn vào đây để bắt đầu<br />trò chuyện cùng trợ lý ảo!</>
