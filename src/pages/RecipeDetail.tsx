@@ -534,53 +534,6 @@ export default function RecipeDetail() {
 
                 {/* Comment Section */}
                 <CommentSection recipeId={recipe._id} />
-
-                {/* Related Recipes - Placeholder */}
-                <div className="mt-10 sm:mt-16 mb-6 sm:mb-10">
-                    <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 flex items-center gap-1.5 sm:gap-2 text-gray-800">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-orange-500 sm:w-6 sm:h-6">
-                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                        </svg>
-                        You Might Also Like
-                    </h2>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                        {/* This would be populated from your Redux store or API */}
-                        <div className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow">
-                            <div className="h-36 sm:h-48 overflow-hidden">
-                                <img
-                                    src="https://images.unsplash.com/photo-1512621776951-a57141f2eefd"
-                                    alt="Vegetable Salad"
-                                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                                />
-                            </div>
-                            <div className="p-3 sm:p-4">
-                                <h3 className="font-semibold text-base sm:text-lg mb-1">Fresh Vegetable Salad</h3>
-                                <div className="flex items-center text-xs sm:text-sm text-gray-500">
-                                    <Clock className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                                    <span>15 minutes</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow">
-                            <div className="h-36 sm:h-48 overflow-hidden">
-                                <img
-                                    src="https://images.unsplash.com/photo-1504674900247-0877df9cc836"
-                                    alt="Grilled Chicken"
-                                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                                />
-                            </div>
-                            <div className="p-3 sm:p-4">
-                                <h3 className="font-semibold text-base sm:text-lg mb-1">Grilled Chicken with Herbs</h3>
-                                <div className="flex items-center text-xs sm:text-sm text-gray-500">
-                                    <Clock className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                                    <span>30 minutes</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
     );
