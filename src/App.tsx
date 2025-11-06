@@ -5,6 +5,9 @@ import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "./redux/store";
 import { loadUser } from "./redux/slices/authSlice";
 import { fetchProfile } from "./redux/slices/userSlice";
+import { fetchTopRatedRecipes, fetchTrendingRecipes } from "./redux/slices/recipeSlice";
+import { fetchTopComments, fetchNewestComments } from "./redux/slices/commentSlice";
+import { fetchMostFavorited } from "./redux/slices/favoriteSlice";
 import Home from "./pages/Home";
 import Header from "./components/Header";
 import LoginPage from "./pages/LoginPage";
@@ -12,9 +15,11 @@ import RegisterPage from "./pages/RegisterPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import AdminDashboard from "./pages/AdminDashboard";
+import DataManagement from "./pages/DataManagement";
 import Footer from "./components/Footer";
 import Recipes from "./pages/Recipes";
 import RecipeDetail from "./pages/RecipeDetail";
+import AllRecipes from "./pages/AllRecipes";
 
 // USer
 import ProfilePage from "./pages/ProfilePage";
@@ -25,13 +30,38 @@ import MyFavourite from "./pages/MyFavourite";
 import GoogleCallback from "./pages/GoogleCallback";
 import About from "./pages/About";
 import MealPlannerPage from "./pages/MealPlannerPage";
+import Categories from "./pages/Categories";
 import AIChatBot from "./components/AIChatBot";
+import ScrollToTop from "./components/ScrollToTop";
 
 function App() {
   const location = useLocation();
   const dispatch = useDispatch<AppDispatch>();
   const { token, user } = useSelector((state: RootState) => state.auth);
   const { profile } = useSelector((state: RootState) => state.user);
+  const { topRatedRecipes, trendingRecipes } = useSelector((state: RootState) => state.recipes);
+  const { topComments, newestComments } = useSelector((state: RootState) => state.comments);
+  const { mostFavorited } = useSelector((state: RootState) => state.favorites);
+
+  // Chỉ prefetch banner (top-rated recipes), trending, top comments, newest comments và most favorited để giảm tải bộ nhớ
+  // Newest và Popular recipes sẽ được lazy load khi user vào Home page
+  useEffect(() => {
+    if (topRatedRecipes.length === 0) {
+      dispatch(fetchTopRatedRecipes(6));
+    }
+    if (trendingRecipes.length === 0) {
+      dispatch(fetchTrendingRecipes());
+    }
+    if (topComments.length === 0) {
+      dispatch(fetchTopComments());
+    }
+    if (newestComments.length === 0) {
+      dispatch(fetchNewestComments());
+    }
+    if (mostFavorited.length === 0) {
+      dispatch(fetchMostFavorited());
+    }
+  }, [dispatch, topRatedRecipes.length, trendingRecipes.length, topComments.length, newestComments.length, mostFavorited.length]);
 
   // Auto-load user data khi có token nhưng chưa có user
   useEffect(() => {
@@ -62,6 +92,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/recipes" element={<Recipes />} />
+        <Route path="/recipes/:type" element={<AllRecipes />} />
         <Route path="/recipe/:id" element={<RecipeDetail />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
@@ -70,7 +101,9 @@ function App() {
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/auth/google/callback" element={<GoogleCallback />} />
         <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/admin/data-management" element={<DataManagement />} />
         <Route path="/about" element={<About />} />
+        <Route path="/categories" element={<Categories />} />
         <Route path="/meal-planner" element={<MealPlannerPage />} />
 
 
@@ -83,6 +116,7 @@ function App() {
         </Route>
       </Routes>
       {!hideHeader && <Footer />}
+      <ScrollToTop />
       <AIChatBot />
     </>
   );

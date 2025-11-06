@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import type { RootState, AppDispatch } from '../redux/store';
 import { fetchRecipes } from '../redux/slices/recipeSlice';
@@ -10,14 +10,39 @@ import {
   deleteMealPlan
 } from '../redux/slices/mealPlanSlice';
 import type { DayPlan, Meal } from '../redux/slices/mealPlanSlice';
-import { Calendar, Plus, ChefHat, Clock, Users, Star, Edit, Trash2, ShoppingCart, Download, RefreshCw, Coffee, Sun, Moon, CheckCircle, Search } from 'lucide-react';
+import { Calendar, Plus, ChefHat, Clock, Users, Star, Edit, Trash2, ShoppingCart, Download, ChevronLeft, ChevronRight, Coffee, Sun, Moon, CheckCircle, Search } from 'lucide-react';
 import type { Recipe } from '../redux/slices/recipeSlice';
 import { useLanguage } from '../contexts/LanguageContext';
 
+interface MealPlanDay {
+  morning?: {
+    recipeId: string;
+    recipeName: string;
+    recipeImage?: string;
+  };
+  noon?: {
+    recipeId: string;
+    recipeName: string;
+    recipeImage?: string;
+  };
+  evening?: {
+    recipeId: string;
+    recipeName: string;
+    recipeImage?: string;
+  };
+}
+
+interface AIGeneratedPlan {
+  mealPlanType: string;
+  duration: number;
+  plans: MealPlanDay[]; // Backend trả về plans array (7 ngày), không có date
+  totalRecipes: number;
+}
 
 const MealPlannerPage: React.FC = () => {
   const { language } = useLanguage();
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useDispatch<AppDispatch>();
   const { recipes, loading: recipesLoading } = useSelector((state: RootState) => state.recipes);
   const { mealPlans } = useSelector((state: RootState) => state.mealPlans);
@@ -35,8 +60,15 @@ const MealPlannerPage: React.FC = () => {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showStartDateModal, setShowStartDateModal] = useState(false);
   const [selectedStartDate, setSelectedStartDate] = useState<Date | null>(null);
+  const [startDateError, setStartDateError] = useState<string>('');
   const [viewMode, setViewMode] = useState<'browse' | 'viewing' | 'creating'>('browse');
   const [justCreatedPlanId, setJustCreatedPlanId] = useState<string | null>(null);
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [hoveredDate, setHoveredDate] = useState<Date | null>(null);
+  const [aiGeneratedPlans, setAiGeneratedPlans] = useState<MealPlanDay[] | null>(null); // Lưu tạm plans từ AI
+  
+  // Ref for auto-scroll to meal plan table
+  const mealPlanTableRef = useRef<HTMLDivElement>(null);
 
   // Load recipes and meal plans on mount
   useEffect(() => {
@@ -47,6 +79,61 @@ const MealPlannerPage: React.FC = () => {
       dispatch(fetchMealPlansByUser(user._id));
     }
   }, [dispatch, recipes.length, user]);
+
+  // Handle AI-generated meal plan from chatbot
+  useEffect(() => {
+    const state = location.state as { aiGeneratedPlan?: AIGeneratedPlan };
+    
+    if (state?.aiGeneratedPlan) {
+      console.log('🤖 Received AI-generated meal plan:', state.aiGeneratedPlan);
+      
+      // Check if user is logged in
+      if (!user?._id) {
+        alert(language === 'vi' 
+          ? 'Vui lòng đăng nhập để sử dụng tính năng này!' 
+          : 'Please login to use this feature!');
+        navigate('/login');
+        return;
+      }
+
+      // Check pending plans limit (max 3)
+      const pendingPlans = mealPlans.filter(p => p.status === 'pending');
+      if (pendingPlans.length >= 3) {
+        alert(language === 'vi' 
+          ? 'Bạn đã có 3 kế hoạch chưa hoàn thành. Vui lòng hoàn thành hoặc xóa bớt trước khi tạo mới.' 
+          : 'You already have 3 pending plans. Please complete or delete some before creating a new one.');
+        
+        // Clear navigation state
+        navigate('/meal-planner', { replace: true, state: {} });
+        return;
+      }
+
+      // Set view mode to creating
+      setViewMode('creating');
+      setCurrentMealPlanId(null);
+      
+      // Lưu tạm AI-generated plans (chưa có date)
+      setAiGeneratedPlans(state.aiGeneratedPlan.plans);
+      
+      // Chưa set editingPlans ở đây, sẽ set sau khi user chọn startDate
+      setEditingPlans([]);
+      setHasUnsavedChanges(false);
+      
+      // Open start date modal for user to select start date
+      setShowStartDateModal(true);
+      
+      // Auto-scroll to meal plan table for better UX
+      setTimeout(() => {
+        mealPlanTableRef.current?.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'start' 
+        });
+      }, 300); // Small delay to ensure modal is rendered
+      
+      // Clear navigation state to prevent re-triggering
+      navigate('/meal-planner', { replace: true, state: {} });
+    }
+  }, [location.state, user, mealPlans, language, navigate]);
 
   // Sort meal plans by startDate (pending first, then by date)
   const sortedMealPlans = [...mealPlans].sort((a, b) => {
@@ -94,6 +181,45 @@ const MealPlannerPage: React.FC = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mealPlans, justCreatedPlanId]); // Thêm justCreatedPlanId vào dependencies
+
+  // Kiểm tra ngày bắt đầu có nằm trong vùng cấm không (±6 ngày của plan hiện có)
+  const isStartDateConflict = (newStartDate: Date): { hasConflict: boolean; conflictMessage?: string } => {
+    // Normalize the input date
+    const normalizedNewDate = new Date(newStartDate);
+    normalizedNewDate.setHours(0, 0, 0, 0);
+    
+    for (const existingPlan of sortedMealPlans) {
+      const existingStart = new Date(existingPlan.startDate);
+      existingStart.setHours(0, 0, 0, 0);
+      
+      // Tính vùng cấm: từ (existingStart - 6 ngày) đến (existingStart + 6 ngày)
+      const forbiddenStart = new Date(existingStart);
+      forbiddenStart.setDate(existingStart.getDate() - 6);
+      forbiddenStart.setHours(0, 0, 0, 0);
+      
+      const forbiddenEnd = new Date(existingStart);
+      forbiddenEnd.setDate(existingStart.getDate() + 6);
+      forbiddenEnd.setHours(0, 0, 0, 0);
+      
+      // Kiểm tra xem newStartDate có nằm trong vùng cấm không
+      if (normalizedNewDate >= forbiddenStart && normalizedNewDate <= forbiddenEnd) {
+        const formatDate = (date: Date) => {
+          const day = date.getDate().toString().padStart(2, '0');
+          const month = (date.getMonth() + 1).toString().padStart(2, '0');
+          const year = date.getFullYear();
+          return `${day}/${month}/${year}`;
+        };
+        
+        const message = language === 'vi' 
+          ? `Ngày bắt đầu (${formatDate(normalizedNewDate)}) nằm trong vùng cấm (từ ${formatDate(forbiddenStart)} đến ${formatDate(forbiddenEnd)}) của kế hoạch bắt đầu ${formatDate(existingStart)}.`
+          : `Start date (${formatDate(normalizedNewDate)}) is in the forbidden zone (from ${formatDate(forbiddenStart)} to ${formatDate(forbiddenEnd)}) of the plan starting ${formatDate(existingStart)}.`;
+        
+        return { hasConflict: true, conflictMessage: message };
+      }
+    }
+    
+    return { hasConflict: false };
+  };
 
   // Generate week dates based on mode
   const getWeekDates = (): Date[] => {
@@ -196,10 +322,35 @@ const MealPlannerPage: React.FC = () => {
 
   const startCreatingNewPlan = () => {
     setShowStartDateModal(true);
+    setStartDateError(''); // Reset error khi mở modal
+  };
+
+  // Handler để validate ngày khi người dùng chọn
+  const handleStartDateChange = (date: Date) => {
+    // Normalize date to remove time component
+    const normalizedDate = new Date(date);
+    normalizedDate.setHours(0, 0, 0, 0);
+    
+    setSelectedStartDate(normalizedDate);
+    
+    // Kiểm tra conflict ngay khi chọn ngày
+    const conflictCheck = isStartDateConflict(normalizedDate);
+    if (conflictCheck.hasConflict) {
+      setStartDateError(conflictCheck.conflictMessage || '');
+    } else {
+      setStartDateError('');
+    }
   };
 
   const confirmStartDate = () => {
     if (!selectedStartDate) return;
+    
+    // Kiểm tra conflict lần cuối trước khi confirm
+    const conflictCheck = isStartDateConflict(selectedStartDate);
+    if (conflictCheck.hasConflict) {
+      setStartDateError(conflictCheck.conflictMessage || '');
+      return;
+    }
     
     const pendingPlans = sortedMealPlans.filter(p => p.status === 'pending');
     if (pendingPlans.length >= 3) {
@@ -208,21 +359,52 @@ const MealPlannerPage: React.FC = () => {
         : 'You already have 3 pending plans. Please complete or delete some before creating a new one.');
       setShowStartDateModal(false);
       setSelectedStartDate(null);
+      setStartDateError('');
       return;
+    }
+    
+    // Nếu có AI-generated plans, thêm date vào mỗi plan
+    if (aiGeneratedPlans && aiGeneratedPlans.length > 0) {
+      const plansWithDate: DayPlan[] = aiGeneratedPlans.map((plan, index) => {
+        const date = new Date(selectedStartDate);
+        date.setDate(selectedStartDate.getDate() + index);
+        
+        // Format date without timezone issues
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const dateString = `${year}-${month}-${day}`;
+        
+        return {
+          date: dateString,
+          morning: plan.morning || {},
+          noon: plan.noon || {},
+          evening: plan.evening || {}
+        };
+      });
+      
+      setEditingPlans(plansWithDate);
+      setHasUnsavedChanges(true); // Có sẵn plans từ AI
+      setAiGeneratedPlans(null); // Clear AI plans đã dùng
+    } else {
+      // Tạo plan thủ công (không có AI)
+      setEditingPlans([]);
+      setHasUnsavedChanges(false);
     }
     
     setViewMode('creating');
     setCurrentMealPlanId(null);
-    setEditingPlans([]);
-    setHasUnsavedChanges(false);
     setShowStartDateModal(false);
+    setStartDateError('');
   };
 
   const cancelCreatingPlan = () => {
     setViewMode(sortedMealPlans.length > 0 ? 'viewing' : 'browse');
     setSelectedStartDate(null);
+    setStartDateError('');
     setEditingPlans([]);
     setHasUnsavedChanges(false);
+    setAiGeneratedPlans(null); // Clear AI plans nếu cancel
     
     if (sortedMealPlans.length > 0) {
       setCurrentMealPlanIndex(0);
@@ -236,9 +418,14 @@ const MealPlannerPage: React.FC = () => {
   };
 
   const getDayPlan = (date: string): DayPlan => {
-    const existing = editingPlans.find(plan => 
-      new Date(plan.date).toISOString().split('T')[0] === date
-    );
+    const existing = editingPlans.find(plan => {
+      // Format date without timezone issues
+      const planDate = new Date(plan.date);
+      const year = planDate.getFullYear();
+      const month = String(planDate.getMonth() + 1).padStart(2, '0');
+      const day = String(planDate.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}` === date;
+    });
     if (existing) return existing;
     
     return {
@@ -263,9 +450,14 @@ const MealPlannerPage: React.FC = () => {
     }
     
     setEditingPlans(prev => {
-      const existing = prev.find(plan => 
-        new Date(plan.date).toISOString().split('T')[0] === date
-      );
+      const existing = prev.find(plan => {
+        // Format date without timezone issues
+        const planDate = new Date(plan.date);
+        const year = planDate.getFullYear();
+        const month = String(planDate.getMonth() + 1).padStart(2, '0');
+        const day = String(planDate.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}` === date;
+      });
       
       const meal: Meal = {
         recipeId: recipe._id,
@@ -274,11 +466,16 @@ const MealPlannerPage: React.FC = () => {
       };
 
       if (existing) {
-        return prev.map(plan => 
-          new Date(plan.date).toISOString().split('T')[0] === date
+        return prev.map(plan => {
+          // Format date without timezone issues
+          const planDate = new Date(plan.date);
+          const year = planDate.getFullYear();
+          const month = String(planDate.getMonth() + 1).padStart(2, '0');
+          const day = String(planDate.getDate()).padStart(2, '0');
+          return `${year}-${month}-${day}` === date
             ? { ...plan, [mealType]: meal }
-            : plan
-        );
+            : plan;
+        });
       } else {
         return [...prev, {
           date,
@@ -300,11 +497,16 @@ const MealPlannerPage: React.FC = () => {
     }
     
     setEditingPlans(prev => 
-      prev.map(plan => 
-        new Date(plan.date).toISOString().split('T')[0] === date
+      prev.map(plan => {
+        // Format date without timezone issues
+        const planDate = new Date(plan.date);
+        const year = planDate.getFullYear();
+        const month = String(planDate.getMonth() + 1).padStart(2, '0');
+        const day = String(planDate.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}` === date
           ? { ...plan, [mealType]: {} }
-          : plan
-      ).filter(plan => plan.morning?.recipeId || plan.noon?.recipeId || plan.evening?.recipeId)
+          : plan;
+      }).filter(plan => plan.morning?.recipeId || plan.noon?.recipeId || plan.evening?.recipeId)
     );
     setHasUnsavedChanges(true);
   };
@@ -336,9 +538,22 @@ const MealPlannerPage: React.FC = () => {
         setHasUnsavedChanges(false);
         alert(language === 'vi' ? 'Cập nhật thành công!' : 'Updated successfully!');
       } else {
+        // Khi tạo mới, phải gửi cả startDate lên backend
+        if (!selectedStartDate) {
+          alert(language === 'vi' ? 'Vui lòng chọn ngày bắt đầu' : 'Please select a start date');
+          return;
+        }
+        
+        // Format startDate - use local date format to avoid timezone issues
+        const year = selectedStartDate.getFullYear();
+        const month = String(selectedStartDate.getMonth() + 1).padStart(2, '0');
+        const day = String(selectedStartDate.getDate()).padStart(2, '0');
+        const formattedStartDate = `${year}-${month}-${day}`;
+        
         const newPlan = await dispatch(createMealPlan({
           userId: user._id,
-          plans: validPlans
+          plans: validPlans,
+          startDate: formattedStartDate
         })).unwrap();
         
         // Sau khi tạo thành công, LUÔN hiển thị plan vừa tạo
@@ -489,6 +704,67 @@ const MealPlannerPage: React.FC = () => {
 
   const currentPlan = currentMealPlanId ? mealPlans.find(p => p._id === currentMealPlanId) : null;
 
+  // Calendar helper functions
+  const getDaysInMonth = (date: Date) => {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const daysInMonth = lastDay.getDate();
+    const startingDayOfWeek = firstDay.getDay();
+    
+    const days: (Date | null)[] = [];
+    
+    // Add empty slots for days before month starts
+    for (let i = 0; i < startingDayOfWeek; i++) {
+      days.push(null);
+    }
+    
+    // Add all days of the month - normalized to midnight
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dayDate = new Date(year, month, day);
+      dayDate.setHours(0, 0, 0, 0);
+      days.push(dayDate);
+    }
+    
+    return days;
+  };
+
+  const isDateDisabled = (date: Date | null): boolean => {
+    if (!date) return true;
+    
+    // Normalize dates to remove time component
+    const normalizedDate = new Date(date);
+    normalizedDate.setHours(0, 0, 0, 0);
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    // Disable dates before tomorrow
+    if (normalizedDate < tomorrow) return true;
+    
+    // Check conflict with existing plans
+    const conflictCheck = isStartDateConflict(normalizedDate);
+    return conflictCheck.hasConflict;
+  };
+
+  const isDateInConflictZone = (date: Date | null): boolean => {
+    if (!date) return false;
+    const conflictCheck = isStartDateConflict(date);
+    return conflictCheck.hasConflict;
+  };
+
+  const goToPreviousMonth = () => {
+    setCurrentMonth(prev => new Date(prev.getFullYear(), prev.getMonth() - 1));
+  };
+
+  const goToNextMonth = () => {
+    setCurrentMonth(prev => new Date(prev.getFullYear(), prev.getMonth() + 1));
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
@@ -590,31 +866,31 @@ const MealPlannerPage: React.FC = () => {
                   <button
                     onClick={goToPreviousWeek}
                     disabled={selectedWeek <= -2}
-                    className={`p-2 transition-colors duration-200 ${
+                    className={`p-2 rounded-lg transition-all duration-200 ${
                       selectedWeek <= -2 
-                        ? 'text-gray-300 cursor-not-allowed' 
-                        : 'text-gray-400 hover:text-gray-600'
+                        ? 'text-gray-300 cursor-not-allowed bg-gray-50' 
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                     }`}
                   >
-                    <RefreshCw className="h-5 w-5 transform rotate-180" />
+                    <ChevronLeft className="h-6 w-6" />
                   </button>
                 ) : viewMode === 'viewing' ? (
                   <button
                     onClick={goToPreviousPlan}
                     disabled={currentMealPlanIndex <= 0}
-                    className={`p-2 transition-colors duration-200 ${
+                    className={`p-2 rounded-lg transition-all duration-200 ${
                       currentMealPlanIndex <= 0
-                        ? 'text-gray-300 cursor-not-allowed' 
-                        : 'text-gray-400 hover:text-gray-600'
+                        ? 'text-gray-300 cursor-not-allowed bg-gray-50' 
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                     }`}
                   >
-                    <RefreshCw className="h-5 w-5 transform rotate-180" />
+                    <ChevronLeft className="h-6 w-6" />
                   </button>
                 ) : (
                   <div className="w-10"></div>
                 )}
 
-                <div className="text-center flex-1">
+                <div ref={mealPlanTableRef} className="text-center flex-1">
                   <h2 className="text-xl font-bold text-gray-900">
                     {viewMode === 'viewing' && currentPlan ? (
                       <>
@@ -670,25 +946,25 @@ const MealPlannerPage: React.FC = () => {
                   <button
                     onClick={goToNextWeek}
                     disabled={selectedWeek >= 2}
-                    className={`p-2 transition-colors duration-200 ${
+                    className={`p-2 rounded-lg transition-all duration-200 ${
                       selectedWeek >= 2
-                        ? 'text-gray-300 cursor-not-allowed' 
-                        : 'text-gray-400 hover:text-gray-600'
+                        ? 'text-gray-300 cursor-not-allowed bg-gray-50' 
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                     }`}
                   >
-                    <RefreshCw className="h-5 w-5" />
+                    <ChevronRight className="h-6 w-6" />
                   </button>
                 ) : viewMode === 'viewing' ? (
                   <button
                     onClick={goToNextPlan}
                     disabled={currentMealPlanIndex >= sortedMealPlans.length - 1}
-                    className={`p-2 transition-colors duration-200 ${
+                    className={`p-2 rounded-lg transition-all duration-200 ${
                       currentMealPlanIndex >= sortedMealPlans.length - 1
-                        ? 'text-gray-300 cursor-not-allowed' 
-                        : 'text-gray-400 hover:text-gray-600'
+                        ? 'text-gray-300 cursor-not-allowed bg-gray-50' 
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                     }`}
                   >
-                    <RefreshCw className="h-5 w-5" />
+                    <ChevronRight className="h-6 w-6" />
                   </button>
                 ) : (
                   <div className="w-10"></div>
@@ -798,132 +1074,142 @@ const MealPlannerPage: React.FC = () => {
               /* Meal Planning Grid */
               <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
                 <div className="overflow-x-auto">
-                  <table className="w-full">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider w-32">
-                        {language === 'vi' ? 'Bữa Ăn' : 'Meal'}
-                      </th>
-                      {weekDates.map((date) => {
-                        const dayOfWeek = date.getDay();
-                        return (
-                          <th key={date.toISOString()} className="px-4 py-4 text-center text-sm font-medium text-gray-500 uppercase tracking-wider min-w-48">
-                            <div>
-                              <div className="font-bold text-gray-900">
-                                {language === 'vi' ? weekDaysVi[dayOfWeek] : weekDays[dayOfWeek]}
-                              </div>
-                              <div className="text-xs text-gray-500 mt-1">
-                                {date.getDate()}/{date.getMonth() + 1}
-                              </div>
-                            </div>
+                  <div className="min-w-[1000px]">
+                    <table className="w-full">
+                      <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
+                        <tr>
+                          <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-28 sticky left-0 bg-gray-50 z-10">
+                            {language === 'vi' ? 'Bữa' : 'Meal'}
                           </th>
-                        );
-                      })}
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {mealTypes.map((mealType) => {
-                      const IconComponent = mealType.icon;
-                      return (
-                        <tr key={mealType.id} className="hover:bg-gray-50 transition-colors duration-200">
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center space-x-3">
-                              <div className={`bg-gradient-to-r ${mealType.color} p-2 rounded-lg`}>
-                                <IconComponent className="h-5 w-5 text-white" />
-                              </div>
-                              <span className="font-medium text-gray-900">{mealType.name}</span>
-                            </div>
-                          </td>
                           {weekDates.map((date) => {
-                            const dateStr = date.toISOString().split('T')[0];
-                            const dayPlan = getDayPlan(dateStr);
-                            const meal = dayPlan[mealType.id];
-                            const recipe = getRecipeFromMeal(meal);
-                            
+                            const dayOfWeek = date.getDay();
+                            const isToday = new Date().toDateString() === date.toDateString();
                             return (
-                              <td key={dateStr} className="px-4 py-4">
-                                {recipe ? (
-                                  <div 
-                                    className="relative rounded-xl overflow-hidden h-24 group cursor-pointer hover:shadow-lg transition-all duration-200"
-                                    style={{
-                                      backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.6)), url(${recipe.image})`,
-                                      backgroundSize: 'cover',
-                                      backgroundPosition: 'center'
-                                    }}
-                                  >
-                                    <div className="absolute inset-0 p-3 flex flex-col justify-between">
-                                      <div className="flex items-start justify-between">
-                                        <h4 
-                                          className="font-semibold text-white text-sm line-clamp-2 flex-1 drop-shadow-lg"
-                                          onClick={() => handleRecipeClick(recipe._id)}
-                                        >
-                                          {recipe.name}
-                                        </h4>
-                                        {(viewMode === 'creating' || (currentPlan?.status === 'pending')) && (
-                                          <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                                            <button
-                                              onClick={() => handleRecipeClick(recipe._id)}
-                                              className="p-1 bg-white/90 rounded hover:bg-white transition-colors duration-200"
-                                            >
-                                              <Edit className="h-3 w-3 text-blue-600" />
-                                            </button>
-                                            <button
-                                              onClick={() => removeRecipeFromMeal(dateStr, mealType.id)}
-                                              className="p-1 bg-white/90 rounded hover:bg-white transition-colors duration-200"
-                                            >
-                                              <Trash2 className="h-3 w-3 text-red-600" />
-                                            </button>
-                                          </div>
-                                        )}
-                                      </div>
-                                      <div className="flex items-center justify-between text-xs text-white drop-shadow">
-                                        <div className="flex items-center space-x-2">
-                                          <div className="flex items-center space-x-1 bg-black/30 px-2 py-1 rounded">
-                                            <Clock className="h-3 w-3" />
-                                            <span>{recipe.time}m</span>
-                                          </div>
-                                          <div className="flex items-center space-x-1 bg-black/30 px-2 py-1 rounded">
-                                            <Star className="h-3 w-3 text-yellow-400" />
-                                            <span>{(recipe.rate || 0).toFixed(1)}</span>
-                                          </div>
-                                        </div>
-                                      </div>
-                                    </div>
+                              <th key={date.toISOString()} className="px-2 py-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                <div className={`${isToday ? 'text-green-600' : ''}`}>
+                                  <div className="font-bold text-sm">
+                                    {language === 'vi' ? weekDaysVi[dayOfWeek] : weekDays[dayOfWeek]}
                                   </div>
-                                ) : (
-                                  (viewMode === 'creating' || (currentPlan?.status === 'pending')) ? (
-                                    <button
-                                      onClick={() => {
-                                        setSelectedSlot({ date: dateStr, mealType: mealType.id });
-                                        setShowRecipeSelector(true);
-                                      }}
-                                      className="w-full h-20 border-2 border-dashed border-gray-300 rounded-xl hover:border-green-400 hover:bg-green-50 transition-all duration-200 flex items-center justify-center group"
-                                    >
-                                      <div className="text-center">
-                                        <Plus className="h-6 w-6 text-gray-400 group-hover:text-green-500 mx-auto mb-1 transition-colors duration-200" />
-                                        <span className="text-xs text-gray-500 group-hover:text-green-600 transition-colors duration-200">
-                                          {language === 'vi' ? 'Thêm món' : 'Add meal'}
-                                        </span>
-                                      </div>
-                                    </button>
-                                  ) : (
-                                    <div className="w-full h-20 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50 flex items-center justify-center">
-                                      <span className="text-xs text-gray-400">
-                                        {language === 'vi' ? 'Trống' : 'Empty'}
-                                      </span>
-                                    </div>
-                                  )
-                                )}
-                              </td>
+                                  <div className={`text-xs mt-1 ${isToday ? 'text-green-500 font-semibold' : 'text-gray-500'}`}>
+                                    {date.getDate()}/{date.getMonth() + 1}
+                                  </div>
+                                </div>
+                              </th>
                             );
                           })}
                         </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-100">
+                        {mealTypes.map((mealType) => {
+                          const IconComponent = mealType.icon;
+                          return (
+                            <tr key={mealType.id} className="hover:bg-gray-50/50 transition-colors duration-150">
+                              <td className="px-4 py-3 whitespace-nowrap sticky left-0 bg-white z-10 border-r border-gray-100">
+                                <div className="flex items-center space-x-2">
+                                  <div className={`bg-gradient-to-r ${mealType.color} p-1.5 rounded-lg shadow-sm`}>
+                                    <IconComponent className="h-4 w-4 text-white" />
+                                  </div>
+                                  <span className="font-medium text-gray-800 text-sm">{mealType.name}</span>
+                                </div>
+                              </td>
+                              {weekDates.map((date) => {
+                                // Format date without timezone issues
+                                const year = date.getFullYear();
+                                const month = String(date.getMonth() + 1).padStart(2, '0');
+                                const day = String(date.getDate()).padStart(2, '0');
+                                const dateStr = `${year}-${month}-${day}`;
+                                
+                                const dayPlan = getDayPlan(dateStr);
+                                const meal = dayPlan[mealType.id];
+                                const recipe = getRecipeFromMeal(meal);
+                                
+                                return (
+                                  <td key={dateStr} className="px-2 py-3">
+                                    {recipe ? (
+                                      <div 
+                                        className="relative rounded-lg overflow-hidden h-24 group cursor-pointer hover:shadow-md transition-all duration-200 transform hover:scale-[1.02]"
+                                        style={{
+                                          backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.5)), url(${recipe.image})`,
+                                          backgroundSize: 'cover',
+                                          backgroundPosition: 'center'
+                                        }}
+                                      >
+                                        <div className="absolute inset-0 p-2 flex flex-col justify-between">
+                                          <div className="flex items-start justify-between gap-1">
+                                            <h4 
+                                              className="font-semibold text-white text-xs line-clamp-2 flex-1 drop-shadow-lg leading-tight"
+                                              onClick={() => handleRecipeClick(recipe._id)}
+                                            >
+                                              {recipe.name}
+                                            </h4>
+                                            {(viewMode === 'creating' || (currentPlan?.status === 'pending')) && (
+                                              <div className="flex space-x-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                                <button
+                                                  onClick={() => handleRecipeClick(recipe._id)}
+                                                  className="p-1 bg-white/95 rounded hover:bg-white transition-colors duration-200 shadow-sm"
+                                                  title={language === 'vi' ? 'Xem chi tiết' : 'View details'}
+                                                >
+                                                  <Edit className="h-3 w-3 text-blue-600" />
+                                                </button>
+                                                <button
+                                                  onClick={() => removeRecipeFromMeal(dateStr, mealType.id)}
+                                                  className="p-1 bg-white/95 rounded hover:bg-white transition-colors duration-200 shadow-sm"
+                                                  title={language === 'vi' ? 'Xóa' : 'Remove'}
+                                                >
+                                                  <Trash2 className="h-3 w-3 text-red-600" />
+                                                </button>
+                                              </div>
+                                            )}
+                                          </div>
+                                          <div className="flex items-center justify-between text-[10px] text-white drop-shadow">
+                                            <div className="flex items-center space-x-1">
+                                              <div className="flex items-center space-x-0.5 bg-black/40 px-1.5 py-0.5 rounded backdrop-blur-sm">
+                                                <Clock className="h-2.5 w-2.5" />
+                                                <span className="font-medium">{recipe.time}m</span>
+                                              </div>
+                                              <div className="flex items-center space-x-0.5 bg-black/40 px-1.5 py-0.5 rounded backdrop-blur-sm">
+                                                <Star className="h-2.5 w-2.5 text-yellow-400 fill-yellow-400" />
+                                                <span className="font-medium">{(recipe.rate || 0).toFixed(1)}</span>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      (viewMode === 'creating' || (currentPlan?.status === 'pending')) ? (
+                                        <button
+                                          onClick={() => {
+                                            setSelectedSlot({ date: dateStr, mealType: mealType.id });
+                                            setShowRecipeSelector(true);
+                                          }}
+                                          className="w-full h-24 border-2 border-dashed border-gray-200 rounded-lg hover:border-green-400 hover:bg-green-50/50 transition-all duration-200 flex items-center justify-center group"
+                                        >
+                                          <div className="text-center">
+                                            <Plus className="h-5 w-5 text-gray-300 group-hover:text-green-500 mx-auto mb-0.5 transition-colors duration-200" />
+                                            <span className="text-[10px] text-gray-400 group-hover:text-green-600 transition-colors duration-200 font-medium">
+                                              {language === 'vi' ? 'Thêm' : 'Add'}
+                                            </span>
+                                          </div>
+                                        </button>
+                                      ) : (
+                                        <div className="w-full h-24 border-2 border-dashed border-gray-100 rounded-lg bg-gray-50/30 flex items-center justify-center">
+                                          <span className="text-[10px] text-gray-300 font-medium">
+                                            {language === 'vi' ? 'Trống' : 'Empty'}
+                                          </span>
+                                        </div>
+                                      )
+                                    )}
+                                  </td>
+                                );
+                              })}
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
               </div>
-            </div>
             )}
           </div>
         )}
@@ -998,42 +1284,176 @@ const MealPlannerPage: React.FC = () => {
 
       {/* Start Date Modal */}
       {showStartDateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl p-6 max-w-md w-full">
-            <h3 className="text-xl font-bold text-gray-900 mb-4">
-              {language === 'vi' ? 'Chọn Ngày Bắt Đầu' : 'Select Start Date'}
-            </h3>
-            <p className="text-gray-600 mb-4">
-              {language === 'vi' 
-                ? 'Kế hoạch sẽ bắt đầu từ ngày này và kéo dài 7 ngày' 
-                : 'Your meal plan will start from this date and last for 7 days'}
-            </p>
-            <input
-              type="date"
-              min={(() => {
-                const tomorrow = new Date();
-                tomorrow.setDate(tomorrow.getDate() + 1);
-                return tomorrow.toISOString().split('T')[0];
-              })()}
-              onChange={(e) => setSelectedStartDate(new Date(e.target.value))}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent mb-4"
-            />
-            <div className="flex space-x-3">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden animate-slideUp">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-green-500 to-blue-500 p-6 text-white">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-2xl font-bold">
+                  {language === 'vi' ? '📅 Chọn Ngày Bắt Đầu' : '📅 Select Start Date'}
+                </h3>
+                <button
+                  onClick={() => {
+                    setShowStartDateModal(false);
+                    setSelectedStartDate(null);
+                    setStartDateError('');
+                    setCurrentMonth(new Date());
+                  }}
+                  className="p-1 hover:bg-white/20 rounded-lg transition-colors duration-200"
+                >
+                  <Plus className="h-6 w-6 transform rotate-45" />
+                </button>
+              </div>
+              <p className="text-white/90 text-sm">
+                {language === 'vi' 
+                  ? 'Kế hoạch sẽ bắt đầu từ ngày này và kéo dài 7 ngày' 
+                  : 'Your meal plan will start from this date and last for 7 days'}
+              </p>
+            </div>
+
+            {/* Calendar */}
+            <div className="p-6">
+              {/* Month Navigation */}
+              <div className="flex items-center justify-between mb-6">
+                <button
+                  onClick={goToPreviousMonth}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+                >
+                  <ChevronLeft className="h-5 w-5 text-gray-600" />
+                </button>
+                <h4 className="text-lg font-bold text-gray-900">
+                  {currentMonth.toLocaleDateString(language === 'vi' ? 'vi-VN' : 'en-US', { 
+                    month: 'long', 
+                    year: 'numeric' 
+                  })}
+                </h4>
+                <button
+                  onClick={goToNextMonth}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+                >
+                  <ChevronRight className="h-5 w-5 text-gray-600" />
+                </button>
+              </div>
+
+              {/* Weekday Headers */}
+              <div className="grid grid-cols-7 gap-2 mb-2">
+                {(language === 'vi' ? weekDaysVi : weekDays).map((day) => (
+                  <div key={day} className="text-center text-xs font-semibold text-gray-500 py-2">
+                    {day}
+                  </div>
+                ))}
+              </div>
+
+              {/* Calendar Grid */}
+              <div className="grid grid-cols-7 gap-2">
+                {getDaysInMonth(currentMonth).map((date, index) => {
+                  if (!date) {
+                    return <div key={`empty-${index}`} className="aspect-square" />;
+                  }
+
+                  const isDisabled = isDateDisabled(date);
+                  const isSelected = selectedStartDate?.toDateString() === date.toDateString();
+                  const isToday = new Date().toDateString() === date.toDateString();
+                  const isInConflictZone = isDateInConflictZone(date);
+                  const isHovered = hoveredDate?.toDateString() === date.toDateString();
+
+                  return (
+                    <button
+                      key={date.toISOString()}
+                      onClick={() => {
+                        if (!isDisabled) {
+                          handleStartDateChange(date);
+                        }
+                      }}
+                      onMouseEnter={() => !isDisabled && setHoveredDate(date)}
+                      onMouseLeave={() => setHoveredDate(null)}
+                      disabled={isDisabled}
+                      className={`
+                        aspect-square rounded-lg font-medium text-sm transition-all duration-200
+                        ${isSelected 
+                          ? 'bg-gradient-to-r from-green-500 to-blue-500 text-white shadow-lg scale-110 z-10' 
+                          : isDisabled && isInConflictZone
+                            ? 'bg-red-50 text-red-300 cursor-not-allowed line-through'
+                            : isDisabled
+                              ? 'bg-gray-50 text-gray-300 cursor-not-allowed'
+                              : isToday
+                                ? 'bg-orange-100 text-orange-700 hover:bg-orange-200'
+                                : 'bg-gray-50 text-gray-700 hover:bg-gradient-to-r hover:from-green-100 hover:to-blue-100 hover:text-gray-900'
+                        }
+                        ${isHovered && !isDisabled && !isSelected ? 'ring-2 ring-green-300' : ''}
+                        ${isSelected ? 'ring-2 ring-green-400' : ''}
+                      `}
+                      title={
+                        isDisabled && isInConflictZone 
+                          ? (language === 'vi' ? 'Ngày này xung đột với kế hoạch hiện có' : 'This date conflicts with existing plans')
+                          : isDisabled 
+                            ? (language === 'vi' ? 'Không thể chọn ngày này' : 'Cannot select this date')
+                            : ''
+                      }
+                    >
+                      {date.getDate()}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Selected Date Display */}
+              {selectedStartDate && (
+                <div className="mt-6 p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-xl border-2 border-green-200">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs text-gray-600 mb-1">
+                        {language === 'vi' ? 'Ngày được chọn:' : 'Selected date:'}
+                      </p>
+                      <p className="text-lg font-bold text-gray-900">
+                        {selectedStartDate.toLocaleDateString(language === 'vi' ? 'vi-VN' : 'en-US', {
+                          weekday: 'long',
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })}
+                      </p>
+                    </div>
+                    <Calendar className="h-8 w-8 text-green-500" />
+                  </div>
+                </div>
+              )}
+
+              {/* Error Message */}
+              {startDateError && (
+                <div className="mt-4 p-4 bg-red-50 border-l-4 border-red-500 rounded-lg animate-shake">
+                  <div className="flex items-start space-x-3">
+                    <div className="flex-shrink-0">
+                      <svg className="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <p className="text-sm text-red-700 leading-relaxed">{startDateError}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 pb-6 pt-2 flex space-x-3">
               <button
                 onClick={() => {
                   setShowStartDateModal(false);
                   setSelectedStartDate(null);
+                  setStartDateError('');
+                  setCurrentMonth(new Date());
                 }}
-                className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors duration-200"
+                className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-all duration-200 font-medium"
               >
                 {language === 'vi' ? 'Hủy' : 'Cancel'}
               </button>
               <button
                 onClick={confirmStartDate}
-                disabled={!selectedStartDate}
-                className="flex-1 px-4 py-2 bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-lg hover:from-green-600 hover:to-blue-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={!selectedStartDate || !!startDateError}
+                className="flex-1 px-4 py-3 bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-xl hover:from-green-600 hover:to-blue-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-medium shadow-lg hover:shadow-xl disabled:shadow-none flex items-center justify-center space-x-2"
               >
-                {language === 'vi' ? 'Xác Nhận' : 'Confirm'}
+                <CheckCircle className="h-5 w-5" />
+                <span>{language === 'vi' ? 'Xác Nhận' : 'Confirm'}</span>
               </button>
             </div>
           </div>
@@ -1042,7 +1462,7 @@ const MealPlannerPage: React.FC = () => {
 
       {/* Recipe Selector Modal */}
       {showRecipeSelector && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-gray-800/20 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[80vh] overflow-hidden">
             <div className="p-6 border-b border-gray-200">
               <div className="flex items-center justify-between mb-4">

@@ -70,7 +70,7 @@ export const fetchMealPlansByUser = createAsyncThunk(
 // 🥗 Tạo meal plan mới
 export const createMealPlan = createAsyncThunk(
     "mealPlans/create",
-    async (data: { userId: string; plans: DayPlan[] }, { rejectWithValue }) => {
+    async (data: { userId: string; plans: DayPlan[]; startDate?: string }, { rejectWithValue }) => {
         try {
             const res = await axiosInstance.post(`/mealplans`, data, {
                 headers: { "Content-Type": "application/json" },
@@ -106,23 +106,6 @@ export const deleteMealPlan = createAsyncThunk(
         try {
             await axiosInstance.delete(`/mealplans/${id}`);
             return id;
-        } catch (error: unknown) {
-            const err = error as { response?: { data?: { message?: string } }; message?: string };
-            return rejectWithValue(err.response?.data?.message || err.message || "An error occurred");
-        }
-    }
-);
-
-// 🥗 Đánh dấu meal plan là hoàn thành
-export const markMealPlanCompleted = createAsyncThunk(
-    "mealPlans/markCompleted",
-    async (id: string, { rejectWithValue }) => {
-        try {
-            const res = await axiosInstance.patch(`/mealplans/${id}/status`, {
-                status: "completed",
-            });
-            // Backend trả về { message, data }
-            return res.data.data as MealPlan;
         } catch (error: unknown) {
             const err = error as { response?: { data?: { message?: string } }; message?: string };
             return rejectWithValue(err.response?.data?.message || err.message || "An error occurred");
@@ -174,18 +157,6 @@ const mealPlanSlice = createSlice({
         // 🟢 Update
         builder.addCase(
             updateMealPlan.fulfilled,
-            (state, action: PayloadAction<MealPlan>) => {
-                const index = state.mealPlans.findIndex(
-                    (m) => m._id === action.payload._id
-                );
-                if (index !== -1) state.mealPlans[index] = action.payload;
-                state.loading = false;
-            }
-        );
-
-        // 🟢 Mark Completed
-        builder.addCase(
-            markMealPlanCompleted.fulfilled,
             (state, action: PayloadAction<MealPlan>) => {
                 const index = state.mealPlans.findIndex(
                     (m) => m._id === action.payload._id

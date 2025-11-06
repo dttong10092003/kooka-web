@@ -1,7 +1,6 @@
 import React from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
-  Search,
   Heart,
   User,
   ChefHat,
@@ -10,6 +9,7 @@ import {
   Settings,
   Star,
   Shield,
+  Bell,
 } from "lucide-react";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useSelector, useDispatch } from "react-redux";
@@ -21,15 +21,43 @@ export default function Header() {
   const { t } = useLanguage();
   const dispatch = useDispatch<AppDispatch>();
   const location = useLocation();
+  const navigate = useNavigate();
 
   const { token, user } = useSelector((state: RootState) => state.auth);
   const { profile } = useSelector((state: RootState) => state.user);
   const [showUserDropdown, setShowUserDropdown] = React.useState(false);
+  const [showNotifications, setShowNotifications] = React.useState(false);
+  const [notificationTab, setNotificationTab] = React.useState<'recipes' | 'community'>('recipes');
+  const [showAppDownload, setShowAppDownload] = React.useState(false);
+
+  const notificationRef = React.useRef<HTMLDivElement>(null);
+  const userDropdownRef = React.useRef<HTMLDivElement>(null);
+  const appDownloadRef = React.useRef<HTMLDivElement>(null);
+
+  // Close dropdowns when clicking outside
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
+        setShowNotifications(false);
+      }
+      if (userDropdownRef.current && !userDropdownRef.current.contains(event.target as Node)) {
+        setShowUserDropdown(false);
+      }
+      if (appDownloadRef.current && !appDownloadRef.current.contains(event.target as Node)) {
+        setShowAppDownload(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   // Get avatar from either user or profile
   let avatarUrl = user?.avatar || profile?.avatar;
 
-  
+
   // Fix Google avatar URL format and add size parameter
   if (avatarUrl && avatarUrl.includes('googleusercontent.com')) {
     // Ensure Google avatar has proper size parameter
@@ -54,8 +82,17 @@ export default function Header() {
   // 👉 Nếu đang ở trang Register, luôn hiển thị trạng thái chưa login
   const forceGuest = location.pathname === "/register";
 
+  // Handler để kiểm tra đăng nhập trước khi vào Meal Planner
+  const handleMealPlannerClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    if (!token || !user) {
+      e.preventDefault();
+      alert(t("header.loginRequired") || "Please login to access Meal Planner");
+      navigate("/login");
+    }
+  };
+
   return (
-    <header className="bg-white border-b border-gray-200 px-4 py-3">
+    <header className="sticky top-0 z-50 bg-white px-4 py-3 shadow-sm">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         {/* Logo */}
         <div className="flex items-center gap-2">
@@ -71,50 +108,311 @@ export default function Header() {
 
         {/* Navigation */}
         <nav className="hidden md:flex items-center gap-8">
-          <Link to="/" className="text-orange-500 font-medium">
+          <Link 
+            to="/" 
+            className={location.pathname === "/" ? "text-orange-500 font-medium" : "text-gray-600 hover:text-gray-900"}
+          >
             {t("header.home")}
           </Link>
-          <Link to="/recipes" className="text-gray-600 hover:text-gray-900">
+          <Link 
+            to="/recipes" 
+            className={location.pathname === "/recipes" ? "text-orange-500 font-medium" : "text-gray-600 hover:text-gray-900"}
+          >
             {t("header.recipes")}
           </Link>
-          <Link to="/meal-planner" className="text-gray-600 hover:text-gray-900">
+          <Link
+            to="/meal-planner"
+            onClick={handleMealPlannerClick}
+            className={location.pathname === "/meal-planner" ? "text-orange-500 font-medium" : "text-gray-600 hover:text-gray-900"}
+          >
             {t("header.mealPlanner")}
           </Link>
-          <Link to="/categories" className="text-gray-600 hover:text-gray-900">
+          <Link 
+            to="/categories" 
+            className={location.pathname === "/categories" ? "text-orange-500 font-medium" : "text-gray-600 hover:text-gray-900"}
+          >
             {t("header.categories")}
           </Link>
-          <Link to="/about" className="text-gray-600 hover:text-gray-900">
+          <Link 
+            to="/about" 
+            className={location.pathname === "/about" ? "text-orange-500 font-medium" : "text-gray-600 hover:text-gray-900"}
+          >
             {t("header.about")}
           </Link>
         </nav>
 
         {/* Actions */}
         <div className="flex items-center gap-3">
-          <button
-            type="button"
-            className="text-gray-600 hover:text-orange-500 transition-colors duration-200"
-          >
-            <Search className="w-5 h-5" />
-          </button>
-          <button
-            type="button"
-            className="text-gray-600 hover:text-orange-500 transition-colors duration-200"
-          >
-            <Heart className="w-5 h-5" />
-          </button>
+          {/* Download App - Only show when logged in */}
+          {!forceGuest && token && user && location.pathname !== "/login" && (
+            <div className="relative" ref={appDownloadRef}>
+              <button
+                onClick={() => setShowAppDownload(!showAppDownload)}
+                className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-gray-100 transition-all duration-200 cursor-pointer"
+                title="Tải ứng dụng Kooka"
+              >
+                <div className="flex items-center justify-center w-8 h-8 rounded-lg shadow-sm">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M17.476 0H7.524A1.524 1.524 0 0 0 6 1.524v19.952A1.524 1.524 0 0 0 7.524 23h9.952A1.524 1.524 0 0 0 19 21.476V1.524A1.524 1.524 0 0 0 17.476 0zM18 21.477a.524.524 0 0 1-.524.523H14v-1h-3v1H7.524A.524.524 0 0 1 7 21.477V20h11zM18 19H7V3h11zm0-17H7v-.477A.524.524 0 0 1 7.524 1h9.952a.524.524 0 0 1 .524.523zm-7.8 5.7v7.6l6-3.8zm.8 1.453l3.705 2.347L11 13.847z" fill="#f97316" />
+                    <path fill="none" d="M0 0h24v24H0z" />
+                  </svg>
+                </div>
+                <div className="hidden lg:flex flex-col items-start leading-tight">
+                  <span className="text-[10px] text-gray-600">Tải ứng dụng</span>
+                  <span className="text-xs font-semibold text-gray-900">Kooka</span>
+                </div>
+              </button>
+
+              {/* App Download Dropdown */}
+              {showAppDownload && (
+                <div className="absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-xl border border-gray-200 z-50 p-3">
+                  {/* Header with Logo */}
+                  <div className="flex items-start gap-2 mb-3">
+                    <img
+                      src="/kookalogo.png"
+                      alt="Kooka Logo"
+                      className="w-12 h-12 rounded-xl"
+                    />
+                    <p className="text-xs text-gray-700 leading-relaxed pt-1">
+                      Cài đặt Kooka và khám phá hành trình nấu ăn ngay!
+                    </p>
+                  </div>
+
+                  {/* Platform Options */}
+                  <div className="flex gap-2">
+                    {/* iOS Button - Disabled (Coming Soon) */}
+                    <button
+                      disabled
+                      className="flex-1 flex items-center gap-2 py-2 px-3 border-2 border-gray-200 rounded-lg opacity-50 cursor-not-allowed"
+                    >
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M16.52 12.46C16.508 11.8438 16.6682 11.2365 16.9827 10.7065C17.2972 10.1765 17.7534 9.74476 18.3 9.46C17.9558 8.98143 17.5063 8.5883 16.9862 8.31089C16.466 8.03349 15.8892 7.87923 15.3 7.86C14.03 7.76 12.65 8.6 12.14 8.6C11.63 8.6 10.37 7.9 9.40999 7.9C7.40999 7.9 5.29999 9.49 5.29999 12.66C5.30963 13.6481 5.48194 14.6279 5.80999 15.56C6.24999 16.84 7.89999 20.05 9.61999 20C10.52 20 11.16 19.36 12.33 19.36C13.5 19.36 14.05 20 15.06 20C16.79 20 18.29 17.05 18.72 15.74C18.0689 15.4737 17.5119 15.0195 17.1201 14.4353C16.7282 13.8511 16.5193 13.1634 16.52 12.46ZM14.52 6.59C14.8307 6.23965 15.065 5.82839 15.2079 5.38245C15.3508 4.93651 15.3992 4.46569 15.35 4C14.4163 4.10239 13.5539 4.54785 12.93 5.25C12.6074 5.58991 12.3583 5.99266 12.1983 6.43312C12.0383 6.87358 11.9708 7.34229 12 7.81C12.4842 7.82361 12.9646 7.71974 13.3999 7.50728C13.8353 7.29482 14.2127 6.98009 14.5 6.59H14.52Z" fill="#9CA3AF" />
+                      </svg>
+                      <span className="text-[11px] font-semibold text-gray-400">iOS</span>
+                    </button>
+
+                    {/* Android Button */}
+                    <button className="flex-1 flex items-center gap-2 py-2 px-3 border-2 border-gray-200 rounded-lg hover:border-orange-400 hover:bg-orange-50 transition-all">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="7" y="2" width="10" height="20" rx="2" stroke="#6B7280" strokeWidth="1.5" fill="none" />
+                        <line x1="7" y1="18" x2="17" y2="18" stroke="#6B7280" strokeWidth="1.5" />
+                        <circle cx="12" cy="20" r="0.5" fill="#6B7280" />
+                      </svg>
+                      <span className="text-[11px] font-semibold text-gray-900">Android</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Notifications - Only show when logged in */}
+          {!forceGuest && token && user && location.pathname !== "/login" && (
+            <div className="relative" ref={notificationRef}>
+              <button
+                onClick={() => setShowNotifications(!showNotifications)}
+                className="relative p-2.5 rounded-full bg-white hover:bg-gray-100 transition-all duration-200"
+              >
+                <Bell className="w-5 h-5 text-black" />
+                {/* Notification badge */}
+                <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full ring-2 ring-white"></span>
+              </button>
+
+              {/* Notifications Dropdown */}
+              {showNotifications && (
+                <div className="absolute right-0 mt-3 w-96 bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                  {/* Header with Tabs */}
+                  <div className="bg-gradient-to-r from-indigo-900 via-indigo-800 to-indigo-900 px-5 py-3 flex items-center justify-between">
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => setNotificationTab('recipes')}
+                        className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${notificationTab === 'recipes'
+                          ? 'bg-white text-indigo-900'
+                          : 'text-white/80 hover:text-white hover:bg-white/15'
+                          }`}
+                      >
+                        Công thức
+                      </button>
+                      <button
+                        onClick={() => setNotificationTab('community')}
+                        className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${notificationTab === 'community'
+                          ? 'bg-white text-indigo-900'
+                          : 'text-white/80 hover:text-white hover:bg-white/15'
+                          }`}
+                      >
+                        Cộng đồng
+                      </button>
+                    </div>
+                    <button
+                      className="text-white text-sm font-medium px-3 py-1.5 rounded-lg hover:bg-white/15 transition-colors flex items-center gap-1.5"
+                    >
+                      <span className="text-base">✓</span>
+                      <span>Đã đọc</span>
+                    </button>
+                  </div>
+
+                  {/* Notifications List */}
+                  <div className="max-h-[480px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+                    {notificationTab === 'recipes' ? (
+                      <>
+                        {/* Recipe Notifications */}
+                        <div className="px-5 py-4 hover:bg-orange-50 cursor-pointer border-b border-gray-100 transition-colors group">
+                          <div className="flex gap-3">
+                            <div className="relative flex-shrink-0">
+                              <img
+                                src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=100"
+                                alt="Recipe"
+                                className="w-14 h-14 rounded-lg object-cover ring-2 ring-gray-200 group-hover:ring-orange-300 transition-all"
+                              />
+                              <div className="absolute -top-1 -right-1 w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center">
+                                <span className="text-white text-xs">⚡</span>
+                              </div>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm text-gray-800 leading-relaxed">
+                                <strong className="text-gray-900 font-semibold">Bún Chả Hà Nội</strong> vừa được thêm vào danh sách món ăn mới
+                              </p>
+                              <p className="text-xs text-gray-500 mt-1.5 flex items-center gap-1">
+                                <span className="w-1 h-1 bg-gray-400 rounded-full"></span>
+                                5 ngày trước
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="px-5 py-4 hover:bg-orange-50 cursor-pointer border-b border-gray-100 transition-colors group">
+                          <div className="flex gap-3">
+                            <div className="relative flex-shrink-0">
+                              <img
+                                src="https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=100"
+                                alt="Recipe"
+                                className="w-14 h-14 rounded-lg object-cover ring-2 ring-gray-200 group-hover:ring-orange-300 transition-all"
+                              />
+                              <div className="absolute -top-1 -right-1 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+                                <span className="text-white text-xs">✨</span>
+                              </div>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm text-gray-800 leading-relaxed">
+                                <strong className="text-gray-900 font-semibold">Phở Bò Truyền Thống</strong> có công thức mới được cập nhật
+                              </p>
+                              <p className="text-xs text-gray-500 mt-1.5 flex items-center gap-1">
+                                <span className="w-1 h-1 bg-gray-400 rounded-full"></span>
+                                1 tuần trước
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="px-5 py-4 hover:bg-orange-50 cursor-pointer border-b border-gray-100 transition-colors group">
+                          <div className="flex gap-3">
+                            <div className="relative flex-shrink-0">
+                              <img
+                                src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=100"
+                                alt="Recipe"
+                                className="w-14 h-14 rounded-lg object-cover ring-2 ring-gray-200 group-hover:ring-orange-300 transition-all"
+                              />
+                              <div className="absolute -top-1 -right-1 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
+                                <span className="text-white text-xs">🎉</span>
+                              </div>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm text-gray-800 leading-relaxed">
+                                <strong className="text-gray-900 font-semibold">Bánh Xèo Miền Tây</strong> vừa ra mắt trên Kooka
+                              </p>
+                              <p className="text-xs text-gray-500 mt-1.5 flex items-center gap-1">
+                                <span className="w-1 h-1 bg-gray-400 rounded-full"></span>
+                                1 tháng trước
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="px-5 py-4 hover:bg-orange-50 cursor-pointer border-b border-gray-100 transition-colors group">
+                          <div className="flex gap-3">
+                            <div className="relative flex-shrink-0">
+                              <img
+                                src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=100"
+                                alt="Recipe"
+                                className="w-14 h-14 rounded-lg object-cover ring-2 ring-gray-200 group-hover:ring-orange-300 transition-all"
+                              />
+                              <div className="absolute -top-1 -right-1 w-5 h-5 bg-purple-500 rounded-full flex items-center justify-center">
+                                <span className="text-white text-xs">📹</span>
+                              </div>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm text-gray-800 leading-relaxed">
+                                <strong className="text-gray-900 font-semibold">Cơm Tấm Sườn Bì</strong> có video hướng dẫn chi tiết
+                              </p>
+                              <p className="text-xs text-gray-500 mt-1.5 flex items-center gap-1">
+                                <span className="w-1 h-1 bg-gray-400 rounded-full"></span>
+                                2 tháng trước
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="px-5 py-4 hover:bg-orange-50 cursor-pointer transition-colors group">
+                          <div className="flex gap-3">
+                            <div className="relative flex-shrink-0">
+                              <img
+                                src="https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=100"
+                                alt="Recipe"
+                                className="w-14 h-14 rounded-lg object-cover ring-2 ring-gray-200 group-hover:ring-orange-300 transition-all"
+                              />
+                              <div className="absolute -top-1 -right-1 w-5 h-5 bg-pink-500 rounded-full flex items-center justify-center">
+                                <span className="text-white text-xs">💡</span>
+                              </div>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm text-gray-800 leading-relaxed">
+                                <strong className="text-gray-900 font-semibold">Gỏi Cuốn Tôm Thịt</strong> có mẹo hay được cập nhật
+                              </p>
+                              <p className="text-xs text-gray-500 mt-1.5 flex items-center gap-1">
+                                <span className="w-1 h-1 bg-gray-400 rounded-full"></span>
+                                3 tháng trước
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      /* Community Tab - Empty State */
+                      <div className="px-5 py-20 text-center">
+                        <Bell className="mx-auto text-gray-300 mb-4" size={48} />
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                          Chưa có thông báo cộng đồng
+                        </h3>
+                        <p className="text-sm text-gray-500">
+                          Các thông báo về bình luận, lượt thích sẽ hiển thị tại đây
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Footer */}
+                  <div className="px-5 py-3.5 bg-gradient-to-r from-gray-50 to-orange-50 border-t border-gray-200">
+                    <button className="w-full text-sm text-orange-600 hover:text-orange-700 font-semibold py-2 rounded-lg hover:bg-white/60 transition-all">
+                      Xem tất cả thông báo →
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* User state */}
           {!forceGuest && token && user && location.pathname !== "/login" ? (
-            <div className="relative">
+            <div className="relative" ref={userDropdownRef}>
               <button
                 onClick={() => setShowUserDropdown(!showUserDropdown)}
-                className="flex items-center gap-2 bg-gradient-to-r from-orange-500 to-red-500 text-white px-3 py-2 rounded-lg hover:from-orange-600 hover:to-red-600 transition-all duration-200 cursor-pointer"
+                className="flex items-center gap-2 transition-all duration-200 cursor-pointer"
               >
-                <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center overflow-hidden relative">
+                <div className="w-10 h-10 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center overflow-hidden relative ring-2 ring-orange-200 hover:ring-orange-300">
                   {avatarUrl ? (
-                    <img 
-                      src={avatarUrl} 
-                      alt="Avatar" 
+                    <img
+                      src={avatarUrl}
+                      alt="Avatar"
                       className="w-full h-full object-cover rounded-full"
                       referrerPolicy="no-referrer"
                       crossOrigin="anonymous"
@@ -125,18 +423,17 @@ export default function Header() {
                           fallbackDiv.style.display = 'flex';
                         }
                       }}
-                      
+
                     />
                   ) : null}
-                  <div 
+                  <div
                     className="w-full h-full flex items-center justify-center text-white font-semibold"
                     style={{ display: avatarUrl ? 'none' : 'flex' }}
                   >
                     {getUserInitials(user.username)}
                   </div>
                 </div>
-                <span className="hidden sm:inline">{user.username}</span>
-                <ChevronDown className="h-4 w-4" />
+                <ChevronDown className="h-4 w-4 text-gray-600" />
               </button>
 
               {/* Dropdown */}
@@ -145,9 +442,9 @@ export default function Header() {
                   <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-100">
                     <div className="w-10 h-10 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center text-white font-semibold overflow-hidden relative">
                       {avatarUrl ? (
-                        <img 
-                          src={avatarUrl} 
-                          alt="Avatar" 
+                        <img
+                          src={avatarUrl}
+                          alt="Avatar"
                           className="w-full h-full object-cover rounded-full"
                           referrerPolicy="no-referrer"
                           crossOrigin="anonymous"
@@ -160,7 +457,7 @@ export default function Header() {
                           }}
                         />
                       ) : null}
-                      <div 
+                      <div
                         className="w-full h-full flex items-center justify-center"
                         style={{ display: avatarUrl ? 'none' : 'flex' }}
                       >

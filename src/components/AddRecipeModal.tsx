@@ -7,6 +7,7 @@ import {
     fetchCuisines,
     fetchIngredients,
     fetchTags,
+    fetchRecipes,
 } from "../redux/slices/recipeSlice";
 import type { RootState, AppDispatch } from "../redux/store";
 import AddCategoryModal from "./AddCategoryModal";
@@ -185,6 +186,7 @@ const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ isOpen, onClose }) => {
     const [isTagModalOpen, setIsTagModalOpen] = useState(false);
     const [isIngredientSelectorOpen, setIsIngredientSelectorOpen] = useState(false);
     const [isTagSelectorOpen, setIsTagSelectorOpen] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const [recipe, setRecipe] = useState({
         name: "",
@@ -292,14 +294,20 @@ const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ isOpen, onClose }) => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setIsSubmitting(true);
         try {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             await dispatch(addRecipe(recipe as any)).unwrap();
             toast.success("Thêm công thức thành công!", { duration: 2500 });
             onClose();
-        } catch (error) {
-            console.error("Failed to add recipe:", error);
-            toast.error("Thêm công thức thất bại. Vui lòng thử lại.", { duration: 2500 });
+            // Refresh danh sách recipes
+            await dispatch(fetchRecipes());
+        } catch (error: any) {
+            const errorMessage = error?.message || error || 'Thêm công thức thất bại.';
+            toast.error(errorMessage, { duration: 3000 });
+            // Không đóng modal để người dùng có thể thử lại
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -895,15 +903,27 @@ const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ isOpen, onClose }) => {
                             <button
                                 type="button"
                                 onClick={onClose}
-                                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100"
+                                disabled={isSubmitting}
+                                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 Huỷ
                             </button>
                             <button
                                 type="submit"
-                                className="px-4 py-2 bg-gradient-to-r from-orange-400 to-red-500 text-white rounded-lg hover:opacity-90"
+                                disabled={isSubmitting}
+                                className="px-4 py-2 bg-gradient-to-r from-orange-400 to-red-500 text-white rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                             >
-                                Lưu công thức
+                                {isSubmitting ? (
+                                    <>
+                                        <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                        Đang thêm...
+                                    </>
+                                ) : (
+                                    'Lưu công thức'
+                                )}
                             </button>
                         </div>
                     </form>

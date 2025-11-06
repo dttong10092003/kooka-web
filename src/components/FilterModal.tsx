@@ -1,11 +1,15 @@
 import { X } from "lucide-react"
 import { useState, useRef, useEffect } from "react"
+import { useSelector, useDispatch } from "react-redux"
+import type { RootState, AppDispatch } from "../redux/store"
+import { fetchCategories, fetchTags, fetchCuisines } from "../redux/slices/recipeSlice"
 
 interface FilterModalProps {
     isOpen: boolean
     onClose: () => void
     onApply: (filters: FilterData) => void
     initialFilters?: FilterData
+    colorScheme?: "orange" | "indigo"
 }
 
 export interface FilterData {
@@ -14,11 +18,47 @@ export interface FilterData {
     selectedCuisine: string
 }
 
-export default function FilterModal({ isOpen, onClose, onApply, initialFilters }: FilterModalProps) {
+export default function FilterModal({ isOpen, onClose, onApply, initialFilters, colorScheme = "orange" }: FilterModalProps) {
+    const dispatch = useDispatch<AppDispatch>()
+    
+    // Get data from Redux
+    const { categories, tags, cuisines } = useSelector((state: RootState) => state.recipes)
+    
     // State for filters with initial values from props or defaults
     const [selectedCategory, setSelectedCategory] = useState(initialFilters?.selectedCategory || "")
     const [selectedTags, setSelectedTags] = useState<string[]>(initialFilters?.selectedTags || [])
     const [selectedCuisine, setSelectedCuisine] = useState(initialFilters?.selectedCuisine || "")
+
+    // Fetch data when component mounts if not already loaded
+    useEffect(() => {
+        if (categories.length === 0) {
+            dispatch(fetchCategories())
+        }
+        if (tags.length === 0) {
+            dispatch(fetchTags())
+        }
+        if (cuisines.length === 0) {
+            dispatch(fetchCuisines())
+        }
+    }, [dispatch, categories, tags, cuisines])
+
+    // Color classes based on colorScheme
+    const colors = {
+        orange: {
+            tagActive: "bg-orange-500 text-white border-orange-500",
+            tagHover: "hover:border-orange-500 hover:text-orange-500",
+            focusRing: "focus:ring-orange-500 focus:border-orange-500",
+            buttonGradient: "bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
+        },
+        indigo: {
+            tagActive: "bg-indigo-500 text-white border-indigo-500",
+            tagHover: "hover:border-indigo-500 hover:text-indigo-500",
+            focusRing: "focus:ring-indigo-500 focus:border-indigo-500",
+            buttonGradient: "bg-gradient-to-r from-indigo-500 to-blue-500 hover:from-indigo-600 hover:to-blue-600"
+        }
+    }
+
+    const currentColors = colors[colorScheme]
 
     // Function to clear all filters
     const handleClearFilters = () => {
@@ -54,10 +94,6 @@ export default function FilterModal({ isOpen, onClose, onApply, initialFilters }
         }
     }, [isOpen, onClose])
 
-    const categories = ["Buổi sáng", "Buổi trưa", "Ăn nhẹ", "Buổi tối"]
-    const tags = ["Món nước", "Món chay", "Món cay", "Món tráng miệng"]
-    const cuisines = ["Việt Nam", "Ý", "Nhật Bản", "Hàn Quốc", "Mỹ"]
-
     const handleTagToggle = (tag: string) => {
         setSelectedTags((prev) =>
             prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
@@ -92,18 +128,22 @@ export default function FilterModal({ isOpen, onClose, onApply, initialFilters }
                 <div className="mb-4 text-left">
                     <p className="font-semibold mb-2">Tags</p>
                     <div className="flex flex-wrap gap-2">
-                        {tags.map((tag) => (
-                            <button
-                                key={tag}
-                                className={`px-4 py-2 rounded-md border transition-colors ${selectedTags.includes(tag)
-                                        ? "bg-orange-500 text-white border-orange-500"
-                                        : "bg-white text-gray-700 border-gray-300 hover:border-orange-500 hover:text-orange-500"
-                                    }`}
-                                onClick={() => handleTagToggle(tag)}
-                            >
-                                {tag}
-                            </button>
-                        ))}
+                        {tags.length > 0 ? (
+                            tags.map((tag) => (
+                                <button
+                                    key={tag._id}
+                                    className={`px-4 py-2 rounded-md border transition-colors ${selectedTags.includes(tag.name)
+                                            ? currentColors.tagActive
+                                            : `bg-white text-gray-700 border-gray-300 ${currentColors.tagHover}`
+                                        }`}
+                                    onClick={() => handleTagToggle(tag.name)}
+                                >
+                                    {tag.name}
+                                </button>
+                            ))
+                        ) : (
+                            <p className="text-sm text-gray-500">No tags available</p>
+                        )}
                     </div>
                 </div>
 
@@ -114,12 +154,12 @@ export default function FilterModal({ isOpen, onClose, onApply, initialFilters }
                         <select 
                             value={selectedCategory}
                             onChange={(e) => setSelectedCategory(e.target.value)}
-                            className="w-full px-4 py-3 bg-white border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-700 cursor-pointer shadow-sm"
+                            className={`w-full px-4 py-3 bg-white border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-2 ${currentColors.focusRing} text-gray-700 cursor-pointer shadow-sm`}
                         >
                             <option value="">All Categories</option>
                             {categories.map((cat) => (
-                                <option key={cat} value={cat}>
-                                    {cat}
+                                <option key={cat._id} value={cat.name}>
+                                    {cat.name}
                                 </option>
                             ))}
                         </select>
@@ -138,12 +178,12 @@ export default function FilterModal({ isOpen, onClose, onApply, initialFilters }
                         <select 
                             value={selectedCuisine}
                             onChange={(e) => setSelectedCuisine(e.target.value)}
-                            className="w-full px-4 py-3 bg-white border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-700 cursor-pointer shadow-sm"
+                            className={`w-full px-4 py-3 bg-white border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-2 ${currentColors.focusRing} text-gray-700 cursor-pointer shadow-sm`}
                         >
                             <option value="">All Cuisines</option>
                             {cuisines.map((cuisine) => (
-                                <option key={cuisine} value={cuisine}>
-                                    {cuisine}
+                                <option key={cuisine._id} value={cuisine.name}>
+                                    {cuisine.name}
                                 </option>
                             ))}
                         </select>
@@ -165,7 +205,7 @@ export default function FilterModal({ isOpen, onClose, onApply, initialFilters }
                     </button>
                     <button
                         onClick={handleApply}
-                        className="w-2/3 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white py-3 rounded-lg font-semibold"
+                        className={`w-2/3 ${currentColors.buttonGradient} text-white py-3 rounded-lg font-semibold`}
                     >
                         Apply Filters
                     </button>

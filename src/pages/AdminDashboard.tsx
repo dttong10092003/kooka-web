@@ -1,8 +1,9 @@
 import type React from "react"
 import { useState, useEffect } from "react"
 import { useDispatch, useSelector } from "react-redux"
+import { useNavigate } from "react-router-dom"
 import type { AppDispatch, RootState } from "../redux/store"
-import { fetchRecipes, deleteRecipe } from "../redux/slices/recipeSlice"
+import { fetchRecipes, deleteRecipe, fetchNewestRecipes } from "../redux/slices/recipeSlice"
 import type { Recipe } from "../redux/slices/recipeSlice"
 import {
     BarChart3,
@@ -19,12 +20,18 @@ import {
     Star,
     Eye,
     MessageSquare,
-    Activity,
     LogOut,
+    ArrowLeft,
+    ChevronLeft,
+    ChevronRight,
+    Database,
 } from "lucide-react"
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import AddRecipeModal from "../components/AddRecipeModal";
 import EditRecipeModal from "../components/EditRecipeModal";
+import DataManagement from "./DataManagement";
 import toast from "react-hot-toast";
+import axiosInstance from "../utils/axiosInstance";
 
 const AdminDashboard: React.FC = () => {
     const [activeTab, setActiveTab] = useState("overview")
@@ -34,13 +41,174 @@ const AdminDashboard: React.FC = () => {
     const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null)
     const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
     const [recipeToDelete, setRecipeToDelete] = useState<Recipe | null>(null)
+    const [recentUsers, setRecentUsers] = useState<any[]>([])
+    const [weeklyData, setWeeklyData] = useState<any[]>([])
+    const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
+    const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1)
+    const [dashboardStats, setDashboardStats] = useState({
+        totalRecipes: 0,
+        activeUsers: 0,
+        recipeViews: 0,
+        userReviews: 0,
+    })
+    const [loadingStats, setLoadingStats] = useState(true)
+    const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false)
+    const [recipePerformanceData, setRecipePerformanceData] = useState<any[]>([])
 
+    const navigate = useNavigate()
     const dispatch = useDispatch<AppDispatch>()
-    const { recipes, loading, error } = useSelector((state: RootState) => state.recipes)
+    const { recipes, loading, error, newestRecipes } = useSelector((state: RootState) => state.recipes)
 
     useEffect(() => {
         dispatch(fetchRecipes())
+        dispatch(fetchNewestRecipes(4))
+        fetchDashboardStats()
+        fetchRecentUsers()
+        fetchWeeklyUserActivity(selectedYear, selectedMonth)
+        fetchRecipePerformance()
     }, [dispatch])
+
+    useEffect(() => {
+        fetchWeeklyUserActivity(selectedYear, selectedMonth)
+    }, [selectedYear, selectedMonth])
+
+    const fetchDashboardStats = async () => {
+        try {
+            setLoadingStats(true)
+            
+            // Get current month and year
+            const currentDate = new Date()
+            const currentYear = currentDate.getFullYear()
+            const currentMonth = currentDate.getMonth() + 1
+
+            const [recipesRes, usersRes, reviewsRes, monthlyViewsRes] = await Promise.all([
+                axiosInstance.get("/recipes"),
+                axiosInstance.get("/user/profile/count"),
+                axiosInstance.get("/reviews/count"),
+                axiosInstance.get(`/views/monthly/total?year=${currentYear}&month=${currentMonth}`),
+            ])
+
+            setDashboardStats({
+                totalRecipes: recipesRes.data.length || 0,
+                activeUsers: usersRes.data.count || 0,
+                recipeViews: monthlyViewsRes.data.totalViews || 0,
+                userReviews: reviewsRes.data.count || 0,
+            })
+        } catch (error) {
+            console.error("Error fetching dashboard stats:", error)
+            // Fallback: use recipes length from Redux
+            setDashboardStats({
+                totalRecipes: recipes.length,
+                activeUsers: 0,
+                recipeViews: 0,
+                userReviews: 0,
+            })
+        } finally {
+            setLoadingStats(false)
+        }
+    }
+
+    const fetchRecentUsers = async () => {
+        try {
+            const res = await axiosInstance.get("/user/profile/recent?limit=5")
+            setRecentUsers(res.data || [])
+        } catch (error) {
+            console.error("Error fetching recent users:", error)
+            setRecentUsers([])
+        }
+    }
+
+    const fetchWeeklyUserActivity = async (year: number, month: number) => {
+        try {
+            const res = await axiosInstance.get(`/user/profile/stats/weekly`, {
+                params: { year, month }
+            })
+
+            console.log("API Response:", res.data)
+
+            // API trả về object với field weeks
+            const weeklyStats = res.data?.weeks || []
+
+            const formattedWeekly = weeklyStats.map((week: any) => ({
+                week: week.week, // "Week 1", "Week 2", ...
+                users: week.users || 0,
+                period: week.period // "Day 1-7", ...
+            }))
+
+            console.log(`Weekly stats for ${year}-${month}:`, formattedWeekly)
+            setWeeklyData(formattedWeekly)
+        } catch (error) {
+            console.error("Error fetching weekly user activity:", error)
+            setWeeklyData([])
+        }
+    }
+
+    const fetchRecipePerformance = async () => {
+        try {
+            // Fetch recipes and views data
+            const recipesRes = await axiosInstance.get("/recipes")
+            const recipes = recipesRes.data
+            
+            // Get view counts for top 10 recipes
+            const recipeIds = recipes.map((r: any) => r._id).slice(0, 10)
+            const viewsRes = await axiosInstance.post("/views/batch", { recipeIds })
+            const viewsData = viewsRes.data || {}
+
+            // Combine data for top 10 recipes
+            const performanceData = recipes.slice(0, 10).map((recipe: any) => {
+                const recipeViews = viewsData[recipe._id] || 0
+                return {
+                    name: recipe.name.length > 15 ? recipe.name.substring(0, 15) + "..." : recipe.name,
+                    views: recipeViews,
+                    reviews: recipe.numberOfRate || 0,
+                    // favorites: Get from favorites API if available
+                    favorites: Math.floor(recipeViews * 0.3) // Temporary calculation
+                }
+            })
+
+            setRecipePerformanceData(performanceData)
+        } catch (error) {
+            console.error("Error fetching recipe performance:", error)
+            setRecipePerformanceData([])
+        }
+    }
+
+    const handlePreviousMonth = () => {
+        if (selectedMonth === 1) {
+            setSelectedMonth(12)
+            setSelectedYear(selectedYear - 1)
+        } else {
+            setSelectedMonth(selectedMonth - 1)
+        }
+    }
+
+    const handleNextMonth = () => {
+        const currentDate = new Date()
+        const currentYear = currentDate.getFullYear()
+        const currentMonth = currentDate.getMonth() + 1
+
+        // Không cho phép chọn tháng trong tương lai
+        if (selectedYear === currentYear && selectedMonth === currentMonth) {
+            return
+        }
+
+        if (selectedMonth === 12) {
+            setSelectedMonth(1)
+            setSelectedYear(selectedYear + 1)
+        } else {
+            setSelectedMonth(selectedMonth + 1)
+        }
+    }
+
+    const formatNumber = (num: number): string => {
+        if (num >= 1000000) {
+            return `${(num / 1000000).toFixed(1)}M`
+        }
+        if (num >= 1000) {
+            return `${(num / 1000).toFixed(1)}K`
+        }
+        return num.toString()
+    }
 
     const currentUser = {
         name: "Admin User",
@@ -53,7 +221,7 @@ const AdminDashboard: React.FC = () => {
     const stats = [
         {
             title: "Total Recipes",
-            value: "2,847",
+            value: loadingStats ? "..." : formatNumber(dashboardStats.totalRecipes),
             change: "+12%",
             trend: "up",
             icon: ChefHat,
@@ -61,15 +229,15 @@ const AdminDashboard: React.FC = () => {
         },
         {
             title: "Active Users",
-            value: "18,392",
+            value: loadingStats ? "..." : formatNumber(dashboardStats.activeUsers),
             change: "+8%",
             trend: "up",
             icon: Users,
             color: "from-green-500 to-green-600",
         },
         {
-            title: "Recipe Views",
-            value: "847K",
+            title: "Recipe Views (This Month)",
+            value: loadingStats ? "..." : formatNumber(dashboardStats.recipeViews),
             change: "+23%",
             trend: "up",
             icon: Eye,
@@ -77,7 +245,7 @@ const AdminDashboard: React.FC = () => {
         },
         {
             title: "User Reviews",
-            value: "12,847",
+            value: loadingStats ? "..." : formatNumber(dashboardStats.userReviews),
             change: "+15%",
             trend: "up",
             icon: MessageSquare,
@@ -85,76 +253,14 @@ const AdminDashboard: React.FC = () => {
         },
     ]
 
-    const recentRecipes = [
-        {
-            id: 1,
-            title: "Spicy Thai Basil Chicken",
-            author: "Chef Maria",
-            status: "Published",
-            views: "2.3K",
-            rating: 4.8,
-            date: "2025-01-15",
-        },
-        {
-            id: 2,
-            title: "Classic French Onion Soup",
-            author: "Chef Pierre",
-            status: "Draft",
-            views: "1.8K",
-            rating: 4.6,
-            date: "2025-01-14",
-        },
-        {
-            id: 3,
-            title: "Vegan Buddha Bowl",
-            author: "Chef Sarah",
-            status: "Published",
-            views: "3.1K",
-            rating: 4.9,
-            date: "2025-01-13",
-        },
-        {
-            id: 4,
-            title: "Chocolate Lava Cake",
-            author: "Chef David",
-            status: "Review",
-            views: "4.2K",
-            rating: 4.7,
-            date: "2025-01-12",
-        },
-    ]
-
-    const recentUsers = [
-        {
-            id: 1,
-            name: "John Smith",
-            email: "john@example.com",
-            joinDate: "2025-01-10",
-            recipes: 12,
-            status: "Active",
-        },
-        {
-            id: 2,
-            name: "Emma Wilson",
-            email: "emma@example.com",
-            joinDate: "2025-01-09",
-            recipes: 8,
-            status: "Active",
-        },
-        {
-            id: 3,
-            name: "Michael Brown",
-            email: "michael@example.com",
-            joinDate: "2025-01-08",
-            recipes: 15,
-            status: "Inactive",
-        },
-    ]
+    // Get 4 most recent recipes from Redux store
+    const recentRecipes = newestRecipes
 
     const tabs = [
         { id: "overview", label: "Overview", icon: BarChart3 },
         { id: "recipes", label: "Recipes", icon: ChefHat },
         { id: "users", label: "Users", icon: Users },
+        { id: "data", label: "Data Management", icon: Database },
         { id: "analytics", label: "Analytics", icon: TrendingUp },
         { id: "settings", label: "Settings", icon: Settings },
     ]
@@ -208,21 +314,28 @@ const AdminDashboard: React.FC = () => {
     const handleEditModalClose = () => {
         setIsEditModalOpen(false)
         setSelectedRecipe(null)
+        // Refresh recipes list to ensure data consistency
+        dispatch(fetchRecipes())
+    }
+
+    const handleAddModalClose = () => {
+        setIsRecipeModalOpen(false)
+        // Refresh recipes list to ensure data consistency
+        dispatch(fetchRecipes())
     }
 
     return (
         <div className="h-screen bg-gray-50 flex overflow-hidden">
             <div className="w-64 bg-white shadow-lg border-r border-gray-200 flex flex-col h-full overflow-y-auto">
-                {/* Logo/Brand */}
+                {/* Back Button */}
                 <div className="p-6 border-b border-gray-200 flex-shrink-0">
-                    <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg flex items-center justify-center">
-                            <ChefHat className="w-6 h-6 text-white" />
-                        </div>
-                        <span className="text-xl font-bold bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent">
-                            Kooka Admin
-                        </span>
-                    </div>
+                    <button
+                        onClick={() => navigate("/")}
+                        className="flex items-center gap-2 text-gray-700 hover:text-orange-600 transition-colors duration-200 w-full"
+                    >
+                        <ArrowLeft className="w-5 h-5" />
+                        <span className="text-lg font-semibold">Back</span>
+                    </button>
                 </div>
 
                 {/* User Profile Section */}
@@ -259,7 +372,7 @@ const AdminDashboard: React.FC = () => {
 
                     {/* thêm logout trực tiếp */}
                     <button
-                        onClick={() => console.log("Logging out...")}
+                        onClick={() => setLogoutConfirmOpen(true)}
                         className="w-full flex items-center space-x-3 px-4 py-3 text-gray-600 hover:bg-gray-100 hover:text-gray-900 rounded-xl transition-all duration-200 cursor-pointer"
                     >
                         <LogOut className="h-5 w-5" />
@@ -273,7 +386,7 @@ const AdminDashboard: React.FC = () => {
                 <div className="bg-white shadow-sm border-b border-gray-200 flex-shrink-0">
                     <div className="px-6 lg:px-8">
                         <div className="flex justify-between items-center h-16">
-                            <div>
+                            <div className="flex items-center space-x-4">
                                 <h1 className="text-2xl font-bold text-gray-900">
                                     {tabs.find((tab) => tab.id === activeTab)?.label || "Dashboard"}
                                 </h1>
@@ -336,28 +449,148 @@ const AdminDashboard: React.FC = () => {
                                             <Download className="h-5 w-5" />
                                         </button>
                                     </div>
-                                    <div className="h-64 bg-gradient-to-br from-orange-50 to-red-50 rounded-xl flex items-center justify-center">
-                                        <div className="text-center">
-                                            <BarChart3 className="h-16 w-16 text-orange-400 mx-auto mb-4" />
-                                            <p className="text-gray-600">Chart visualization would go here</p>
+                                    {recipePerformanceData.length > 0 ? (
+                                        <div className="h-64">
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <BarChart data={recipePerformanceData}>
+                                                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                                                    <XAxis 
+                                                        dataKey="name" 
+                                                        stroke="#9ca3af"
+                                                        style={{ fontSize: '11px' }}
+                                                        angle={-15}
+                                                        textAnchor="end"
+                                                        height={60}
+                                                    />
+                                                    <YAxis 
+                                                        stroke="#9ca3af"
+                                                        style={{ fontSize: '12px' }}
+                                                        allowDecimals={false}
+                                                    />
+                                                    <Tooltip
+                                                        contentStyle={{
+                                                            backgroundColor: '#fff',
+                                                            border: '1px solid #e5e7eb',
+                                                            borderRadius: '8px',
+                                                            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                                                        }}
+                                                        cursor={{ fill: 'rgba(249, 115, 22, 0.1)' }}
+                                                    />
+                                                    <Legend 
+                                                        wrapperStyle={{ fontSize: '12px' }}
+                                                        iconType="circle"
+                                                    />
+                                                    <Bar 
+                                                        dataKey="views" 
+                                                        fill="#8b5cf6" 
+                                                        name="Views"
+                                                        radius={[8, 8, 0, 0]}
+                                                    />
+                                                    <Bar 
+                                                        dataKey="reviews" 
+                                                        fill="#f97316" 
+                                                        name="Reviews"
+                                                        radius={[8, 8, 0, 0]}
+                                                    />
+                                                    <Bar 
+                                                        dataKey="favorites" 
+                                                        fill="#ef4444" 
+                                                        name="Favorites"
+                                                        radius={[8, 8, 0, 0]}
+                                                    />
+                                                </BarChart>
+                                            </ResponsiveContainer>
                                         </div>
-                                    </div>
+                                    ) : (
+                                        <div className="h-64 bg-gradient-to-br from-orange-50 to-red-50 rounded-xl flex items-center justify-center">
+                                            <div className="text-center">
+                                                <BarChart3 className="h-16 w-16 text-orange-400 mx-auto mb-4" />
+                                                <p className="text-gray-600">No recipe performance data available</p>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
 
-                                {/* User Activity Chart */}
+                                {/* User Activity Chart - Weekly */}
                                 <div className="bg-white rounded-2xl shadow-lg p-6">
-                                    <div className="flex items-center justify-between mb-6">
-                                        <h3 className="text-lg font-semibold text-gray-900">User Activity</h3>
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h3 className="text-lg font-semibold text-gray-900">
+                                            User Activity
+                                        </h3>
                                         <button className="text-gray-400 hover:text-gray-600">
                                             <Download className="h-5 w-5" />
                                         </button>
                                     </div>
-                                    <div className="h-64 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl flex items-center justify-center">
+
+                                    {/* Month/Year Selector */}
+                                    <div className="flex items-center justify-between mb-6">
+                                        <button
+                                            onClick={handlePreviousMonth}
+                                            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                                        >
+                                            <ChevronLeft className="h-5 w-5 text-gray-600" />
+                                        </button>
                                         <div className="text-center">
-                                            <Activity className="h-16 w-16 text-blue-400 mx-auto mb-4" />
-                                            <p className="text-gray-600">Activity chart would go here</p>
+                                            <h4 className="text-base font-semibold text-gray-900">
+                                                {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][selectedMonth - 1]} {selectedYear}
+                                            </h4>
+                                            <p className="text-xs text-gray-500 mt-1">Weekly new users registration</p>
                                         </div>
+                                        <button
+                                            onClick={handleNextMonth}
+                                            disabled={selectedYear === new Date().getFullYear() && selectedMonth === new Date().getMonth() + 1}
+                                            className="p-2 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            <ChevronRight className="h-5 w-5 text-gray-600" />
+                                        </button>
                                     </div>
+
+                                    {weeklyData.length > 0 ? (
+                                        <div className="h-64">
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <LineChart data={weeklyData}>
+                                                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                                                    <XAxis
+                                                        dataKey="week"
+                                                        stroke="#9ca3af"
+                                                        style={{ fontSize: '12px' }}
+                                                    />
+                                                    <YAxis
+                                                        stroke="#9ca3af"
+                                                        style={{ fontSize: '12px' }}
+                                                        allowDecimals={false}
+                                                    />
+                                                    <Tooltip
+                                                        contentStyle={{
+                                                            backgroundColor: '#fff',
+                                                            border: '1px solid #e5e7eb',
+                                                            borderRadius: '8px',
+                                                            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                                                        }}
+                                                        labelStyle={{ color: '#374151', fontWeight: 'bold' }}
+                                                        cursor={{ fill: 'rgba(249, 115, 22, 0.1)' }}
+                                                    />
+                                                    <Line
+                                                        type="monotone"
+                                                        dataKey="users"
+                                                        stroke="#f97316"
+                                                        strokeWidth={3}
+                                                        dot={{ fill: '#f97316', strokeWidth: 2, r: 5 }}
+                                                        activeDot={{ r: 7 }}
+                                                        name="New Users"
+                                                    />
+                                                </LineChart>
+                                            </ResponsiveContainer>
+                                        </div>
+                                    ) : (
+                                        <div className="h-64 bg-gradient-to-br from-orange-50 to-red-50 rounded-xl flex items-center justify-center">
+                                            <div className="text-center">
+                                                <Users className="h-16 w-16 text-orange-400 mx-auto mb-4" />
+                                                <p className="text-gray-600">No user activity data available</p>
+                                                <p className="text-sm text-gray-500 mt-1">for {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][selectedMonth - 1]} {selectedYear}</p>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
@@ -370,35 +603,44 @@ const AdminDashboard: React.FC = () => {
                                         <button className="text-orange-600 hover:text-orange-700 text-sm font-medium">View All</button>
                                     </div>
                                     <div className="space-y-4">
-                                        {recentRecipes.map((recipe) => (
-                                            <div
-                                                key={recipe.id}
-                                                className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors duration-200"
-                                            >
-                                                <div className="flex-1">
-                                                    <h4 className="font-medium text-gray-900">{recipe.title}</h4>
-                                                    <p className="text-sm text-gray-600">by {recipe.author}</p>
-                                                    <div className="flex items-center space-x-4 mt-2">
-                                                        <span className="flex items-center text-sm text-gray-500">
-                                                            <Eye className="h-4 w-4 mr-1" />
-                                                            {recipe.views}
+                                        {recentRecipes.length > 0 ? (
+                                            recentRecipes.map((recipe) => (
+                                                <div
+                                                    key={recipe._id}
+                                                    className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors duration-200"
+                                                >
+                                                    <div className="flex-1">
+                                                        <h4 className="font-medium text-gray-900">{recipe.name}</h4>
+                                                        <p className="text-sm text-gray-600">{recipe.cuisine?.name || "Various Cuisine"}</p>
+                                                        <div className="flex items-center space-x-4 mt-2">
+                                                            <span className="flex items-center text-sm text-gray-500">
+                                                                <ChefHat className="h-4 w-4 mr-1" />
+                                                                {recipe.difficulty || "Normal"}
+                                                            </span>
+                                                            <span className="flex items-center text-sm text-gray-500">
+                                                                <Star className="h-4 w-4 mr-1 text-yellow-400" />
+                                                                {recipe.rate?.toFixed(1) || "0.0"}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                            Published
                                                         </span>
-                                                        <span className="flex items-center text-sm text-gray-500">
-                                                            <Star className="h-4 w-4 mr-1 text-yellow-400" />
-                                                            {recipe.rating}
-                                                        </span>
+                                                        <p className="text-xs text-gray-500 mt-1">
+                                                            {recipe.createdAt 
+                                                                ? new Date(recipe.createdAt).toLocaleDateString('vi-VN')
+                                                                : "N/A"
+                                                            }
+                                                        </p>
                                                     </div>
                                                 </div>
-                                                <div className="text-right">
-                                                    <span
-                                                        className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(recipe.status)}`}
-                                                    >
-                                                        {recipe.status}
-                                                    </span>
-                                                    <p className="text-xs text-gray-500 mt-1">{recipe.date}</p>
-                                                </div>
+                                            ))
+                                        ) : (
+                                            <div className="text-center py-8 text-gray-500">
+                                                No recent recipes available
                                             </div>
-                                        ))}
+                                        )}
                                     </div>
                                 </div>
 
@@ -418,21 +660,24 @@ const AdminDashboard: React.FC = () => {
                                                     <div className="w-10 h-10 bg-orange-500 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center">
                                                         <span className="text-white font-medium text-sm">
                                                             {user.name
-                                                                .split(" ")
-                                                                .map((n) => n[0])
-                                                                .join("")}
+                                                                ? user.name.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase()
+                                                                : "U"}
                                                         </span>
                                                     </div>
                                                     <div>
-                                                        <h4 className="font-medium text-gray-900">{user.name}</h4>
-                                                        <p className="text-sm text-gray-600">{user.email}</p>
+                                                        <h4 className="font-medium text-gray-900">
+                                                            {user.name || "Unknown User"}
+                                                        </h4>
+                                                        <p className="text-sm text-gray-600">{user.email || "N/A"}</p>
                                                     </div>
                                                 </div>
                                                 <div className="text-right">
-                                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(user.status)}`}>
-                                                        {user.status}
+                                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor("Active")}`}>
+                                                        Active
                                                     </span>
-                                                    <p className="text-xs text-gray-500 mt-1">{user.recipes} recipes</p>
+                                                    <p className="text-xs text-gray-500 mt-1">
+                                                        {new Date(user.createdAt).toLocaleDateString()}
+                                                    </p>
                                                 </div>
                                             </div>
                                         ))}
@@ -516,13 +761,13 @@ const AdminDashboard: React.FC = () => {
                                                                 </td>
                                                                 <td className="px-6 py-4">
                                                                     <div className="flex space-x-2">
-                                                                        <button 
+                                                                        <button
                                                                             onClick={() => handleEditClick(recipe)}
                                                                             className="text-blue-600 hover:text-blue-900 transition-colors duration-200"
                                                                         >
                                                                             <Edit className="h-4 w-4" />
                                                                         </button>
-                                                                        <button 
+                                                                        <button
                                                                             onClick={() => handleDeleteClick(recipe)}
                                                                             className="text-red-600 hover:text-red-900 transition-colors duration-200"
                                                                         >
@@ -590,29 +835,32 @@ const AdminDashboard: React.FC = () => {
                                             </tr>
                                         </thead>
                                         <tbody className="bg-white divide-y divide-gray-200">
-                                            {recentUsers.map((user) => (
-                                                <tr key={user.id} className="hover:bg-gray-50 transition-colors duration-200">
+                                            {recentUsers.map((user, index) => (
+                                                <tr key={user._id || index} className="hover:bg-gray-50 transition-colors duration-200">
                                                     <td className="px-6 py-4 whitespace-nowrap">
                                                         <div className="flex items-center">
                                                             <div className="w-10 h-10 bg-orange-500 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center mr-3">
                                                                 <span className="text-white font-medium text-sm">
                                                                     {user.name
-                                                                        .split(" ")
-                                                                        .map((n) => n[0])
-                                                                        .join("")}
+                                                                        ? user.name.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase()
+                                                                        : "U"}
                                                                 </span>
                                                             </div>
-                                                            <div className="font-medium text-gray-900">{user.name}</div>
+                                                            <div className="font-medium text-gray-900">
+                                                                {user.name || "Unknown User"}
+                                                            </div>
                                                         </div>
                                                     </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{user.email}</td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{user.joinDate}</td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{user.recipes}</td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{user.email || "N/A"}</td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                                        {new Date(user.createdAt).toLocaleDateString()}
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">-</td>
                                                     <td className="px-6 py-4 whitespace-nowrap">
                                                         <span
-                                                            className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(user.status)}`}
+                                                            className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor("Active")}`}
                                                         >
-                                                            {user.status}
+                                                            Active
                                                         </span>
                                                     </td>
                                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -659,6 +907,11 @@ const AdminDashboard: React.FC = () => {
                         </div>
                     )}
 
+                    {/* Data Management Tab */}
+                    {activeTab === "data" && (
+                        <DataManagement />
+                    )}
+
                     {/* Settings Tab */}
                     {activeTab === "settings" && (
                         <div className="space-y-8">
@@ -673,7 +926,7 @@ const AdminDashboard: React.FC = () => {
                                                     <label className="block text-sm font-medium text-gray-700 mb-2">Site Name</label>
                                                     <input
                                                         type="text"
-                                                        defaultValue="SuperCook"
+                                                        defaultValue="Kooka"
                                                         className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
                                                     />
                                                 </div>
@@ -712,7 +965,7 @@ const AdminDashboard: React.FC = () => {
                         </div>
                     )}
                 </div>
-                
+
                 {/* Delete Confirmation Modal */}
                 {deleteConfirmOpen && (
                     <div className="fixed inset-0 bg-gray-800/20 flex items-center justify-center z-50">
@@ -724,7 +977,7 @@ const AdminDashboard: React.FC = () => {
                                 Xác nhận xóa công thức
                             </h3>
                             <p className="text-gray-600 text-center mb-6">
-                                Bạn có chắc chắn muốn xóa công thức "{recipeToDelete?.name}"? 
+                                Bạn có chắc chắn muốn xóa công thức "{recipeToDelete?.name}"?
                                 Hành động này không thể hoàn tác.
                             </p>
                             <div className="flex space-x-3">
@@ -745,10 +998,45 @@ const AdminDashboard: React.FC = () => {
                     </div>
                 )}
 
+                {/* Logout Confirmation Modal */}
+                {logoutConfirmOpen && (
+                    <div className="fixed inset-0 bg-gray-800/20 flex items-center justify-center z-50">
+                        <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-xl">
+                            <div className="flex items-center justify-center w-12 h-12 mx-auto bg-orange-100 rounded-full mb-4">
+                                <LogOut className="h-6 w-6 text-orange-600" />
+                            </div>
+                            <h3 className="text-lg font-semibold text-gray-900 text-center mb-2">
+                                Xác nhận đăng xuất
+                            </h3>
+                            <p className="text-gray-600 text-center mb-6">
+                                Bạn có chắc chắn muốn đăng xuất khỏi tài khoản admin?
+                            </p>
+                            <div className="flex space-x-3">
+                                <button
+                                    onClick={() => setLogoutConfirmOpen(false)}
+                                    className="flex-1 px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors duration-200"
+                                >
+                                    Hủy
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setLogoutConfirmOpen(false)
+                                        // Implement logout logic here
+                                        navigate("/login")
+                                    }}
+                                    className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors duration-200"
+                                >
+                                    Đăng xuất
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {/* Add Recipe Modal */}
                 <AddRecipeModal
                     isOpen={isRecipeModalOpen}
-                    onClose={() => setIsRecipeModalOpen(false)}
+                    onClose={handleAddModalClose}
                 />
 
                 {/* Edit Recipe Modal */}

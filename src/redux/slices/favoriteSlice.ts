@@ -12,9 +12,18 @@ interface Favorite {
   createdAt: string
 }
 
+interface MostFavoritedRecipe {
+  _id: string
+  name: string
+  image: string
+  favoriteCount: number
+  rank?: number
+}
+
 interface FavoriteState {
   favorites: Favorite[]
   favoriteRecipeIds: string[]  // Changed from Set to Array for Redux serialization
+  mostFavorited: MostFavoritedRecipe[] // Most favorited recipes cho trang chủ
   loading: boolean
   error: string | null
   pagination: {
@@ -32,6 +41,7 @@ interface FavoriteState {
 const initialState: FavoriteState = {
   favorites: [],
   favoriteRecipeIds: [],  // Changed from Set to Array
+  mostFavorited: [],
   loading: false,
   error: null,
   pagination: {
@@ -113,6 +123,20 @@ export const getFavoriteCount = createAsyncThunk<
     return res.data
   } catch (err: any) {
     return rejectWithValue(err.response?.data?.error || "Failed to get favorite count")
+  }
+})
+
+// Get most favorited recipes cho trang chủ
+export const fetchMostFavorited = createAsyncThunk<
+  MostFavoritedRecipe[],
+  void,
+  { rejectValue: string }
+>("favorite/fetchMostFavorited", async (_, { rejectWithValue }) => {
+  try {
+    const res = await apiClient.get("/favorites/most-favorited")
+    return res.data || []
+  } catch (err: any) {
+    return rejectWithValue(err.response?.data?.error || "Failed to load most favorited recipes")
   }
 })
 
@@ -233,6 +257,20 @@ const favoriteSlice = createSlice({
       .addCase(getFavoriteCount.rejected, (state, action) => {
         state.loading = false
         state.error = action.payload || "Failed to get favorite count"
+      })
+
+      // FETCH MOST FAVORITED
+      .addCase(fetchMostFavorited.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(fetchMostFavorited.fulfilled, (state, action) => {
+        state.loading = false
+        state.mostFavorited = action.payload
+      })
+      .addCase(fetchMostFavorited.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload || "Failed to load most favorited recipes"
       })
   },
 })

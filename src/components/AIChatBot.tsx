@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Send, Bot, User, ChefHat, Lightbulb, Star, Clock, Users, Image as ImageIcon } from 'lucide-react';
+import { X, Send, Bot, User, ChefHat, Lightbulb, Star, Image as ImageIcon } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import axiosInstance from '../utils/axiosInstance';
 import { useSelector } from 'react-redux';
@@ -7,15 +7,43 @@ import type { RootState } from '../redux/store';
 import { useNavigate } from 'react-router-dom';
 
 interface Recipe {
-    _id: string;
+    id: string;
     name: string;
     image?: string;
-    cookTime?: number;
-    prepTime?: number;
-    servings?: number;
+    time?: number; // Thời gian nấu (phút)
+    calories?: number; // Calo
+    size?: number; // Số người ăn
     difficulty?: string;
-    rate?: number; // Rating từ backend
-    numberOfRate?: number; // Số lượng đánh giá
+    rating?: number; // Rating từ backend
+    numberOfRatings?: number; // Số lượng đánh giá
+    cuisine?: string | null; // Quốc gia/ẩm thực
+    category?: string | null; // Danh mục
+    short?: string; // Mô tả ngắn
+}
+
+interface MealPlanDay {
+    morning?: {
+        recipeId: string;
+        recipeName: string;
+        recipeImage?: string;
+    };
+    noon?: {
+        recipeId: string;
+        recipeName: string;
+        recipeImage?: string;
+    };
+    evening?: {
+        recipeId: string;
+        recipeName: string;
+        recipeImage?: string;
+    };
+}
+
+interface MealPlan {
+    mealPlanType: string;
+    duration: number;
+    plans: MealPlanDay[]; // Backend trả về plans, không có date
+    totalRecipes: number;
 }
 
 interface Message {
@@ -25,6 +53,7 @@ interface Message {
     timestamp: Date;
     recipes?: Recipe[];
     images?: string[]; // Base64 images
+    mealPlan?: MealPlan; // AI-generated meal plan
 }
 
 const AIChatBot: React.FC = () => {
@@ -137,12 +166,17 @@ const AIChatBot: React.FC = () => {
     }, [isOpen, sessionId]);
 
     // Send message to backend API
-    const sendMessageToAPI = async (userMessage: string, images?: string[]): Promise<{ message: string; recipes: Recipe[] }> => {
+    const sendMessageToAPI = async (userMessage: string, images?: string[]): Promise<{ message: string; recipes: Recipe[]; mealPlan?: MealPlan }> => {
         try {
             setError('');
 
             // Backend expects imageBase64 (single string), not images array
-            const requestBody: any = {
+            const requestBody: {
+                message?: string;
+                sessionId: string;
+                userId: string | null;
+                imageBase64?: string;
+            } = {
                 message: userMessage || undefined,
                 sessionId: sessionId,
                 userId: user?._id || null
@@ -160,14 +194,37 @@ const AIChatBot: React.FC = () => {
             // Backend returns "message" not "response"
             if (response.data.success) {
                 const message = response.data.message || response.data.response || 'Không có phản hồi';
-                const recipes = response.data.data?.recipes || [];
-                return { message, recipes };
+
+                // Backend trả về structuredData với logic:
+                // - recipe: 1 món chi tiết (hiển thị card lớn)
+                // - recipes: danh sách nhiều món (hiển thị danh sách clickable cards)
+                let recipes: Recipe[] = [];
+                let mealPlan: MealPlan | undefined = undefined;
+
+                if (response.data.structuredData) {
+                    // Single recipe detail
+                    if (response.data.structuredData.recipe) {
+                        recipes = [response.data.structuredData.recipe];
+                    }
+                    // Multiple recipes list - hiển thị dạng clickable cards
+                    else if (response.data.structuredData.recipes && response.data.structuredData.recipes.length > 0) {
+                        recipes = response.data.structuredData.recipes;
+                    }
+
+                    // Handle meal plan data
+                    if (response.data.structuredData.generatedMealPlan) {
+                        mealPlan = response.data.structuredData.generatedMealPlan;
+                    }
+                }
+
+                return { message, recipes, mealPlan };
             } else {
                 throw new Error(response.data.error || 'Failed to get response');
             }
-        } catch (err: any) {
+        } catch (err) {
+            const error = err as Error;
             console.error('Error sending message to chatbot:', err);
-            setError(err.message || 'An error occurred');
+            setError(error.message || 'An error occurred');
 
             // Fallback response on error
             const errorMessage = language === 'vi'
@@ -285,14 +342,15 @@ const AIChatBot: React.FC = () => {
 
         try {
             // Call backend API with Gemini AI
-            const { message: botResponseText, recipes } = await sendMessageToAPI(currentMessage, currentImages);
+            const { message: botResponseText, recipes, mealPlan } = await sendMessageToAPI(currentMessage, currentImages);
 
             const botResponse: Message = {
                 id: (Date.now() + 1).toString(),
                 text: botResponseText,
                 sender: 'bot',
                 timestamp: new Date(),
-                recipes: recipes.length > 0 ? recipes : undefined
+                recipes: recipes.length > 0 ? recipes : undefined,
+                mealPlan: mealPlan
             };
             setMessages(prev => [...prev, botResponse]);
         } catch (err) {
@@ -371,7 +429,7 @@ const AIChatBot: React.FC = () => {
 
                         {/* Tooltip with Animation */}
                         {showTooltip && (
-                            <div className="absolute right-full top-1/2 -translate-y-1/2 mr-3">
+                            <div className="absolute right-full top-1/2 -translate-y-1/2 mr-3 pointer-events-none">
                                 <div className="bg-white text-gray-800 px-3 py-2 rounded-lg text-xs shadow-md border border-gray-300 whitespace-nowrap">
                                     {language === 'vi' ? (
                                         <>Nhấn vào đây để bắt đầu<br />trò chuyện cùng trợ lý ảo!</>
@@ -451,8 +509,8 @@ const AIChatBot: React.FC = () => {
                                             {/* Images */}
                                             {message.images && message.images.length > 0 && (
                                                 <div className={`grid gap-2 mb-2 ${message.images.length === 1 ? 'grid-cols-1' :
-                                                        message.images.length === 2 ? 'grid-cols-2' :
-                                                            'grid-cols-2'
+                                                    message.images.length === 2 ? 'grid-cols-2' :
+                                                        'grid-cols-2'
                                                     }`}>
                                                     {message.images.map((img, idx) => (
                                                         <div key={idx} className="rounded-lg overflow-hidden">
@@ -474,26 +532,23 @@ const AIChatBot: React.FC = () => {
                                                 )}
                                             </div>
 
-                                            {/* Recipe Cards - hiển thị trong bubble của bot */}
+                                            {/* Recipe Cards - Horizontal Layout */}
                                             {message.sender === 'bot' && message.recipes && message.recipes.length > 0 && (
-                                                <div className="mt-3 space-y-2">
-                                                    <p className="text-xs text-gray-500 mb-2">
-                                                        {language === 'vi' ? 'Các món ăn gợi ý:' : 'Suggested recipes:'}
-                                                    </p>
-                                                    {message.recipes.map((recipe) => {
-                                                        console.log('Recipe data:', recipe); // Debug
-                                                        return (
-                                                            <div
-                                                                key={recipe._id}
-                                                                onClick={() => {
-                                                                    navigate(`/recipe/${recipe._id}`);
-                                                                    setIsOpen(false);
-                                                                }}
-                                                                className="bg-white border border-gray-200 rounded-lg p-2.5 hover:shadow-md transition-all duration-200 cursor-pointer group"
-                                                            >
-                                                                <div className="flex gap-2.5">
+                                                <div className="mt-3">
+                                                    <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
+                                                        {message.recipes.slice(0, 6).map((recipe) => {
+                                                            console.log('Recipe card:', recipe); // Debug
+                                                            return (
+                                                                <div
+                                                                    key={recipe.id}
+                                                                    onClick={() => {
+                                                                        navigate(`/recipe/${recipe.id}`);
+                                                                        setIsOpen(false);
+                                                                    }}
+                                                                    className="bg-white border border-gray-200 rounded-lg p-2 hover:shadow-md hover:border-orange-300 transition-all duration-200 cursor-pointer group flex items-center gap-2"
+                                                                >
                                                                     {/* Recipe Image */}
-                                                                    <div className="w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100">
+                                                                    <div className="w-16 h-16 flex-shrink-0 rounded-md overflow-hidden bg-gray-100">
                                                                         {recipe.image ? (
                                                                             <img
                                                                                 src={recipe.image}
@@ -513,51 +568,61 @@ const AIChatBot: React.FC = () => {
                                                                             {recipe.name}
                                                                         </h4>
 
-                                                                        <div className="flex items-center gap-2 text-xs text-gray-600 mb-1">
-                                                                            {/* Rating */}
-                                                                            {recipe.rate !== undefined && recipe.rate !== null && recipe.rate > 0 && (
-                                                                                <div className="flex items-center gap-0.5">
-                                                                                    <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                                                                                    <span className="font-medium">{recipe.rate.toFixed(1)}</span>
-                                                                                    {recipe.numberOfRate && recipe.numberOfRate > 0 && (
-                                                                                        <span className="text-gray-400">({recipe.numberOfRate})</span>
-                                                                                    )}
-                                                                                </div>
-                                                                            )}
-
-                                                                            {/* Cook Time */}
-                                                                            {recipe.cookTime && (
-                                                                                <div className="flex items-center gap-0.5">
-                                                                                    <Clock className="h-3 w-3" />
-                                                                                    <span>{recipe.cookTime}{language === 'vi' ? 'p' : 'm'}</span>
-                                                                                </div>
-                                                                            )}
-
-                                                                            {/* Servings */}
-                                                                            {recipe.servings && (
-                                                                                <div className="flex items-center gap-0.5">
-                                                                                    <Users className="h-3 w-3" />
-                                                                                    <span>{recipe.servings}</span>
-                                                                                </div>
-                                                                            )}
-                                                                        </div>
-
-                                                                        {/* Difficulty */}
-                                                                        {recipe.difficulty && (
-                                                                            <span className={`inline-block px-1.5 py-0.5 text-xs rounded-full ${recipe.difficulty === 'Dễ' || recipe.difficulty === 'Easy'
-                                                                                ? 'bg-green-100 text-green-700'
-                                                                                : recipe.difficulty === 'Trung bình' || recipe.difficulty === 'Medium'
-                                                                                    ? 'bg-yellow-100 text-yellow-700'
-                                                                                    : 'bg-red-100 text-red-700'
-                                                                                }`}>
-                                                                                {recipe.difficulty}
-                                                                            </span>
+                                                                        {/* Rating only */}
+                                                                        {recipe.rating !== undefined && recipe.rating !== null && recipe.rating > 0 && (
+                                                                            <div className="flex items-center gap-0.5 text-xs text-gray-600">
+                                                                                <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                                                                                <span className="font-medium">{recipe.rating.toFixed(1)}</span>
+                                                                                {recipe.numberOfRatings && recipe.numberOfRatings > 0 && (
+                                                                                    <span className="text-gray-400">({recipe.numberOfRatings})</span>
+                                                                                )}
+                                                                            </div>
                                                                         )}
                                                                     </div>
                                                                 </div>
-                                                            </div>
-                                                        )
-                                                    })}
+                                                            )
+                                                        })}
+                                                    </div>
+
+                                                    {/* Show more indicator */}
+                                                    {message.recipes.length > 6 && (
+                                                        <p className="text-xs text-gray-500 text-center mt-2">
+                                                            {language === 'vi'
+                                                                ? `Còn ${message.recipes.length - 6} món nữa. Hỏi tôi để xem chi tiết!`
+                                                                : `${message.recipes.length - 6} more recipes. Ask me for details!`}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            )}
+
+                                            {/* Meal Plan Button - hiển thị khi có AI-generated meal plan */}
+                                            {message.sender === 'bot' && message.mealPlan && (
+                                                <div className="mt-3">
+                                                    <button
+                                                        onClick={() => {
+                                                            // Check if user is logged in
+                                                            if (!user) {
+                                                                alert(language === 'vi'
+                                                                    ? 'Vui lòng đăng nhập để sử dụng tính năng này!'
+                                                                    : 'Please login to use this feature!');
+                                                                return;
+                                                            }
+
+                                                            // Navigate to meal planner with meal plan data
+                                                            navigate('/meal-planner', {
+                                                                state: {
+                                                                    aiGeneratedPlan: message.mealPlan
+                                                                }
+                                                            });
+                                                            setIsOpen(false);
+                                                        }}
+                                                        className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-4 py-3 rounded-xl font-semibold text-sm shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 flex items-center justify-center gap-2"
+                                                    >
+                                                        <ChefHat className="h-4 w-4" />
+                                                        <span>
+                                                            {language === 'vi' ? '🎉 Xem Meal Plan' : '🎉 View Meal Plan'}
+                                                        </span>
+                                                    </button>
                                                 </div>
                                             )}
 

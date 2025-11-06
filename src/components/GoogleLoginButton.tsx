@@ -11,6 +11,9 @@ interface GoogleLoginButtonProps {
   onSuccess?: () => void
 }
 
+// Lấy API URL từ environment variables
+const API_URL = import.meta.env.VITE_API_GATEWAY_URL || "http://localhost:3000/api";
+
 // 🔄 Universal Google Auth Button - Handles both Login & Register automatically
 // 📝 Backend determines if user exists (login) or needs to be created (register)
 const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({ 
@@ -36,7 +39,7 @@ const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
     // 2️⃣ If user doesn't exist → Auto Register + Login
     // 3️⃣ Backend handles both cases seamlessly
     const popup = window.open(
-      "http://localhost:3000/api/auth/google", 
+      `${API_URL}/auth/google`, 
       "googleLogin",
       "width=500,height=600,scrollbars=yes,resizable=yes"
     )
@@ -51,8 +54,12 @@ const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
       
       console.log("🔔 Message received:", event.data)
       
-      // Allow messages from backend (localhost:3000) and frontend (localhost:5173)
-      const allowedOrigins = ['http://localhost:3000', 'http://localhost:5173']
+      // Allow messages from both backend and frontend origins
+      // In production, backend URL will be different from localhost
+      const backendOrigin = API_URL.replace('/api', ''); // Remove /api suffix
+      const currentOrigin = window.location.origin;
+      const allowedOrigins = [backendOrigin, currentOrigin, 'http://localhost:3000', 'http://localhost:5173']
+      
       if (!allowedOrigins.includes(event.origin)) {
         console.log("❌ Origin not allowed:", event.origin)
         return

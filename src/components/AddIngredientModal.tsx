@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
+import toast from 'react-hot-toast';
 import { 
   addIngredient, 
   fetchIngredientTypes,
@@ -22,7 +23,6 @@ const AddIngredientModal: React.FC<AddIngredientModalProps> = ({ isOpen, onClose
   const [selectedTypeId, setSelectedTypeId] = useState('');
   const [isAddingType, setIsAddingType] = useState(false);
   const [newTypeName, setNewTypeName] = useState('');
-  const [error, setError] = useState<string | null>(null);
   
   useEffect(() => {
     dispatch(fetchIngredientTypes());
@@ -31,44 +31,40 @@ const AddIngredientModal: React.FC<AddIngredientModalProps> = ({ isOpen, onClose
   const handleSubmitIngredient = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!ingredientName.trim() || !selectedTypeId) {
-      setError('Ingredient name and type are required');
+      toast.error('Tên nguyên liệu và loại nguyên liệu không được để trống!');
       return;
     }
-
-    setError(null);
 
     try {
       await dispatch(addIngredient({ 
         name: ingredientName, 
         typeId: selectedTypeId 
-      }));
+      })).unwrap();
+      toast.success('Thêm nguyên liệu thành công!');
       setIngredientName('');
       onClose();
-    } catch {
-      setError('Failed to add ingredient. Please try again.');
+    } catch (error: any) {
+      const errorMessage = error || 'Thêm nguyên liệu thất bại!';
+      toast.error(errorMessage);
     }
   };
 
   const handleSubmitType = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTypeName.trim()) {
-      setError('Type name is required');
+      toast.error('Tên loại nguyên liệu không được để trống!');
       return;
     }
 
-    setError(null);
-
     try {
-      const resultAction = await dispatch(addIngredientType(newTypeName));
-      if (addIngredientType.fulfilled.match(resultAction)) {
-        // If we successfully added the type, select it
-        const newType = resultAction.payload;
-        setSelectedTypeId(newType._id);
-        setNewTypeName('');
-        setIsAddingType(false);
-      }
-    } catch {
-      setError('Failed to add ingredient type. Please try again.');
+      const newType = await dispatch(addIngredientType(newTypeName)).unwrap();
+      toast.success('Thêm loại nguyên liệu thành công!');
+      setSelectedTypeId(newType._id);
+      setNewTypeName('');
+      setIsAddingType(false);
+    } catch (error: any) {
+      const errorMessage = error || 'Thêm loại nguyên liệu thất bại!';
+      toast.error(errorMessage);
     }
   };
 
@@ -87,12 +83,6 @@ const AddIngredientModal: React.FC<AddIngredientModalProps> = ({ isOpen, onClose
 
         {/* Content */}
         <div className="overflow-y-auto p-6 space-y-6">
-          {error && (
-            <div className="mb-4 p-3 bg-red-100 border border-red-300 text-red-700 rounded-lg">
-              {error}
-            </div>
-          )}
-
           {isAddingType ? (
             <form onSubmit={handleSubmitType} className="space-y-4">
               <div>

@@ -14,6 +14,7 @@ export const translations = {
             authAdmin: "Quản Trị Viên",
             authSettings: "Cài Đặt",
             authLogout: "Đăng Xuất",
+            loginRequired: "Vui lòng đăng nhập để sử dụng tính năng Lập Kế Hoạch Bữa Ăn",
         },
         footer: {
             description:
@@ -119,6 +120,7 @@ export const translations = {
             authAdmin: "Admin Dashboard",
             authSettings: "Settings",
             authLogout: "Logout",
+            loginRequired: "Please login to access Meal Planner",
         },
         footer: {
             description:

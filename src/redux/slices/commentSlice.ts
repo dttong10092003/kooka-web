@@ -18,12 +18,20 @@ export interface Comment {
   ratingRecipe?: number | null // Rating từ 1-5 (chỉ parent comment mới có) - backend dùng field ratingRecipe
   parentCommentId?: string | null
   replies?: Comment[]
+  replyCount?: number // Số lượng reply
+  recipe?: {
+    _id: string
+    name: string
+    image: string
+  } // Recipe info (chỉ có trong top comments)
   createdAt: string
   updatedAt: string
 }
 
 interface CommentState {
   comments: Comment[]
+  topComments: Comment[] // Top comments cho trang chủ
+  newestComments: Comment[] // Newest comments cho trang chủ
   loading: boolean
   error: string | null
   totalComments: number
@@ -37,6 +45,8 @@ interface CommentState {
 
 const initialState: CommentState = {
   comments: [],
+  topComments: [],
+  newestComments: [],
   loading: false,
   error: null,
   totalComments: 0,
@@ -47,6 +57,34 @@ const initialState: CommentState = {
 // =====================
 // API CALLS
 // =====================
+
+// Lấy top comments cho trang chủ
+export const fetchTopComments = createAsyncThunk<
+  Comment[],
+  void,
+  { rejectValue: string }
+>("comments/fetchTop", async (_, { rejectWithValue }) => {
+  try {
+    const res = await apiClient.get("/comments/top")
+    return res.data || []
+  } catch (err: any) {
+    return rejectWithValue(err.response?.data?.message || "Failed to load top comments")
+  }
+})
+
+// Lấy newest comments cho trang chủ
+export const fetchNewestComments = createAsyncThunk<
+  Comment[],
+  void,
+  { rejectValue: string }
+>("comments/fetchNewest", async (_, { rejectWithValue }) => {
+  try {
+    const res = await apiClient.get("/comments/newest")
+    return res.data || []
+  } catch (err: any) {
+    return rejectWithValue(err.response?.data?.message || "Failed to load newest comments")
+  }
+})
 
 // Lấy tất cả comments của recipe
 export const getCommentsByRecipeId = createAsyncThunk<
@@ -163,6 +201,10 @@ const commentSlice = createSlice({
     clearCommentError: (state) => {
       state.error = null
     },
+    // Invalidate newest comments cache để force refetch
+    invalidateNewestComments: (state) => {
+      state.newestComments = []
+    },
     // Update comment likes locally (sau khi like/unlike)
     updateCommentLikes: (state, action: PayloadAction<{ commentId: string; likes: number }>) => {
       const { commentId, likes } = action.payload
@@ -188,6 +230,34 @@ const commentSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+      // FETCH TOP COMMENTS
+      .addCase(fetchTopComments.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(fetchTopComments.fulfilled, (state, action) => {
+        state.loading = false
+        state.topComments = action.payload
+      })
+      .addCase(fetchTopComments.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload || "Failed to load top comments"
+      })
+
+      // FETCH NEWEST COMMENTS
+      .addCase(fetchNewestComments.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(fetchNewestComments.fulfilled, (state, action) => {
+        state.loading = false
+        state.newestComments = action.payload
+      })
+      .addCase(fetchNewestComments.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload || "Failed to load newest comments"
+      })
+
       // GET COMMENTS
       .addCase(getCommentsByRecipeId.pending, (state) => {
         state.loading = true
@@ -227,6 +297,8 @@ const commentSlice = createSlice({
           state.userHasReviewed = true
           state.userRating = action.payload.ratingRecipe
         }
+        // Invalidate newest comments cache để force refetch khi quay về trang chủ
+        state.newestComments = []
       })
       .addCase(createComment.rejected, (state, action) => {
         state.loading = false
@@ -283,6 +355,8 @@ const commentSlice = createSlice({
           parentComment.replies.push(reply)
         }
         state.totalComments += 1
+        // Invalidate newest comments cache để force refetch khi quay về trang chủ
+        state.newestComments = []
       })
       .addCase(createReply.rejected, (state, action) => {
         state.loading = false
@@ -291,5 +365,5 @@ const commentSlice = createSlice({
   },
 })
 
-export const { clearComments, clearCommentError, updateCommentLikes } = commentSlice.actions
+export const { clearComments, clearCommentError, updateCommentLikes, invalidateNewestComments } = commentSlice.actions
 export default commentSlice.reducer
