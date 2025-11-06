@@ -1,10 +1,13 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from "@reduxjs/toolkit"
 import axios from "axios"
 
+// Lấy API URL từ environment variables, fallback về localhost nếu không có
+const API_URL = import.meta.env.VITE_API_GATEWAY_URL || "http://localhost:3000/api";
+
 // Tạo axios instance với interceptor
 const createAxiosWithAuth = () => {
   const axiosInstance = axios.create({
-    baseURL: "http://localhost:3000/api",
+    baseURL: API_URL,
     timeout: 10000,
   })
 
@@ -93,7 +96,7 @@ export const login = createAsyncThunk<
   { rejectValue: string }
 >("auth/login", async ({ usernameOrEmail, password }, { rejectWithValue }) => {
   try {
-    const res = await axios.post("http://localhost:3000/api/auth/login", {
+    const res = await axios.post(`${API_URL}/auth/login`, {
       usernameOrEmail,
       password,
     })
@@ -117,7 +120,7 @@ export const registerUser = createAsyncThunk<
   { rejectValue: string }
 >("auth/register", async (formData, { rejectWithValue }) => {
   try {
-    const res = await axios.post("http://localhost:3000/api/auth/register", formData)
+    const res = await axios.post(`${API_URL}/auth/register`, formData)
     return res.data as AuthResponse
   } catch (err: any) {
     return rejectWithValue(err.response?.data?.code || "auth.registerFailed")
@@ -159,7 +162,7 @@ export const forgotPassword = createAsyncThunk<
   { rejectValue: string }
 >("auth/forgotPassword", async ({ email }, { rejectWithValue }) => {
   try {
-    const res = await axios.post("http://localhost:3000/api/auth/forgot-password", { email })
+    const res = await axios.post(`${API_URL}/auth/forgot-password`, { email })
     return res.data as { message: string }
   } catch (err: any) {
     return rejectWithValue(err.response?.data?.code || "auth.resetLinkError")
@@ -173,7 +176,7 @@ export const resetPassword = createAsyncThunk<
   { rejectValue: string }
 >("auth/resetPassword", async ({ token, newPassword }, { rejectWithValue }) => {
   try {
-    const res = await axios.post(`http://localhost:3000/api/auth/reset-password/${token}`, { 
+    const res = await axios.post(`${API_URL}/auth/reset-password/${token}`, { 
       newPassword 
     })
     return res.data as { message: string }
