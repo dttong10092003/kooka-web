@@ -1,54 +1,5 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from "@reduxjs/toolkit"
-import axios from "axios"
-
-// Lấy API URL từ environment variables, fallback về localhost nếu không có
-const API_URL = import.meta.env.VITE_API_GATEWAY_URL || "http://localhost:3000/api";
-
-// Tạo axios instance với interceptor
-const createAxiosWithAuth = () => {
-  const axiosInstance = axios.create({
-    baseURL: API_URL,
-    timeout: 10000,
-  })
-
-  // Request interceptor - tự động thêm token
-  axiosInstance.interceptors.request.use(
-    (config) => {
-      const token = localStorage.getItem("token")
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`
-      }
-      return config
-    },
-    (error) => Promise.reject(error)
-  )
-
-  // Response interceptor - xử lý lỗi middleware
-  axiosInstance.interceptors.response.use(
-    (response) => response,
-    (error) => {
-      if (error.response?.status === 401) {
-        // Token không hợp lệ - clear localStorage
-        localStorage.removeItem("token")
-        localStorage.removeItem("persist:root")
-        
-        // Chỉ redirect nếu KHÔNG đang ở trang login hoặc auth-related pages
-        const currentPath = window.location.pathname
-        const authPaths = ['/login', '/register', '/forgot-password', '/reset-password', '/auth/google/callback']
-        const isAuthPage = authPaths.some(path => currentPath.startsWith(path))
-        
-        if (!isAuthPage) {
-          window.location.href = "/login"
-        }
-      }
-      return Promise.reject(error)
-    }
-  )
-
-  return axiosInstance
-}
-
-const apiClient = createAxiosWithAuth()
+import axiosInstance from "../../utils/axiosInstance"
 
 // =====================
 // TYPES
@@ -96,7 +47,7 @@ export const login = createAsyncThunk<
   { rejectValue: string }
 >("auth/login", async ({ usernameOrEmail, password }, { rejectWithValue }) => {
   try {
-    const res = await axios.post(`${API_URL}/auth/login`, {
+    const res = await axiosInstance.post("/auth/login", {
       usernameOrEmail,
       password,
     })
@@ -120,7 +71,7 @@ export const registerUser = createAsyncThunk<
   { rejectValue: string }
 >("auth/register", async (formData, { rejectWithValue }) => {
   try {
-    const res = await axios.post(`${API_URL}/auth/register`, formData)
+    const res = await axiosInstance.post("/auth/register", formData)
     return res.data as AuthResponse
   } catch (err: any) {
     return rejectWithValue(err.response?.data?.code || "auth.registerFailed")
@@ -134,7 +85,7 @@ export const loadUser = createAsyncThunk<
   { rejectValue: string }
 >("auth/loadUser", async (_, { rejectWithValue }) => {
   try {
-    const res = await apiClient.get("/auth/me")
+    const res = await axiosInstance.get("/auth/me")
     return res.data.user as AuthUser
   } catch (err: any) {
     return rejectWithValue(err.response?.data?.message || "Failed to load user")
@@ -148,7 +99,7 @@ export const verifyToken = createAsyncThunk<
   { rejectValue: string }
 >("auth/verifyToken", async (_, { rejectWithValue }) => {
   try {
-    await apiClient.get("/auth/verify")
+    await axiosInstance.get("/auth/verify")
     return true
   } catch (err: any) {
     return rejectWithValue("Token invalid")
@@ -162,7 +113,7 @@ export const forgotPassword = createAsyncThunk<
   { rejectValue: string }
 >("auth/forgotPassword", async ({ email }, { rejectWithValue }) => {
   try {
-    const res = await axios.post(`${API_URL}/auth/forgot-password`, { email })
+    const res = await axiosInstance.post("/auth/forgot-password", { email })
     return res.data as { message: string }
   } catch (err: any) {
     return rejectWithValue(err.response?.data?.code || "auth.resetLinkError")
@@ -176,7 +127,7 @@ export const resetPassword = createAsyncThunk<
   { rejectValue: string }
 >("auth/resetPassword", async ({ token, newPassword }, { rejectWithValue }) => {
   try {
-    const res = await axios.post(`${API_URL}/auth/reset-password/${token}`, { 
+    const res = await axiosInstance.post(`/auth/reset-password/${token}`, { 
       newPassword 
     })
     return res.data as { message: string }
@@ -313,6 +264,3 @@ const authSlice = createSlice({
 
 export const { logout, setToken, setAuthData, clearError } = authSlice.actions
 export default authSlice.reducer
-
-// Export apiClient để sử dụng ở các slice khác
-export { apiClient }
