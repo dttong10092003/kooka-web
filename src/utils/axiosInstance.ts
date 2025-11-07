@@ -19,4 +19,17 @@ axiosInstance.interceptors.request.use((config) => {
     return config;
 });
 
+// Response interceptor để xử lý lỗi
+axiosInstance.interceptors.response.use(
+    (response) => response,
+    async (error) => {
+        if (error.response?.status === 401) {
+            // Token hết hạn hoặc không hợp lệ
+            localStorage.removeItem("token");
+            // Có thể dispatch logout action ở đây nếu cần
+        }
+        return Promise.reject(error);
+    }
+);
+
 export default axiosInstance;

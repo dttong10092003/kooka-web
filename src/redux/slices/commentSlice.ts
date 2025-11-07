@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from "@reduxjs/toolkit"
-import { apiClient } from "./authSlice"
+import axiosInstance from "../../utils/axiosInstance"
 
 // =====================
 // TYPES
@@ -65,7 +65,7 @@ export const fetchTopComments = createAsyncThunk<
   { rejectValue: string }
 >("comments/fetchTop", async (_, { rejectWithValue }) => {
   try {
-    const res = await apiClient.get("/comments/top")
+    const res = await axiosInstance.get("/comments/top")
     return res.data || []
   } catch (err: any) {
     return rejectWithValue(err.response?.data?.message || "Failed to load top comments")
@@ -79,7 +79,7 @@ export const fetchNewestComments = createAsyncThunk<
   { rejectValue: string }
 >("comments/fetchNewest", async (_, { rejectWithValue }) => {
   try {
-    const res = await apiClient.get("/comments/newest")
+    const res = await axiosInstance.get("/comments/newest")
     return res.data || []
   } catch (err: any) {
     return rejectWithValue(err.response?.data?.message || "Failed to load newest comments")
@@ -93,7 +93,7 @@ export const getCommentsByRecipeId = createAsyncThunk<
   { rejectValue: string }
 >("comments/getByRecipeId", async (recipeId, { rejectWithValue }) => {
   try {
-    const res = await apiClient.get(`/comments/recipe/${recipeId}`)
+    const res = await axiosInstance.get(`/comments/recipe/${recipeId}`)
     return {
       comments: res.data.comments || res.data,
       total: res.data.total || res.data.length || 0,
@@ -110,7 +110,7 @@ export const checkUserReview = createAsyncThunk<
   { rejectValue: string }
 >("comments/checkUserReview", async (recipeId, { rejectWithValue }) => {
   try {
-    const res = await apiClient.get(`/reviews/recipe/${recipeId}/user`)
+    const res = await axiosInstance.get(`/reviews/recipe/${recipeId}/user`)
     return {
       hasReviewed: true,
       rating: res.data.rating
@@ -131,7 +131,7 @@ export const createComment = createAsyncThunk<
   { rejectValue: string }
 >("comments/create", async ({ recipeId, content, rating }, { rejectWithValue }) => {
   try {
-    const res = await apiClient.post("/comments", { recipeId, content, rating })
+    const res = await axiosInstance.post("/comments", { recipeId, content, rating })
     return res.data.comment || res.data
   } catch (err: any) {
     return rejectWithValue(err.response?.data?.message || "Failed to create comment")
@@ -145,7 +145,7 @@ export const updateComment = createAsyncThunk<
   { rejectValue: string }
 >("comments/update", async ({ commentId, content }, { rejectWithValue }) => {
   try {
-    const res = await apiClient.put(`/comments/${commentId}`, { content })
+    const res = await axiosInstance.put(`/comments/${commentId}`, { content })
     return res.data.comment || res.data
   } catch (err: any) {
     return rejectWithValue(err.response?.data?.message || "Failed to update comment")
@@ -159,7 +159,7 @@ export const deleteComment = createAsyncThunk<
   { rejectValue: string }
 >("comments/delete", async (commentId, { rejectWithValue }) => {
   try {
-    await apiClient.delete(`/comments/${commentId}`)
+    await axiosInstance.delete(`/comments/${commentId}`)
     return commentId
   } catch (err: any) {
     return rejectWithValue(err.response?.data?.message || "Failed to delete comment")
@@ -174,7 +174,7 @@ export const createReply = createAsyncThunk<
 >("comments/createReply", async ({ parentCommentId, content, recipeId }, { rejectWithValue }) => {
   try {
     // Backend sử dụng endpoint /comments với parentCommentId trong body
-    const res = await apiClient.post(`/comments`, { 
+    const res = await axiosInstance.post(`/comments`, { 
       content, 
       recipeId,
       parentCommentId // Gửi parentCommentId trong body
