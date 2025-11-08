@@ -32,6 +32,7 @@ interface CommentState {
   comments: Comment[]
   topComments: Comment[] // Top comments cho trang chủ
   newestComments: Comment[] // Newest comments cho trang chủ
+  userReviews: Comment[] // Tất cả reviews của user
   loading: boolean
   error: string | null
   totalComments: number
@@ -47,6 +48,7 @@ const initialState: CommentState = {
   comments: [],
   topComments: [],
   newestComments: [],
+  userReviews: [],
   loading: false,
   error: null,
   totalComments: 0,
@@ -83,6 +85,69 @@ export const fetchNewestComments = createAsyncThunk<
     return res.data || []
   } catch (err: any) {
     return rejectWithValue(err.response?.data?.message || "Failed to load newest comments")
+  }
+})
+
+// Lấy tất cả reviews của user hiện tại
+export const fetchUserReviews = createAsyncThunk<
+  Comment[],
+  void,
+  { rejectValue: string }
+>("comments/fetchUserReviews", async (_, { rejectWithValue }) => {
+  try {
+    const res = await axiosInstance.get("/reviews/user")
+    console.log('📊 fetchUserReviews response:', res.data)
+    
+    // API trả về { reviews: [...], pagination: {...} }
+    const reviews = res.data.reviews || []
+    
+    // Fetch chi tiết cho mỗi review
+    const reviewsWithDetails = await Promise.all(
+      reviews.map(async (review: any) => {
+        try {
+          // Fetch recipe details
+          const recipeRes = await axiosInstance.get(`/recipes/${review.recipeId}`)
+          const recipe = recipeRes.data
+          
+          // Fetch comments của recipe này để tìm comment tương ứng
+          const commentsRes = await axiosInstance.get(`/comments/recipe/${review.recipeId}`)
+          const comments = commentsRes.data.comments || commentsRes.data
+          
+          // Tìm comment có ID trùng với commentId trong review
+          const comment = comments.find((c: any) => c._id === review.commentId)
+          
+          if (comment && recipe) {
+            console.log('✅ Found comment and recipe:', { comment, recipe })
+            
+            // Trả về comment với recipe info và rating
+            return {
+              ...comment,
+              ratingRecipe: review.rating,
+              recipe: {
+                _id: recipe._id,
+                name: recipe.name,
+                image: recipe.image,
+              }
+            }
+          }
+          
+          console.warn('⚠️ Comment or recipe not found for review:', review._id)
+          return null
+        } catch (err) {
+          console.error('❌ Error fetching details for review:', review._id, err)
+          return null
+        }
+      })
+    )
+    
+    // Filter out null values
+    const validReviews = reviewsWithDetails.filter(review => review !== null) as Comment[]
+    console.log('✅ Valid reviews with details:', validReviews)
+    
+    return validReviews
+  } catch (err: any) {
+    console.error('❌ Error in fetchUserReviews:', err)
+    return rejectWithValue(err.response?.data?.message || "Failed to load user reviews")
   }
 })
 
@@ -256,6 +321,20 @@ const commentSlice = createSlice({
       .addCase(fetchNewestComments.rejected, (state, action) => {
         state.loading = false
         state.error = action.payload || "Failed to load newest comments"
+      })
+
+      // FETCH USER REVIEWS
+      .addCase(fetchUserReviews.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(fetchUserReviews.fulfilled, (state, action) => {
+        state.loading = false
+        state.userReviews = action.payload
+      })
+      .addCase(fetchUserReviews.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload || "Failed to load user reviews"
       })
 
       // GET COMMENTS
