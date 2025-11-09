@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import type { RootState, AppDispatch } from '../redux/store';
@@ -13,6 +13,7 @@ import type { DayPlan, Meal } from '../redux/slices/mealPlanSlice';
 import { Calendar, Plus, ChefHat, Clock, Users, Star, Edit, Trash2, ShoppingCart, Download, ChevronLeft, ChevronRight, Coffee, Sun, Moon, CheckCircle, Search } from 'lucide-react';
 import type { Recipe } from '../redux/slices/recipeSlice';
 import { useLanguage } from '../contexts/LanguageContext';
+import toast, { Toaster } from 'react-hot-toast';
 
 interface MealPlanDay {
   morning?: {
@@ -52,12 +53,12 @@ const MealPlannerPage: React.FC = () => {
   const [currentMealPlanId, setCurrentMealPlanId] = useState<string | null>(null);
   const [currentMealPlanIndex, setCurrentMealPlanIndex] = useState<number>(0);
   const [editingPlans, setEditingPlans] = useState<DayPlan[]>([]);
+  const [originalPlans, setOriginalPlans] = useState<DayPlan[]>([]); // Lưu bản gốc để so sánh
   const [showRecipeSelector, setShowRecipeSelector] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<{date: string, mealType: 'morning' | 'noon' | 'evening'} | null>(null);
   const [activeTab, setActiveTab] = useState('planner');
   const [searchQuery, setSearchQuery] = useState('');
   const [checkedIngredients, setCheckedIngredients] = useState<Set<string>>(new Set());
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showStartDateModal, setShowStartDateModal] = useState(false);
   const [selectedStartDate, setSelectedStartDate] = useState<Date | null>(null);
   const [startDateError, setStartDateError] = useState<string>('');
@@ -66,6 +67,7 @@ const MealPlannerPage: React.FC = () => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [hoveredDate, setHoveredDate] = useState<Date | null>(null);
   const [aiGeneratedPlans, setAiGeneratedPlans] = useState<MealPlanDay[] | null>(null); // Lưu tạm plans từ AI
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   
   // Ref for auto-scroll to meal plan table
   const mealPlanTableRef = useRef<HTMLDivElement>(null);
@@ -89,7 +91,7 @@ const MealPlannerPage: React.FC = () => {
       
       // Check if user is logged in
       if (!user?._id) {
-        alert(language === 'vi' 
+        toast.error(language === 'vi' 
           ? 'Vui lòng đăng nhập để sử dụng tính năng này!' 
           : 'Please login to use this feature!');
         navigate('/login');
@@ -99,7 +101,7 @@ const MealPlannerPage: React.FC = () => {
       // Check pending plans limit (max 3)
       const pendingPlans = mealPlans.filter(p => p.status === 'pending');
       if (pendingPlans.length >= 3) {
-        alert(language === 'vi' 
+        toast.error(language === 'vi' 
           ? 'Bạn đã có 3 kế hoạch chưa hoàn thành. Vui lòng hoàn thành hoặc xóa bớt trước khi tạo mới.' 
           : 'You already have 3 pending plans. Please complete or delete some before creating a new one.');
         
@@ -117,7 +119,6 @@ const MealPlannerPage: React.FC = () => {
       
       // Chưa set editingPlans ở đây, sẽ set sau khi user chọn startDate
       setEditingPlans([]);
-      setHasUnsavedChanges(false);
       
       // Open start date modal for user to select start date
       setShowStartDateModal(true);
@@ -149,7 +150,6 @@ const MealPlannerPage: React.FC = () => {
       setCurrentMealPlanId(null);
       setCurrentMealPlanIndex(0);
       setEditingPlans([]);
-      setHasUnsavedChanges(false);
     } else {
       if (viewMode === 'creating') return;
       
@@ -162,6 +162,7 @@ const MealPlannerPage: React.FC = () => {
           // Khi justCreatedPlanId được clear (null), điều kiện này sẽ true và update index
           if (justCreatedPlanId !== currentMealPlanId) {
             setEditingPlans(sortedMealPlans[currentIndex].plans);
+            setOriginalPlans(JSON.parse(JSON.stringify(sortedMealPlans[currentIndex].plans)));
           }
         } else {
           // Plan không tìm thấy, chuyển về plan đầu tiên
@@ -169,6 +170,7 @@ const MealPlannerPage: React.FC = () => {
           const firstPlan = sortedMealPlans[0];
           setCurrentMealPlanId(firstPlan._id);
           setEditingPlans(firstPlan.plans);
+          setOriginalPlans(JSON.parse(JSON.stringify(firstPlan.plans)));
         }
       } else {
         // Không có plan nào đang xem, hiển thị plan đầu tiên
@@ -177,6 +179,7 @@ const MealPlannerPage: React.FC = () => {
         const firstPlan = sortedMealPlans[0];
         setCurrentMealPlanId(firstPlan._id);
         setEditingPlans(firstPlan.plans);
+        setOriginalPlans(JSON.parse(JSON.stringify(firstPlan.plans)));
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -275,6 +278,46 @@ const MealPlannerPage: React.FC = () => {
   const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   const weekDaysVi = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
 
+  // Kiểm tra có thay đổi so với bản gốc không (sử dụng useMemo để tự động re-calculate)
+  const hasChanges = useMemo((): boolean => {
+    if (viewMode !== 'viewing' || !currentMealPlanId) return false;
+    
+    const mealTypeKeys: Array<'morning' | 'noon' | 'evening'> = ['morning', 'noon', 'evening'];
+    
+    // Tạo map của originalPlans để dễ tra cứu
+    const originalMap = new Map<string, DayPlan>();
+    originalPlans.forEach(plan => {
+      originalMap.set(plan.date, plan);
+    });
+    
+    // Tạo map của editingPlans để dễ tra cứu
+    const editingMap = new Map<string, DayPlan>();
+    editingPlans.forEach(plan => {
+      editingMap.set(plan.date, plan);
+    });
+    
+    // Lấy tất cả các ngày từ cả 2 plans
+    const allDates = new Set([...originalMap.keys(), ...editingMap.keys()]);
+    
+    // So sánh từng ngày
+    for (const date of allDates) {
+      const originalPlan = originalMap.get(date);
+      const editedPlan = editingMap.get(date);
+      
+      for (const mealType of mealTypeKeys) {
+        const originalRecipeId = originalPlan?.[mealType]?.recipeId || null;
+        const editedRecipeId = editedPlan?.[mealType]?.recipeId || null;
+        
+        // Nếu có bất kỳ slot nào khác nhau → có thay đổi
+        if (originalRecipeId !== editedRecipeId) {
+          return true;
+        }
+      }
+    }
+    
+    return false;
+  }, [viewMode, currentMealPlanId, originalPlans, editingPlans]);
+
   const mealTypes: Array<{
     id: 'morning' | 'noon' | 'evening';
     name: string;
@@ -293,7 +336,7 @@ const MealPlannerPage: React.FC = () => {
       const plan = sortedMealPlans[newIndex];
       setCurrentMealPlanId(plan._id);
       setEditingPlans(plan.plans);
-      setHasUnsavedChanges(false);
+      setOriginalPlans(JSON.parse(JSON.stringify(plan.plans))); // Deep copy
     }
   };
 
@@ -304,7 +347,7 @@ const MealPlannerPage: React.FC = () => {
       const plan = sortedMealPlans[newIndex];
       setCurrentMealPlanId(plan._id);
       setEditingPlans(plan.plans);
-      setHasUnsavedChanges(false);
+      setOriginalPlans(JSON.parse(JSON.stringify(plan.plans))); // Deep copy
     }
   };
 
@@ -354,7 +397,7 @@ const MealPlannerPage: React.FC = () => {
     
     const pendingPlans = sortedMealPlans.filter(p => p.status === 'pending');
     if (pendingPlans.length >= 3) {
-      alert(language === 'vi' 
+      toast.error(language === 'vi' 
         ? 'Bạn đã có 3 kế hoạch chưa hoàn thành. Vui lòng hoàn thành hoặc xóa bớt trước khi tạo mới.' 
         : 'You already have 3 pending plans. Please complete or delete some before creating a new one.');
       setShowStartDateModal(false);
@@ -384,12 +427,12 @@ const MealPlannerPage: React.FC = () => {
       });
       
       setEditingPlans(plansWithDate);
-      setHasUnsavedChanges(true); // Có sẵn plans từ AI
+      setOriginalPlans([]); // Creating mode không cần originalPlans
       setAiGeneratedPlans(null); // Clear AI plans đã dùng
     } else {
       // Tạo plan thủ công (không có AI)
       setEditingPlans([]);
-      setHasUnsavedChanges(false);
+      setOriginalPlans([]);
     }
     
     setViewMode('creating');
@@ -403,7 +446,7 @@ const MealPlannerPage: React.FC = () => {
     setSelectedStartDate(null);
     setStartDateError('');
     setEditingPlans([]);
-    setHasUnsavedChanges(false);
+    setOriginalPlans([]);
     setAiGeneratedPlans(null); // Clear AI plans nếu cancel
     
     if (sortedMealPlans.length > 0) {
@@ -411,6 +454,7 @@ const MealPlannerPage: React.FC = () => {
       const firstPlan = sortedMealPlans[0];
       setCurrentMealPlanId(firstPlan._id);
       setEditingPlans(firstPlan.plans);
+      setOriginalPlans(JSON.parse(JSON.stringify(firstPlan.plans)));
     } else {
       setCurrentMealPlanId(null);
       setSelectedWeek(0);
@@ -443,7 +487,7 @@ const MealPlannerPage: React.FC = () => {
 
   const addRecipeToMeal = (date: string, mealType: 'morning' | 'noon' | 'evening', recipe: Recipe) => {
     if (currentMealPlanId && currentPlan?.status === 'completed') {
-      alert(language === 'vi' 
+      toast.error(language === 'vi' 
         ? 'Không thể chỉnh sửa kế hoạch đã hoàn thành' 
         : 'Cannot edit completed plan');
       return;
@@ -483,14 +527,13 @@ const MealPlannerPage: React.FC = () => {
         } as DayPlan];
       }
     });
-    setHasUnsavedChanges(true);
     setShowRecipeSelector(false);
     setSelectedSlot(null);
   };
 
   const removeRecipeFromMeal = (date: string, mealType: 'morning' | 'noon' | 'evening') => {
     if (currentMealPlanId && currentPlan?.status === 'completed') {
-      alert(language === 'vi' 
+      toast.error(language === 'vi' 
         ? 'Không thể chỉnh sửa kế hoạch đã hoàn thành' 
         : 'Cannot edit completed plan');
       return;
@@ -508,12 +551,11 @@ const MealPlannerPage: React.FC = () => {
           : plan;
       }).filter(plan => plan.morning?.recipeId || plan.noon?.recipeId || plan.evening?.recipeId)
     );
-    setHasUnsavedChanges(true);
   };
 
   const saveMealPlan = async () => {
     if (!user?._id) {
-      alert(language === 'vi' ? 'Vui lòng đăng nhập' : 'Please login');
+      toast.error(language === 'vi' ? 'Vui lòng đăng nhập' : 'Please login');
       return;
     }
 
@@ -522,7 +564,7 @@ const MealPlannerPage: React.FC = () => {
     );
 
     if (validPlans.length === 0) {
-      alert(language === 'vi' ? 'Vui lòng thêm ít nhất một món ăn' : 'Please add at least one meal');
+      toast.error(language === 'vi' ? 'Vui lòng thêm ít nhất một món ăn' : 'Please add at least one meal');
       return;
     }
 
@@ -535,12 +577,12 @@ const MealPlannerPage: React.FC = () => {
             plans: validPlans
           }
         })).unwrap();
-        setHasUnsavedChanges(false);
-        alert(language === 'vi' ? 'Cập nhật thành công!' : 'Updated successfully!');
+        setOriginalPlans(JSON.parse(JSON.stringify(validPlans))); // Update original plans
+        toast.success(language === 'vi' ? 'Cập nhật thành công!' : 'Updated successfully!');
       } else {
         // Khi tạo mới, phải gửi cả startDate lên backend
         if (!selectedStartDate) {
-          alert(language === 'vi' ? 'Vui lòng chọn ngày bắt đầu' : 'Please select a start date');
+          toast.error(language === 'vi' ? 'Vui lòng chọn ngày bắt đầu' : 'Please select a start date');
           return;
         }
         
@@ -558,31 +600,33 @@ const MealPlannerPage: React.FC = () => {
         
         // Sau khi tạo thành công, LUÔN hiển thị plan vừa tạo
         setJustCreatedPlanId(newPlan._id); // Set flag để useEffect không ghi đè
-        setHasUnsavedChanges(false);
         setSelectedStartDate(null);
         setViewMode('viewing');
         setCurrentMealPlanId(newPlan._id);
         setEditingPlans(newPlan.plans); // Set từ response API
+        setOriginalPlans(JSON.parse(JSON.stringify(newPlan.plans))); // Set original plans
         
         // Đợi Redux update xong rồi mới tìm index chính xác
         setTimeout(() => {
           setJustCreatedPlanId(null);
         }, 100);
         
-        alert(language === 'vi' ? 'Tạo kế hoạch thành công!' : 'Plan created successfully!');
+        toast.success(language === 'vi' ? 'Tạo kế hoạch thành công!' : 'Plan created successfully!');
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'An error occurred';
-      alert(errorMessage || (language === 'vi' ? 'Có lỗi xảy ra' : 'An error occurred'));
+      toast.error(errorMessage || (language === 'vi' ? 'Có lỗi xảy ra' : 'An error occurred'));
     }
   };
 
   const deletePlan = async () => {
     if (!currentMealPlanId) return;
     
-    if (!confirm(language === 'vi' ? 'Bạn có chắc muốn xóa kế hoạch này?' : 'Are you sure you want to delete this plan?')) {
-      return;
-    }
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDeletePlan = async () => {
+    if (!currentMealPlanId) return;
 
     try {
       await dispatch(deleteMealPlan(currentMealPlanId)).unwrap();
@@ -603,11 +647,13 @@ const MealPlannerPage: React.FC = () => {
         setSelectedWeek(0);
       }
       
-      setHasUnsavedChanges(false);
-      alert(language === 'vi' ? 'Đã xóa kế hoạch!' : 'Plan deleted!');
+      setOriginalPlans([]);
+      toast.success(language === 'vi' ? 'Đã xóa kế hoạch!' : 'Plan deleted!');
+      setShowDeleteConfirm(false);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'An error occurred';
-      alert(errorMessage || (language === 'vi' ? 'Có lỗi xảy ra' : 'An error occurred'));
+      toast.error(errorMessage || (language === 'vi' ? 'Có lỗi xảy ra' : 'An error occurred'));
+      setShowDeleteConfirm(false);
     }
   };
 
@@ -767,6 +813,40 @@ const MealPlannerPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Toaster for notifications */}
+      <Toaster 
+        position="top-right"
+        toastOptions={{
+          duration: 3000,
+          style: {
+            background: '#fff',
+            color: '#363636',
+            borderRadius: '10px',
+            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+            padding: '16px',
+            fontSize: '14px',
+          },
+          success: {
+            iconTheme: {
+              primary: '#10b981',
+              secondary: '#fff',
+            },
+            style: {
+              border: '1px solid #10b981',
+            },
+          },
+          error: {
+            iconTheme: {
+              primary: '#ef4444',
+              secondary: '#fff',
+            },
+            style: {
+              border: '1px solid #ef4444',
+            },
+          },
+        }}
+      />
+      
       {/* Hero Section */}
       <div className="bg-gradient-to-br from-green-50 via-white to-blue-50 py-16 lg:py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -1002,11 +1082,6 @@ const MealPlannerPage: React.FC = () => {
                   )}
                 </div>
                 <div className="flex items-center space-x-2">
-                  {hasUnsavedChanges && (
-                    <span className="text-sm text-orange-600 mr-2">
-                      {language === 'vi' ? 'Có thay đổi chưa lưu' : 'Unsaved changes'}
-                    </span>
-                  )}
                   {viewMode !== 'browse' && (
                     <>
                       {currentMealPlanId && currentPlan?.status === 'pending' && (
@@ -1021,7 +1096,12 @@ const MealPlannerPage: React.FC = () => {
                       {(viewMode === 'creating' || (currentMealPlanId && currentPlan?.status === 'pending')) && (
                         <button
                           onClick={saveMealPlan}
-                          className="px-4 py-2 bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-lg hover:from-green-600 hover:to-blue-600 transition-all duration-200 flex items-center space-x-2"
+                          disabled={viewMode === 'viewing' && !hasChanges}
+                          className={`px-4 py-2 rounded-lg transition-all duration-200 flex items-center space-x-2 ${
+                            viewMode === 'viewing' && !hasChanges
+                              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                              : 'bg-gradient-to-r from-green-500 to-blue-500 text-white hover:from-green-600 hover:to-blue-600'
+                          }`}
                         >
                           <Download className="h-4 w-4" />
                           <span>
@@ -1541,6 +1621,78 @@ const MealPlannerPage: React.FC = () => {
                   ))}
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden animate-slideUp">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-red-500 to-orange-500 p-6 text-white">
+              <div className="flex items-center justify-center mb-3">
+                <div className="bg-white/20 p-3 rounded-full">
+                  <Trash2 className="h-8 w-8" />
+                </div>
+              </div>
+              <h3 className="text-2xl font-bold text-center">
+                {language === 'vi' ? '⚠️ Xác Nhận Xóa' : '⚠️ Confirm Delete'}
+              </h3>
+            </div>
+
+            {/* Content */}
+            <div className="p-6">
+              <p className="text-gray-700 text-center text-lg mb-2">
+                {language === 'vi' 
+                  ? 'Bạn có chắc chắn muốn xóa kế hoạch này không?' 
+                  : 'Are you sure you want to delete this plan?'}
+              </p>
+              <p className="text-gray-500 text-center text-sm">
+                {language === 'vi' 
+                  ? 'Hành động này không thể hoàn tác!' 
+                  : 'This action cannot be undone!'}
+              </p>
+
+              {/* Plan Info */}
+              {currentPlan && (
+                <div className="mt-4 p-4 bg-red-50 border-l-4 border-red-500 rounded-lg">
+                  <div className="flex items-start space-x-3">
+                    <Calendar className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-gray-900">
+                        {new Date(currentPlan.startDate).toLocaleDateString(language === 'vi' ? 'vi-VN' : 'en-US', { 
+                          weekday: 'long',
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })}
+                      </p>
+                      <p className="text-xs text-gray-600 mt-1">
+                        {currentPlan.plans.filter(p => p.morning?.recipeId || p.noon?.recipeId || p.evening?.recipeId).length} {language === 'vi' ? 'ngày đã lập kế hoạch' : 'days planned'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 pb-6 flex space-x-3">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-all duration-200 font-medium"
+              >
+                {language === 'vi' ? 'Hủy' : 'Cancel'}
+              </button>
+              <button
+                onClick={confirmDeletePlan}
+                className="flex-1 px-4 py-3 bg-gradient-to-r from-red-500 to-orange-500 text-white rounded-xl hover:from-red-600 hover:to-orange-600 transition-all duration-200 font-medium shadow-lg hover:shadow-xl flex items-center justify-center space-x-2"
+              >
+                <Trash2 className="h-5 w-5" />
+                <span>{language === 'vi' ? 'Xóa' : 'Delete'}</span>
+              </button>
             </div>
           </div>
         </div>
