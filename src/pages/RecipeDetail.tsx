@@ -7,11 +7,13 @@ import { getRecipeById } from '../redux/slices/recipeSlice';
 import { toggleFavorite, checkUserFavorited } from '../redux/slices/favoriteSlice';
 import CommentSection from '../components/CommentSection';
 import axiosInstance from '../utils/axiosInstance';
+import { useLanguage } from '../contexts/LanguageContext';
 
 export default function RecipeDetail() {
     const { id } = useParams<{ id: string }>();
     const dispatch = useDispatch<AppDispatch>();
     const navigate = useNavigate();
+    const { language } = useLanguage();
     const [isFavorited, setIsFavorited] = useState(false);
     const [openSteps, setOpenSteps] = useState<number[]>([]);
 
@@ -98,9 +100,11 @@ export default function RecipeDetail() {
     if (!loading && !recipe) {
         return (
             <div className="container mx-auto px-4 py-10 text-center">
-                <h2 className="text-2xl font-semibold">Recipe not found</h2>
+                <h2 className="text-2xl font-semibold">
+                    {language === 'vi' ? 'Không tìm thấy công thức' : 'Recipe not found'}
+                </h2>
                 <Link to="/recipes" className="text-orange-500 hover:underline mt-4 block">
-                    Return to recipes
+                    {language === 'vi' ? 'Quay lại danh sách công thức' : 'Return to recipes'}
                 </Link>
             </div>
         );
@@ -134,7 +138,9 @@ export default function RecipeDetail() {
                 <button
                     onClick={handleFavoriteClick}
                     className="absolute top-4 right-4 bg-white/90 hover:bg-white rounded-full p-2 z-20 transition-all"
-                    aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
+                    aria-label={isFavorited 
+                        ? (language === 'vi' ? "Bỏ khỏi yêu thích" : "Remove from favorites") 
+                        : (language === 'vi' ? "Thêm vào yêu thích" : "Add to favorites")}
                 >
                     <Heart
                         className={`h-6 w-6 transition-colors ${isFavorited ? "fill-red-500 text-red-500" : "text-gray-600"
@@ -162,16 +168,22 @@ export default function RecipeDetail() {
                         <div className="flex flex-wrap items-center gap-4 md:gap-8">
                             <div className="flex items-center gap-2">
                                 <Clock className="h-4 w-4 sm:h-5 sm:w-5" />
-                                <span className="text-sm sm:text-base">{recipe.time} minutes</span>
+                                <span className="text-sm sm:text-base">
+                                    {recipe.time} {language === 'vi' ? 'phút' : 'minutes'}
+                                </span>
                             </div>
                             <div className="flex items-center gap-2">
                                 <Users className="h-4 w-4 sm:h-5 sm:w-5" />
-                                <span className="text-sm sm:text-base">{recipe.size} servings</span>
+                                <span className="text-sm sm:text-base">
+                                    {recipe.size} {language === 'vi' ? 'người ăn' : 'servings'}
+                                </span>
                             </div>
                             <div className="flex items-center gap-2">
                                 <Star className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-400 fill-yellow-400" />
                                 <span className="font-medium text-sm sm:text-base">{(recipe.rate || 0).toFixed(1)}</span>
-                                <span className="opacity-80 text-sm sm:text-base">({recipe.numberOfRate || 0} reviews)</span>
+                                <span className="opacity-80 text-sm sm:text-base">
+                                    ({recipe.numberOfRate || 0} {language === 'vi' ? 'đánh giá' : 'reviews'})
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -198,7 +210,7 @@ export default function RecipeDetail() {
                                             <path d="M21 15a3 3 0 0 0-3-3" />
                                         </svg>
                                     </span>
-                                    Ingredients
+                                    {language === 'vi' ? 'Nguyên Liệu' : 'Ingredients'}
                                 </h2>
                             </div>
 
@@ -221,48 +233,6 @@ export default function RecipeDetail() {
                                         </label>
                                     ))}
                                 </div>
-
-                                <div className="mt-5 pt-5 border-t-2 border-orange-100">
-                                    <div className="space-y-3">
-                                        <div className="flex items-center gap-3 bg-gradient-to-br from-orange-50 to-orange-100/50 p-3 rounded-xl">
-                                            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center shadow-lg">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white">
-                                                    <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
-                                                </svg>
-                                            </div>
-                                            <div className="flex-1">
-                                                <span className="block text-gray-500 text-xs font-medium">Prep</span>
-                                                <span className="font-bold text-gray-800 text-sm">{Math.floor(recipe.time * 0.3)} min</span>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center gap-3 bg-gradient-to-br from-orange-50 to-orange-100/50 p-3 rounded-xl">
-                                            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center shadow-lg">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white">
-                                                    <path d="M6.5 12c0 .2 0 .4.1.6" />
-                                                    <path d="M8 12v-2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-8a2 2 0 0 1-2-2v-2" />
-                                                    <path d="M12 16v-4" />
-                                                    <path d="M12 16h4" />
-                                                </svg>
-                                            </div>
-                                            <div className="flex-1">
-                                                <span className="block text-gray-500 text-xs font-medium">Cook</span>
-                                                <span className="font-bold text-gray-800 text-sm">{Math.floor(recipe.time * 0.7)} min</span>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center gap-3 bg-gradient-to-br from-orange-50 to-orange-100/50 p-3 rounded-xl">
-                                            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center shadow-lg">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white">
-                                                    <circle cx="12" cy="12" r="10" />
-                                                    <polyline points="12 6 12 12 16 14" />
-                                                </svg>
-                                            </div>
-                                            <div className="flex-1">
-                                                <span className="block text-gray-500 text-xs font-medium">Total</span>
-                                                <span className="font-bold text-gray-800 text-sm">{recipe.time} min</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -275,7 +245,7 @@ export default function RecipeDetail() {
                                     <span className="bg-white p-2 rounded-lg">
                                         <ChefHat className="h-5 w-5 sm:h-6 sm:w-6 text-orange-500" />
                                     </span>
-                                    Cooking Instructions
+                                    {language === 'vi' ? 'Hướng Dẫn Nấu Ăn' : 'Cooking Instructions'}
                                 </h2>
                             </div>
 
@@ -458,7 +428,7 @@ export default function RecipeDetail() {
                                         <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
                                     </svg>
                                 </div>
-                                Cooking Tips
+                                {language === 'vi' ? 'Mẹo Nấu Ăn' : 'Cooking Tips'}
                             </h2>
                             <div className="space-y-3">
                                 <div className="flex gap-3 items-start">
@@ -468,7 +438,7 @@ export default function RecipeDetail() {
                                         </div>
                                     </div>
                                     <p className="text-orange-900 text-sm sm:text-base leading-relaxed">
-                                        Read through all instructions before starting to cook
+                                        {language === 'vi' ? 'Đọc hết tất cả hướng dẫn trước khi bắt đầu nấu' : 'Read through all instructions before starting to cook'}
                                     </p>
                                 </div>
                                 <div className="flex gap-3 items-start">
@@ -478,7 +448,7 @@ export default function RecipeDetail() {
                                         </div>
                                     </div>
                                     <p className="text-orange-900 text-sm sm:text-base leading-relaxed">
-                                        Prepare and measure all ingredients before you begin
+                                        {language === 'vi' ? 'Chuẩn bị và đong đo tất cả nguyên liệu trước khi bắt đầu' : 'Prepare and measure all ingredients before you begin'}
                                     </p>
                                 </div>
                                 <div className="flex gap-3 items-start">
@@ -488,7 +458,7 @@ export default function RecipeDetail() {
                                         </div>
                                     </div>
                                     <p className="text-orange-900 text-sm sm:text-base leading-relaxed">
-                                        Adjust seasoning to taste preference
+                                        {language === 'vi' ? 'Điều chỉnh gia vị theo khẩu vị cá nhân' : 'Adjust seasoning to taste preference'}
                                     </p>
                                 </div>
                                 <div className="flex gap-3 items-start">
@@ -498,7 +468,7 @@ export default function RecipeDetail() {
                                         </div>
                                     </div>
                                     <p className="text-orange-900 text-sm sm:text-base leading-relaxed">
-                                        For best results, use fresh ingredients
+                                        {language === 'vi' ? 'Để có kết quả tốt nhất, hãy sử dụng nguyên liệu tươi' : 'For best results, use fresh ingredients'}
                                     </p>
                                 </div>
                             </div>
@@ -514,7 +484,7 @@ export default function RecipeDetail() {
                                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-orange-500">
                                             <polygon points="5 3 19 12 5 21 5 3"></polygon>
                                         </svg>
-                                        Video Tutorial
+                                        {language === 'vi' ? 'Video Hướng Dẫn' : 'Video Tutorial'}
                                     </h3>
                                 </div>
                                 <div className="relative w-full" style={{ paddingTop: '56.25%' }}>

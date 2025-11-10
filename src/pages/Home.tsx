@@ -313,7 +313,7 @@ const Home = () => {
               }}
               className="bg-orange-500 hover:bg-orange-600 text-white px-2 sm:px-3 lg:px-4 py-1.5 sm:py-1.5 lg:py-2 rounded-lg text-[10px] sm:text-xs lg:text-sm font-medium transition-colors whitespace-nowrap"
             >
-              <span className="hidden sm:inline">View Recipe</span>
+              <span className="hidden sm:inline">Xem công thức</span>
               <span className="sm:hidden">View</span>
             </button>
           </div>
