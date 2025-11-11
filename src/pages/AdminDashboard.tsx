@@ -54,22 +54,28 @@ const AdminDashboard: React.FC = () => {
     const [loadingStats, setLoadingStats] = useState(true)
     const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false)
     const [recipePerformanceData, setRecipePerformanceData] = useState<any[]>([])
+    
+    // Pagination states
+    const [currentPage, setCurrentPage] = useState(1)
+    const [itemsPerPage, setItemsPerPage] = useState(10)
 
     const navigate = useNavigate()
     const dispatch = useDispatch<AppDispatch>()
     const { recipes, loading, error, newestRecipes } = useSelector((state: RootState) => state.recipes)
 
+    // Load initial data
     useEffect(() => {
         dispatch(fetchRecipes())
         dispatch(fetchNewestRecipes(4))
+    }, [dispatch])
+
+    // Load dashboard data
+    useEffect(() => {
         fetchDashboardStats()
         fetchRecentUsers()
         fetchWeeklyUserActivity(selectedYear, selectedMonth)
         fetchRecipePerformance()
-    }, [dispatch])
-
-    useEffect(() => {
-        fetchWeeklyUserActivity(selectedYear, selectedMonth)
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedYear, selectedMonth])
 
     const fetchDashboardStats = async () => {
@@ -314,15 +320,37 @@ const AdminDashboard: React.FC = () => {
     const handleEditModalClose = () => {
         setIsEditModalOpen(false)
         setSelectedRecipe(null)
-        // Refresh recipes list to ensure data consistency
-        dispatch(fetchRecipes())
+        // Không cần refresh - modal tự refresh khi cần
     }
 
     const handleAddModalClose = () => {
         setIsRecipeModalOpen(false)
-        // Refresh recipes list to ensure data consistency
-        dispatch(fetchRecipes())
+        // Không cần refresh - modal tự refresh khi cần
     }
+
+    // Pagination logic
+    const filteredRecipes = recipes.filter((r) =>
+        r.name.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+    
+    const totalPages = Math.ceil(filteredRecipes.length / itemsPerPage)
+    const startIndex = (currentPage - 1) * itemsPerPage
+    const endIndex = startIndex + itemsPerPage
+    const currentRecipes = filteredRecipes.slice(startIndex, endIndex)
+
+    const handlePageChange = (page: number) => {
+        setCurrentPage(page)
+    }
+
+    const handleItemsPerPageChange = (value: number) => {
+        setItemsPerPage(value)
+        setCurrentPage(1) // Reset to first page when changing items per page
+    }
+
+    // Reset to first page when search query changes
+    useEffect(() => {
+        setCurrentPage(1)
+    }, [searchQuery])
 
     return (
         <div className="h-screen bg-gray-50 flex overflow-hidden">
@@ -394,12 +422,6 @@ const AdminDashboard: React.FC = () => {
                             <div className="flex items-center space-x-4">
                                 <button className="text-gray-400 hover:text-gray-600 transition-colors duration-200">
                                     <Bell className="h-6 w-6" />
-                                </button>
-                                <button
-                                    onClick={() => setIsRecipeModalOpen(true)}
-                                    className="bg-orange-500 bg-gradient-to-r from-orange-500 to-red-500 text-white px-4 py-2 rounded-lg hover:from-orange-600 hover:to-red-600 transition-all duration-200 flex items-center space-x-2">
-                                    <Plus className="h-4 w-4" />
-                                    <span>Add Recipe</span>
                                 </button>
                             </div>
                         </div>
@@ -721,30 +743,27 @@ const AdminDashboard: React.FC = () => {
                                 ) : error ? (
                                     <div className="p-6 text-center text-red-500">Error: {error}</div>
                                 ) : (
-                                    <div className="overflow-x-auto">
-                                        <table className="w-full">
-                                            <thead className="bg-gray-50">
-                                                <tr>
-                                                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                                                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Cuisine</th>
-                                                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Difficulty</th>
-                                                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Rating</th>
-                                                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="bg-white divide-y divide-gray-200">
-                                                {recipes.length === 0 ? (
+                                    <>
+                                        <div className="overflow-x-auto">
+                                            <table className="w-full">
+                                                <thead className="bg-gray-50">
                                                     <tr>
-                                                        <td colSpan={5} className="text-center py-6 text-gray-500">
-                                                            No recipes found
-                                                        </td>
+                                                        <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                                                        <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Cuisine</th>
+                                                        <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Difficulty</th>
+                                                        <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Rating</th>
+                                                        <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                                                     </tr>
-                                                ) : (
-                                                    recipes
-                                                        .filter((r) =>
-                                                            r.name.toLowerCase().includes(searchQuery.toLowerCase())
-                                                        )
-                                                        .map((recipe: Recipe) => (
+                                                </thead>
+                                                <tbody className="bg-white divide-y divide-gray-200">
+                                                    {currentRecipes.length === 0 ? (
+                                                        <tr>
+                                                            <td colSpan={5} className="text-center py-6 text-gray-500">
+                                                                {searchQuery ? "No recipes found matching your search" : "No recipes found"}
+                                                            </td>
+                                                        </tr>
+                                                    ) : (
+                                                        currentRecipes.map((recipe: Recipe) => (
                                                             <tr key={recipe._id} className="hover:bg-gray-50 transition-colors">
                                                                 <td className="px-6 py-4 font-medium text-gray-900">{recipe.name}</td>
                                                                 <td className="px-6 py-4 text-sm text-gray-700">
@@ -777,10 +796,90 @@ const AdminDashboard: React.FC = () => {
                                                                 </td>
                                                             </tr>
                                                         ))
-                                                )}
-                                            </tbody>
-                                        </table>
-                                    </div>
+                                                    )}
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+                                        {/* Pagination Controls */}
+                                        {filteredRecipes.length > 0 && (
+                                            <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
+                                                <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                                                    {/* Items per page selector */}
+                                                    <div className="flex items-center space-x-2">
+                                                        <span className="text-sm text-gray-700">Show</span>
+                                                        <select
+                                                            value={itemsPerPage}
+                                                            onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
+                                                            className="px-3 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none text-sm"
+                                                        >
+                                                            <option value={5}>5</option>
+                                                            <option value={10}>10</option>
+                                                            <option value={15}>15</option>
+                                                            <option value={20}>20</option>
+                                                            <option value={50}>50</option>
+                                                        </select>
+                                                        <span className="text-sm text-gray-700">
+                                                            of {filteredRecipes.length} recipes
+                                                        </span>
+                                                    </div>
+
+                                                    {/* Page navigation */}
+                                                    <div className="flex items-center space-x-2">
+                                                        <button
+                                                            onClick={() => handlePageChange(currentPage - 1)}
+                                                            disabled={currentPage === 1}
+                                                            className="p-2 rounded-lg border border-gray-300 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                                        >
+                                                            <ChevronLeft className="h-5 w-5 text-gray-600" />
+                                                        </button>
+
+                                                        <div className="flex items-center space-x-1">
+                                                            {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                                                                let pageNum: number;
+                                                                if (totalPages <= 5) {
+                                                                    pageNum = i + 1;
+                                                                } else if (currentPage <= 3) {
+                                                                    pageNum = i + 1;
+                                                                } else if (currentPage >= totalPages - 2) {
+                                                                    pageNum = totalPages - 4 + i;
+                                                                } else {
+                                                                    pageNum = currentPage - 2 + i;
+                                                                }
+
+                                                                return (
+                                                                    <button
+                                                                        key={pageNum}
+                                                                        onClick={() => handlePageChange(pageNum)}
+                                                                        className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                                                                            currentPage === pageNum
+                                                                                ? "bg-orange-500 text-white"
+                                                                                : "border border-gray-300 text-gray-700 hover:bg-gray-100"
+                                                                        }`}
+                                                                    >
+                                                                        {pageNum}
+                                                                    </button>
+                                                                );
+                                                            })}
+                                                        </div>
+
+                                                        <button
+                                                            onClick={() => handlePageChange(currentPage + 1)}
+                                                            disabled={currentPage === totalPages}
+                                                            className="p-2 rounded-lg border border-gray-300 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                                        >
+                                                            <ChevronRight className="h-5 w-5 text-gray-600" />
+                                                        </button>
+                                                    </div>
+
+                                                    {/* Page info */}
+                                                    <div className="text-sm text-gray-700">
+                                                        Page {currentPage} of {totalPages}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </>
                                 )}
                             </div>
                         </div>
