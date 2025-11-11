@@ -190,6 +190,10 @@ const EditRecipeModal: React.FC<EditRecipeModalProps> = ({ isOpen, onClose, reci
     const [updateConfirmOpen, setUpdateConfirmOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    // Upload mode states
+    const [mainImageMode, setMainImageMode] = useState<'file' | 'url'>('file');
+    const [stepImageMode, setStepImageMode] = useState<'file' | 'url'>('file');
+
     const [editedRecipe, setEditedRecipe] = useState({
         name: "",
         ingredients: [] as string[],
@@ -334,9 +338,17 @@ const EditRecipeModal: React.FC<EditRecipeModalProps> = ({ isOpen, onClose, reci
 
         setIsSubmitting(true);
         try {
-            console.log("Updating recipe with data:", editedRecipe);
+            // Nếu video rỗng thì gán mặc định
+            const recipeData = {
+                ...editedRecipe,
+                video: editedRecipe.video && editedRecipe.video.trim() !== '' 
+                    ? editedRecipe.video 
+                    : 'https://youtube.com/watch?v=example7',
+            };
+            
+            console.log("Updating recipe with data:", recipeData);
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            await dispatch(updateRecipe({ id: recipe._id, recipe: editedRecipe as any })).unwrap();
+            await dispatch(updateRecipe({ id: recipe._id, recipe: recipeData as any })).unwrap();
             toast.success("Cập nhật công thức thành công!", { duration: 2500 });
             setUpdateConfirmOpen(false);
             onClose();
@@ -422,22 +434,61 @@ const EditRecipeModal: React.FC<EditRecipeModalProps> = ({ isOpen, onClose, reci
                                         Ảnh minh hoạ
                                     </label>
 
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={(e) => {
-                                            const file = e.target.files?.[0];
-                                            if (file) {
-                                                const reader = new FileReader();
-                                                reader.onload = (event) => {
-                                                    const result = event.target?.result as string;
-                                                    setEditedRecipe(prev => ({ ...prev, image: result }));
-                                                };
-                                                reader.readAsDataURL(file);
+                                    {/* Chọn mode upload */}
+                                    <div className="flex gap-2 mb-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => setMainImageMode('file')}
+                                            className={`flex-1 px-3 py-2 text-sm rounded-lg border transition ${
+                                                mainImageMode === 'file'
+                                                    ? 'bg-blue-500 text-white border-blue-500'
+                                                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                                            }`}
+                                        >
+                                            📁 Upload
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setMainImageMode('url')}
+                                            className={`flex-1 px-3 py-2 text-sm rounded-lg border transition ${
+                                                mainImageMode === 'url'
+                                                    ? 'bg-blue-500 text-white border-blue-500'
+                                                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                                            }`}
+                                        >
+                                            🔗 URL
+                                        </button>
+                                    </div>
+
+                                    {/* Upload file hoặc nhập URL */}
+                                    {mainImageMode === 'file' ? (
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={(e) => {
+                                                const file = e.target.files?.[0];
+                                                if (file) {
+                                                    const reader = new FileReader();
+                                                    reader.onload = (event) => {
+                                                        const result = event.target?.result as string;
+                                                        setEditedRecipe(prev => ({ ...prev, image: result }));
+                                                    };
+                                                    reader.readAsDataURL(file);
+                                                }
+                                            }}
+                                            className="block w-full text-sm text-gray-700 border border-gray-300 rounded-lg cursor-pointer bg-white focus:ring-2 focus:ring-blue-400 focus:border-transparent p-2"
+                                        />
+                                    ) : (
+                                        <input
+                                            type="url"
+                                            placeholder="https://example.com/image.jpg"
+                                            value={editedRecipe.image}
+                                            onChange={(e) =>
+                                                setEditedRecipe(prev => ({ ...prev, image: e.target.value }))
                                             }
-                                        }}
-                                        className="block w-full text-sm text-gray-700 border border-gray-300 rounded-lg cursor-pointer bg-white focus:ring-2 focus:ring-blue-400 focus:border-transparent p-2"
-                                    />
+                                            className="border rounded-lg p-2 w-full focus:ring-2 focus:ring-blue-400 outline-none"
+                                        />
+                                    )}
 
                                     {/* Preview ảnh */}
                                     {editedRecipe.image && (
@@ -714,38 +765,93 @@ const EditRecipeModal: React.FC<EditRecipeModalProps> = ({ isOpen, onClose, reci
                                 />
                                 <div>
                                     <label className="block text-sm text-gray-600 mb-1">
-                                        Hình ảnh bước (tùy chọn)
+                                        Hình ảnh bước (tùy chọn, tối đa 4 ảnh)
                                     </label>
 
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        multiple
-                                        onChange={(e) => {
-                                            const files = Array.from(e.target.files || []);
-                                            if (files.length + currentInstruction.images.length > 4) {
-                                                toast.error("Chỉ được chọn tối đa 4 ảnh mỗi bước!");
-                                                return;
-                                            }
+                                    {/* Chọn mode upload cho step */}
+                                    <div className="flex gap-2 mb-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => setStepImageMode('file')}
+                                            className={`flex-1 px-3 py-2 text-sm rounded-lg border transition ${
+                                                stepImageMode === 'file'
+                                                    ? 'bg-blue-500 text-white border-blue-500'
+                                                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                                            }`}
+                                        >
+                                            📁 Upload từ máy
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setStepImageMode('url')}
+                                            className={`flex-1 px-3 py-2 text-sm rounded-lg border transition ${
+                                                stepImageMode === 'url'
+                                                    ? 'bg-blue-500 text-white border-blue-500'
+                                                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                                            }`}
+                                        >
+                                            🔗 URL
+                                        </button>
+                                    </div>
 
-                                            Promise.all(
-                                                files.map(file => {
-                                                    return new Promise<string>((resolve) => {
-                                                        const reader = new FileReader();
-                                                        reader.onload = (event) => resolve(event.target?.result as string);
-                                                        reader.readAsDataURL(file);
-                                                    });
-                                                })
-                                            ).then((newImages) => {
-                                                setCurrentInstruction(prev => ({
-                                                    ...prev,
-                                                    images: [...prev.images, ...newImages],
-                                                }));
-                                            });
-                                        }}
-                                        className="block w-full text-sm text-gray-700 border border-gray-300 rounded-lg cursor-pointer bg-white focus:ring-2 focus:ring-blue-400 focus:border-transparent p-2"
-                                    />
+                                    {/* Upload file hoặc nhập URL */}
+                                    {stepImageMode === 'file' ? (
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            multiple
+                                            disabled={currentInstruction.images.length >= 4}
+                                            onChange={(e) => {
+                                                const files = Array.from(e.target.files || []);
+                                                if (files.length + currentInstruction.images.length > 4) {
+                                                    toast.error("Chỉ được chọn tối đa 4 ảnh mỗi bước!");
+                                                    return;
+                                                }
 
+                                                Promise.all(
+                                                    files.map(file => {
+                                                        return new Promise<string>((resolve) => {
+                                                            const reader = new FileReader();
+                                                            reader.onload = (event) => resolve(event.target?.result as string);
+                                                            reader.readAsDataURL(file);
+                                                        });
+                                                    })
+                                                ).then((newImages) => {
+                                                    setCurrentInstruction(prev => ({
+                                                        ...prev,
+                                                        images: [...prev.images, ...newImages],
+                                                    }));
+                                                });
+                                            }}
+                                            className="block w-full text-sm text-gray-700 border border-gray-300 rounded-lg cursor-pointer bg-white focus:ring-2 focus:ring-blue-400 focus:border-transparent p-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        />
+                                    ) : (
+                                        <div className="space-y-2">
+                                            <input
+                                                type="url"
+                                                placeholder="https://example.com/step-image.jpg"
+                                                disabled={currentInstruction.images.length >= 4}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter') {
+                                                        e.preventDefault();
+                                                        const input = e.currentTarget;
+                                                        const url = input.value.trim();
+                                                        if (url && currentInstruction.images.length < 4) {
+                                                            setCurrentInstruction((prev) => ({
+                                                                ...prev,
+                                                                images: [...prev.images, url],
+                                                            }));
+                                                            input.value = '';
+                                                        }
+                                                    }
+                                                }}
+                                                className="border rounded-lg p-2 w-full focus:ring-2 focus:ring-blue-400 outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                                            />
+                                            <p className="text-xs text-gray-500">
+                                                💡 Nhấn Enter để thêm URL ảnh
+                                            </p>
+                                        </div>
+                                    )}
 
                                     {/* Preview ảnh instruction */}
                                     {currentInstruction.images.length > 0 && (
@@ -776,6 +882,13 @@ const EditRecipeModal: React.FC<EditRecipeModalProps> = ({ isOpen, onClose, reci
                                                 </div>
                                             ))}
                                         </div>
+                                    )}
+
+                                    {/* Thông báo nếu đạt giới hạn 4 ảnh */}
+                                    {currentInstruction.images.length >= 4 && (
+                                        <p className="text-sm text-orange-500 mt-2">
+                                            ⚠️ Đã đạt giới hạn 4 ảnh cho mỗi bước.
+                                        </p>
                                     )}
 
                                 </div>
