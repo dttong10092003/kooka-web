@@ -188,6 +188,10 @@ const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ isOpen, onClose }) => {
     const [isTagSelectorOpen, setIsTagSelectorOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    // Upload mode states
+    const [mainImageMode, setMainImageMode] = useState<'file' | 'url'>('file');
+    const [stepImageMode, setStepImageMode] = useState<'file' | 'url'>('file');
+
     const [recipe, setRecipe] = useState({
         name: "",
         ingredients: [] as string[],
@@ -211,6 +215,31 @@ const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ isOpen, onClose }) => {
         images: [],
         subTitle: [""],
     });
+
+    // Initial state for reset
+    const initialRecipeState = {
+        name: "",
+        ingredients: [] as string[],
+        tags: [] as string[],
+        short: "",
+        instructions: [] as Instruction[],
+        image: "",
+        video: "",
+        calories: 1,
+        time: 1,
+        size: 1,
+        difficulty: "",
+        cuisine: "",
+        category: "",
+        rate: 0,
+        numberOfRate: 0,
+    };
+
+    const initialInstructionState = {
+        title: "",
+        images: [],
+        subTitle: [""],
+    };
 
     useEffect(() => {
         dispatch(fetchCategories());
@@ -296,12 +325,32 @@ const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ isOpen, onClose }) => {
         e.preventDefault();
         setIsSubmitting(true);
         try {
+            // Kiểm tra và gán video mặc định nếu rỗng hoặc không hợp lệ
+            let videoUrl = 'https://youtube.com/watch?v=example7';
+            if (recipe.video && recipe.video.trim() !== '') {
+                const trimmedVideo = recipe.video.trim();
+                // Chỉ chấp nhận nếu là URL hợp lệ (bắt đầu bằng http:// hoặc https://)
+                if (trimmedVideo.startsWith('http://') || trimmedVideo.startsWith('https://')) {
+                    videoUrl = trimmedVideo;
+                }
+            }
+
+
+            const recipeData = {
+                ...recipe,
+                video: videoUrl,
+            };
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            await dispatch(addRecipe(recipe as any)).unwrap();
+            await dispatch(addRecipe(recipeData as any)).unwrap();
             toast.success("Thêm công thức thành công!", { duration: 2500 });
-            onClose();
+            // Reset form về trạng thái ban đầu
+            setRecipe(initialRecipeState);
+            setCurrentInstruction(initialInstructionState);
+            setMainImageMode('file');
+            setStepImageMode('file');
             // Refresh danh sách recipes
             await dispatch(fetchRecipes());
+            onClose();
         } catch (error: any) {
             const errorMessage = error?.message || error || 'Thêm công thức thất bại.';
             toast.error(errorMessage, { duration: 3000 });
@@ -406,25 +455,61 @@ const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ isOpen, onClose }) => {
                                         Ảnh minh hoạ
                                     </label>
 
-                                    {/* Ô chọn file */}
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={(e) => {
-                                            const file = e.target.files?.[0];
-                                            if (file) {
-                                                const reader = new FileReader();
-                                                reader.onloadend = () => {
-                                                    setRecipe((prev) => ({
-                                                        ...prev,
-                                                        image: reader.result as string, // base64 string
-                                                    }));
-                                                };
-                                                reader.readAsDataURL(file);
+                                    {/* Chọn mode upload */}
+                                    <div className="flex gap-2 mb-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => setMainImageMode('file')}
+                                            className={`flex-1 px-3 py-2 text-sm rounded-lg border transition ${mainImageMode === 'file'
+                                                    ? 'bg-orange-500 text-white border-orange-500'
+                                                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                                                }`}
+                                        >
+                                            📁 Upload
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setMainImageMode('url')}
+                                            className={`flex-1 px-3 py-2 text-sm rounded-lg border transition ${mainImageMode === 'url'
+                                                    ? 'bg-orange-500 text-white border-orange-500'
+                                                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                                                }`}
+                                        >
+                                            🔗 URL
+                                        </button>
+                                    </div>
+
+                                    {/* Upload file hoặc nhập URL */}
+                                    {mainImageMode === 'file' ? (
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={(e) => {
+                                                const file = e.target.files?.[0];
+                                                if (file) {
+                                                    const reader = new FileReader();
+                                                    reader.onloadend = () => {
+                                                        setRecipe((prev) => ({
+                                                            ...prev,
+                                                            image: reader.result as string, // base64 string
+                                                        }));
+                                                    };
+                                                    reader.readAsDataURL(file);
+                                                }
+                                            }}
+                                            className="block w-full text-sm text-gray-700 border border-gray-300 rounded-lg cursor-pointer bg-white focus:ring-2 focus:ring-orange-400 focus:border-transparent p-2"
+                                        />
+                                    ) : (
+                                        <input
+                                            type="url"
+                                            placeholder="https://example.com/image.jpg"
+                                            value={recipe.image}
+                                            onChange={(e) =>
+                                                setRecipe((prev) => ({ ...prev, image: e.target.value }))
                                             }
-                                        }}
-                                        className="block w-full text-sm text-gray-700 border border-gray-300 rounded-lg cursor-pointer bg-white focus:ring-2 focus:ring-orange-400 focus:border-transparent p-2"
-                                    />
+                                            className="border rounded-lg p-2 w-full focus:ring-2 focus:ring-orange-400 outline-none"
+                                        />
+                                    )}
 
                                     {/* Hiển thị preview ảnh */}
                                     {recipe.image && (
@@ -758,69 +843,85 @@ const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ isOpen, onClose }) => {
 
                                 <div>
                                     <label className="block text-sm text-gray-600 mb-1">
-                                        Ảnh minh hoạ bước nấu (tuỳ chọn)
+                                        Ảnh minh hoạ bước nấu (tuỳ chọn, tối đa 4 ảnh)
                                     </label>
 
-                                    {/* <input
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={(e) => {
-                                            const file = e.target.files?.[0];
-                                            if (file) {
-                                                const reader = new FileReader();
-                                                reader.onloadend = () => {
-                                                    setCurrentInstruction((prev) => ({
-                                                        ...prev,
-                                                        image: reader.result as string, // base64
-                                                    }));
-                                                };
-                                                reader.readAsDataURL(file);
-                                            }
-                                        }}
-                                        className="block w-full text-sm text-gray-700 border border-gray-300 rounded-lg cursor-pointer bg-white focus:ring-2 focus:ring-orange-400 focus:border-transparent p-2"
-                                    /> */}
+                                    {/* Chọn mode upload cho step */}
+                                    <div className="flex gap-2 mb-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => setStepImageMode('file')}
+                                            className={`flex-1 px-3 py-2 text-sm rounded-lg border transition ${stepImageMode === 'file'
+                                                    ? 'bg-orange-500 text-white border-orange-500'
+                                                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                                                }`}
+                                        >
+                                            📁 Upload
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setStepImageMode('url')}
+                                            className={`flex-1 px-3 py-2 text-sm rounded-lg border transition ${stepImageMode === 'url'
+                                                    ? 'bg-orange-500 text-white border-orange-500'
+                                                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                                                }`}
+                                        >
+                                            🔗 URL
+                                        </button>
+                                    </div>
 
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        multiple
-                                        onChange={(e) => {
-                                            const files = Array.from(e.target.files || []);
-                                            const remainingSlots = 4 - currentInstruction.images.length;
-                                            const filesToAdd = files.slice(0, remainingSlots);
+                                    {/* Upload file hoặc nhập URL */}
+                                    {stepImageMode === 'file' ? (
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            multiple
+                                            disabled={currentInstruction.images.length >= 4}
+                                            onChange={(e) => {
+                                                const files = Array.from(e.target.files || []);
+                                                const remainingSlots = 4 - currentInstruction.images.length;
+                                                const filesToAdd = files.slice(0, remainingSlots);
 
-                                            filesToAdd.forEach((file) => {
-                                                const reader = new FileReader();
-                                                reader.onloadend = () => {
-                                                    setCurrentInstruction((prev) => ({
-                                                        ...prev,
-                                                        images: [...prev.images, reader.result as string],
-                                                    }));
-                                                };
-                                                reader.readAsDataURL(file);
-                                            });
-                                        }}
-                                        className="block w-full text-sm text-gray-700 border border-gray-300 rounded-lg cursor-pointer bg-white focus:ring-2 focus:ring-orange-400 focus:border-transparent p-2"
-                                    />
-
-                                    {/* {currentInstruction.image && (
-                                        <div className="mt-3 relative inline-block">
-                                            <img
-                                                src={currentInstruction.image}
-                                                alt="Preview step"
-                                                className="w-40 h-28 object-cover rounded-lg border"
+                                                filesToAdd.forEach((file) => {
+                                                    const reader = new FileReader();
+                                                    reader.onloadend = () => {
+                                                        setCurrentInstruction((prev) => ({
+                                                            ...prev,
+                                                            images: [...prev.images, reader.result as string],
+                                                        }));
+                                                    };
+                                                    reader.readAsDataURL(file);
+                                                });
+                                            }}
+                                            className="block w-full text-sm text-gray-700 border border-gray-300 rounded-lg cursor-pointer bg-white focus:ring-2 focus:ring-orange-400 focus:border-transparent p-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        />
+                                    ) : (
+                                        <div className="space-y-2">
+                                            <input
+                                                type="url"
+                                                placeholder="https://example.com/step-image.jpg"
+                                                disabled={currentInstruction.images.length >= 4}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter') {
+                                                        e.preventDefault();
+                                                        const input = e.currentTarget;
+                                                        const url = input.value.trim();
+                                                        if (url && currentInstruction.images.length < 4) {
+                                                            setCurrentInstruction((prev) => ({
+                                                                ...prev,
+                                                                images: [...prev.images, url],
+                                                            }));
+                                                            input.value = '';
+                                                        }
+                                                    }
+                                                }}
+                                                className="border rounded-lg p-2 w-full focus:ring-2 focus:ring-orange-400 outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                                             />
-                                            <button
-                                                type="button"
-                                                onClick={() =>
-                                                    setCurrentInstruction((prev) => ({ ...prev, image: "" }))
-                                                }
-                                                className="absolute top-1 right-1 bg-white/80 hover:bg-white text-red-500 rounded-full p-1 shadow-md transition"
-                                            >
-                                                <X size={14} />
-                                            </button>
+                                            <p className="text-xs text-gray-500">
+                                                💡 Nhấn Enter để thêm URL ảnh
+                                            </p>
                                         </div>
-                                    )} */}
+                                    )}
 
                                     {/* Preview ảnh */}
                                     {currentInstruction.images && currentInstruction.images.length > 0 && (
@@ -853,7 +954,7 @@ const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ isOpen, onClose }) => {
                                 {/* Thông báo nếu đạt giới hạn 4 ảnh */}
                                 {currentInstruction.images.length >= 4 && (
                                     <p className="text-sm text-orange-500 mt-2">
-                                        ⚠️ Bạn chỉ có thể chọn tối đa 4 ảnh cho mỗi bước.
+                                        ⚠️ Đã đạt giới hạn 4 ảnh cho mỗi bước.
                                     </p>
                                 )}
 
