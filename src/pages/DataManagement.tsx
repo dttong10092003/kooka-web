@@ -18,7 +18,7 @@ import {
     updateIngredient,
     updateIngredientType,
 } from '../redux/slices/recipeSlice';
-import { Edit, Trash2, Plus, Search, X, Check } from 'lucide-react';
+import { Edit, Trash2, Plus, Search, X, Check, ChevronLeft, ChevronRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 import AddCategoryModal from '../components/AddCategoryModal';
 import AddCuisineModal from '../components/AddCuisineModal';
@@ -49,6 +49,10 @@ const DataManagement: React.FC = () => {
     
     // Expanded ingredient types
     const [expandedTypes, setExpandedTypes] = useState<Set<string>>(new Set());
+    
+    // Pagination states
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
 
     useEffect(() => {
         dispatch(fetchCategories());
@@ -192,6 +196,28 @@ const DataManagement: React.FC = () => {
         )
     );
 
+    // Pagination logic for non-hierarchical data
+    const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const currentData = filteredData.slice(startIndex, endIndex);
+
+    // Pagination logic for hierarchical data (ingredient types)
+    const totalTypePages = Math.ceil(filteredIngredientTypes.length / itemsPerPage);
+    const currentIngredientTypes = filteredIngredientTypes.slice(
+        (currentPage - 1) * itemsPerPage,
+        currentPage * itemsPerPage
+    );
+
+    const handlePageChange = (page: number) => {
+        setCurrentPage(page);
+    };
+
+    // Reset to first page when search query or tab changes
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery, activeTab]);
+
     const getTabLabel = (tab: string) => {
         switch (tab) {
             case 'categories':
@@ -279,8 +305,8 @@ const DataManagement: React.FC = () => {
                         {isHierarchical ? (
                             // Hierarchical view for ingredients
                             <div className="divide-y divide-gray-200">
-                                {filteredIngredientTypes.length > 0 ? (
-                                    filteredIngredientTypes.map((ingredientType, typeIndex) => {
+                                {currentIngredientTypes.length > 0 ? (
+                                    currentIngredientTypes.map((ingredientType, typeIndex) => {
                                         const typeIngredients = getIngredientsByType(ingredientType._id).filter(ing =>
                                             !searchQuery || ing.name.toLowerCase().includes(searchQuery.toLowerCase())
                                         );
@@ -466,11 +492,11 @@ const DataManagement: React.FC = () => {
                                     </tr>
                                 </thead>
                                 <tbody className="bg-white divide-y divide-gray-200">
-                                    {filteredData.length > 0 ? (
-                                        filteredData.map((item, index) => (
+                                    {currentData.length > 0 ? (
+                                        currentData.map((item, index) => (
                                             <tr key={item._id} className="hover:bg-gray-50 transition-colors">
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                    {index + 1}
+                                                    {startIndex + index + 1}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap">
                                                     {editingId === item._id ? (
@@ -540,23 +566,101 @@ const DataManagement: React.FC = () => {
                         )}
                     </div>
 
-                    {/* Stats */}
-                    <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
-                        <p className="text-sm text-gray-600">
-                            {isHierarchical ? (
-                                <>
-                                    Tổng số: <span className="font-semibold text-gray-900">{filteredIngredientTypes.length}</span> loại nguyên liệu, 
-                                    <span className="font-semibold text-gray-900 ml-1">{ingredients.length}</span> nguyên liệu
-                                </>
-                            ) : (
-                                <>
-                                    Tổng số: <span className="font-semibold text-gray-900">{filteredData.length}</span>{' '}
-                                    {getTabLabel(activeTab).toLowerCase()}
-                                </>
-                            )}
-                            {searchQuery && ` (đã lọc)`}
-                        </p>
-                    </div>
+                    {/* Pagination Controls */}
+                    {((isHierarchical && filteredIngredientTypes.length > itemsPerPage) || 
+                      (!isHierarchical && filteredData.length > itemsPerPage)) && (
+                        <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
+                            <div className="flex items-center justify-between">
+                                <div className="text-sm text-gray-600">
+                                    {isHierarchical ? (
+                                        <>
+                                            Tổng số: <span className="font-semibold text-gray-900">{filteredIngredientTypes.length}</span> loại nguyên liệu
+                                        </>
+                                    ) : (
+                                        <>
+                                            Tổng số: <span className="font-semibold text-gray-900">{filteredData.length}</span>{' '}
+                                            {getTabLabel(activeTab).toLowerCase()}
+                                        </>
+                                    )}
+                                    {searchQuery && ` (đã lọc)`}
+                                </div>
+
+                                <div className="flex items-center space-x-2">
+                                    <button
+                                        onClick={() => handlePageChange(currentPage - 1)}
+                                        disabled={currentPage === 1}
+                                        className="p-2 rounded-lg border border-gray-300 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                    >
+                                        <ChevronLeft className="h-5 w-5 text-gray-600" />
+                                    </button>
+
+                                    <div className="flex items-center space-x-1">
+                                        {Array.from({ 
+                                            length: Math.min(
+                                                isHierarchical ? totalTypePages : totalPages, 
+                                                5
+                                            ) 
+                                        }, (_, i) => {
+                                            const maxPages = isHierarchical ? totalTypePages : totalPages;
+                                            let pageNum: number;
+                                            if (maxPages <= 5) {
+                                                pageNum = i + 1;
+                                            } else if (currentPage <= 3) {
+                                                pageNum = i + 1;
+                                            } else if (currentPage >= maxPages - 2) {
+                                                pageNum = maxPages - 4 + i;
+                                            } else {
+                                                pageNum = currentPage - 2 + i;
+                                            }
+
+                                            return (
+                                                <button
+                                                    key={pageNum}
+                                                    onClick={() => handlePageChange(pageNum)}
+                                                    className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                                                        currentPage === pageNum
+                                                            ? "bg-orange-500 text-white"
+                                                            : "border border-gray-300 text-gray-700 hover:bg-gray-100"
+                                                    }`}
+                                                >
+                                                    {pageNum}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+
+                                    <button
+                                        onClick={() => handlePageChange(currentPage + 1)}
+                                        disabled={currentPage === (isHierarchical ? totalTypePages : totalPages)}
+                                        className="p-2 rounded-lg border border-gray-300 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                    >
+                                        <ChevronRight className="h-5 w-5 text-gray-600" />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Stats - Only show when no pagination */}
+                    {((isHierarchical && filteredIngredientTypes.length <= itemsPerPage) || 
+                      (!isHierarchical && filteredData.length <= itemsPerPage)) && (
+                        <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
+                            <p className="text-sm text-gray-600">
+                                {isHierarchical ? (
+                                    <>
+                                        Tổng số: <span className="font-semibold text-gray-900">{filteredIngredientTypes.length}</span> loại nguyên liệu, 
+                                        <span className="font-semibold text-gray-900 ml-1">{ingredients.length}</span> nguyên liệu
+                                    </>
+                                ) : (
+                                    <>
+                                        Tổng số: <span className="font-semibold text-gray-900">{filteredData.length}</span>{' '}
+                                        {getTabLabel(activeTab).toLowerCase()}
+                                    </>
+                                )}
+                                {searchQuery && ` (đã lọc)`}
+                            </p>
+                        </div>
+                    )}
                 </div>
 
             {/* Modals */}

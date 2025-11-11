@@ -8,8 +8,8 @@ import {
     fetchCuisines,
     fetchIngredients,
     fetchTags,
-    fetchRecipes,
     updateRecipe,
+    getRecipeById,
     type Recipe
 } from '../redux/slices/recipeSlice';
 import AddCategoryModal from './AddCategoryModal';
@@ -350,11 +350,12 @@ const EditRecipeModal: React.FC<EditRecipeModalProps> = ({ isOpen, onClose, reci
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             await dispatch(updateRecipe({ id: recipe._id, recipe: recipeData as any })).unwrap();
             toast.success("Cập nhật công thức thành công!", { duration: 2500 });
+            
+            // Fetch lại recipe vừa cập nhật để có đầy đủ thông tin (cuisine, category populated)
+            await dispatch(getRecipeById(recipe._id));
+            
             setUpdateConfirmOpen(false);
             onClose();
-            
-            // Refresh recipes list after successful update
-            await dispatch(fetchRecipes());
         } catch (error: any) {
             console.error("Failed to update recipe:", error);
             const errorMessage = error?.message || error || 'Cập nhật công thức thất bại. Vui lòng thử lại.';

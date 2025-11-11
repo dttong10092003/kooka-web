@@ -7,7 +7,7 @@ import {
     fetchCuisines,
     fetchIngredients,
     fetchTags,
-    fetchRecipes,
+    getRecipeById,
 } from "../redux/slices/recipeSlice";
 import type { RootState, AppDispatch } from "../redux/store";
 import AddCategoryModal from "./AddCategoryModal";
@@ -341,15 +341,19 @@ const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ isOpen, onClose }) => {
                 video: videoUrl,
             };
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            await dispatch(addRecipe(recipeData as any)).unwrap();
+            const result = await dispatch(addRecipe(recipeData as any)).unwrap();
             toast.success("Thêm công thức thành công!", { duration: 2500 });
+            
+            // Fetch lại recipe vừa tạo để có đầy đủ thông tin (cuisine, category populated)
+            if (result._id) {
+                await dispatch(getRecipeById(result._id));
+            }
+            
             // Reset form về trạng thái ban đầu
             setRecipe(initialRecipeState);
             setCurrentInstruction(initialInstructionState);
             setMainImageMode('file');
             setStepImageMode('file');
-            // Refresh danh sách recipes
-            await dispatch(fetchRecipes());
             onClose();
         } catch (error: any) {
             const errorMessage = error?.message || error || 'Thêm công thức thất bại.';
