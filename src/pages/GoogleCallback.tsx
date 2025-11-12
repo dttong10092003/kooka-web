@@ -11,40 +11,69 @@ const GoogleCallback: React.FC = () => {
     if (hasProcessed.current) return
     hasProcessed.current = true
 
-    // Parse URL parameters hoặc handle kết quả từ Google OAuth
+    // Parse URL parameters từ backend
     const urlParams = new URLSearchParams(location.search)
     const token = urlParams.get('token')
+    const userParam = urlParams.get('user')
     const error = urlParams.get('error')
 
-    console.log("🔍 GoogleCallback - Processing:", { token: token ? "exists" : "none", error, isPopup: !!window.opener })
+    console.log("🔍 GoogleCallback - Processing:", { 
+      token: token ? "exists" : "none", 
+      user: userParam ? "exists" : "none",
+      error, 
+      isPopup: !!window.opener 
+    })
 
-    if (window.opener) {
-      if (token) {
-        // Parse user data từ URL hoặc từ response
-        const userData = {
-          // Bạn có thể decode JWT token ở đây để lấy user info
-          token: token
-        }
-        
-        // Gửi thông tin thành công về parent window
-        window.opener.postMessage({
-          type: 'GOOGLE_AUTH_SUCCESS',
-          payload: userData
-        }, window.location.origin)
-      } else if (error) {
-        // Gửi lỗi về parent window
+    // Xử lý lỗi từ backend
+    if (error) {
+      console.error("❌ Google login error:", error)
+      if (window.opener) {
         window.opener.postMessage({
           type: 'GOOGLE_AUTH_ERROR',
           error: error
         }, window.location.origin)
+        setTimeout(() => window.close(), 500)
+      } else {
+        navigate('/login?error=' + encodeURIComponent(error), { replace: true })
       }
-      
-      // Đóng popup
-      setTimeout(() => window.close(), 500)
+      return
+    }
+
+    // Xử lý thành công
+    if (token && userParam) {
+      try {
+        // Parse user data từ URL
+        const user = JSON.parse(decodeURIComponent(userParam))
+        
+        console.log("✅ Google login success:", { userId: user._id, email: user.email })
+
+        if (window.opener) {
+          // Nếu là popup, gửi data về parent window
+          window.opener.postMessage({
+            type: 'GOOGLE_AUTH_SUCCESS',
+            payload: { token, user }
+          }, window.location.origin)
+          
+          // Đóng popup
+          setTimeout(() => window.close(), 500)
+        } else {
+          // Nếu là direct navigation, lưu vào localStorage và redirect
+          localStorage.setItem('token', token)
+          localStorage.setItem('user', JSON.stringify(user))
+          
+          console.log("💾 Saved to localStorage, redirecting to home...")
+          
+          // Redirect về trang chủ
+          window.location.href = '/'
+        }
+      } catch (parseError) {
+        console.error("❌ Failed to parse user data:", parseError)
+        navigate('/login?error=Invalid user data', { replace: true })
+      }
     } else {
-      // Nếu không phải popup, redirect về trang chủ ngay lập tức
-      // Replace thay vì push để tránh quay lại trang này
-      navigate('/', { replace: true })
+      // Không có token hoặc user, redirect về login
+      console.warn("⚠️ Missing token or user data")
+      navigate('/login', { replace: true })
     }
   }, []) // Empty dependency array - chỉ chạy 1 lần
 
