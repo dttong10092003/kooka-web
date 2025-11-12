@@ -74,15 +74,17 @@ const AllRecipes = () => {
   }, [categoryNameFromState, categories]);
 
   useEffect(() => {
-    // Fetch recipes based on type
+    // Fetch recipes based on type - only if not already loaded from App
     if (isAllRecipes) {
-      dispatch(fetchRecipes());
+      if (allRecipes.length === 0) {
+        dispatch(fetchRecipes());
+      }
     } else if (isNewRecipes) {
       dispatch(fetchNewestRecipes());
     } else {
       dispatch(fetchPopularRecipes());
     }
-  }, [dispatch, isNewRecipes, isAllRecipes]);
+  }, [dispatch, isNewRecipes, isAllRecipes, allRecipes.length]);
 
   // Check favorites for displayed recipes when user is logged in
   useEffect(() => {

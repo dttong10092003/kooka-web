@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "./redux/store";
 import { loadUser } from "./redux/slices/authSlice";
 import { fetchProfile } from "./redux/slices/userSlice";
-import { fetchTopRatedRecipes, fetchTrendingRecipes } from "./redux/slices/recipeSlice";
+import { fetchTopRatedRecipes, fetchTrendingRecipes, fetchRecipes } from "./redux/slices/recipeSlice";
 import { fetchTopComments, fetchNewestComments } from "./redux/slices/commentSlice";
 import { fetchMostFavorited } from "./redux/slices/favoriteSlice";
 import Home from "./pages/Home";
@@ -39,13 +39,19 @@ function App() {
   const dispatch = useDispatch<AppDispatch>();
   const { token, user } = useSelector((state: RootState) => state.auth);
   const { profile } = useSelector((state: RootState) => state.user);
-  const { topRatedRecipes, trendingRecipes } = useSelector((state: RootState) => state.recipes);
+  const { topRatedRecipes, trendingRecipes, recipes } = useSelector((state: RootState) => state.recipes);
   const { topComments, newestComments } = useSelector((state: RootState) => state.comments);
   const { mostFavorited } = useSelector((state: RootState) => state.favorites);
 
-  // Chỉ prefetch banner (top-rated recipes), trending, top comments, newest comments và most favorited để giảm tải bộ nhớ
-  // Newest và Popular recipes sẽ được lazy load khi user vào Home page
+  // Load all necessary data once when app starts up
   useEffect(() => {
+    // Load all recipes first - this is the main source of truth for recipe data
+    if (recipes.length === 0) {
+      console.log("🚀 Loading all recipes on app startup...");
+      dispatch(fetchRecipes());
+    }
+    
+    // Load other data for homepage
     if (topRatedRecipes.length === 0) {
       dispatch(fetchTopRatedRecipes(6));
     }
@@ -61,7 +67,7 @@ function App() {
     if (mostFavorited.length === 0) {
       dispatch(fetchMostFavorited());
     }
-  }, [dispatch, topRatedRecipes.length, trendingRecipes.length, topComments.length, newestComments.length, mostFavorited.length]);
+  }, [dispatch, recipes.length, topRatedRecipes.length, trendingRecipes.length, topComments.length, newestComments.length, mostFavorited.length]);
 
   // Auto-load user data khi có token nhưng chưa có user
   useEffect(() => {

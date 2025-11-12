@@ -63,11 +63,13 @@ const AdminDashboard: React.FC = () => {
     const dispatch = useDispatch<AppDispatch>()
     const { recipes, loading, error, newestRecipes } = useSelector((state: RootState) => state.recipes)
 
-    // Load initial data
+    // Load initial data - only fetch if not already loaded from App
     useEffect(() => {
-        dispatch(fetchRecipes())
+        if (recipes.length === 0) {
+            dispatch(fetchRecipes())
+        }
         dispatch(fetchNewestRecipes(4))
-    }, [dispatch])
+    }, [dispatch, recipes.length])
 
     // Load dashboard data
     useEffect(() => {
