@@ -1,5 +1,6 @@
 import { Facebook, Twitter, Instagram, Youtube, Mail, Phone, MapPin, ChefHat, Globe, ChevronDown } from "lucide-react";
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useLanguage } from "../contexts/LanguageContext";
 
 export default function Footer() {
@@ -37,10 +38,26 @@ export default function Footer() {
         <div>
           <h3 className="text-white font-semibold mb-4">{t("footer.quickLinks")}</h3>
           <ul className="space-y-2">
-            <li><a href="#" className="hover:text-white transition">{t("footer.allRecipes")}</a></li>
-            <li><a href="#" className="hover:text-white transition">{t("footer.popularIngredients")}</a></li>
-            <li><a href="#" className="hover:text-white transition">{t("footer.mealPlanning")}</a></li>
-            <li><a href="#" className="hover:text-white transition">{t("footer.cookingTips")}</a></li>
+            <li>
+              <Link to="/recipes/all" className="hover:text-white transition">
+                {t("footer.allRecipes")}
+              </Link>
+            </li>
+            <li>
+              <Link to="/" className="hover:text-white transition">
+                {t("footer.popularIngredients")}
+              </Link>
+            </li>
+            <li>
+              <Link to="/meal-planner" className="hover:text-white transition">
+                {t("footer.mealPlanning")}
+              </Link>
+            </li>
+            <li>
+              <Link to="/" className="hover:text-white transition">
+                {t("footer.cookingTips")}
+              </Link>
+            </li>
           </ul>
         </div>
 
@@ -48,11 +65,51 @@ export default function Footer() {
         <div>
           <h3 className="text-white font-semibold mb-4">{t("header.categories")}</h3>
           <ul className="space-y-2">
-            <li><a href="#" className="hover:text-white transition">{t("footer.breakfast")}</a></li>
-            <li><a href="#" className="hover:text-white transition">{t("footer.lunch")}</a></li>
-            <li><a href="#" className="hover:text-white transition">{t("footer.dinner")}</a></li>
-            <li><a href="#" className="hover:text-white transition">{t("footer.desserts")}</a></li>
-            <li><a href="#" className="hover:text-white transition">{t("footer.vegetarian")}</a></li>
+            <li>
+              <Link 
+                to="/recipes/all" 
+                state={{ categoryName: t("footer.breakfast") }}
+                className="hover:text-white transition"
+              >
+                {t("footer.breakfast")}
+              </Link>
+            </li>
+            <li>
+              <Link 
+                to="/recipes/all" 
+                state={{ categoryName: t("footer.lunch") }}
+                className="hover:text-white transition"
+              >
+                {t("footer.lunch")}
+              </Link>
+            </li>
+            <li>
+              <Link 
+                to="/recipes/all" 
+                state={{ categoryName: t("footer.dinner") }}
+                className="hover:text-white transition"
+              >
+                {t("footer.dinner")}
+              </Link>
+            </li>
+            <li>
+              <Link 
+                to="/recipes/all" 
+                state={{ categoryName: t("footer.desserts") }}
+                className="hover:text-white transition"
+              >
+                {t("footer.desserts")}
+              </Link>
+            </li>
+            <li>
+              <Link 
+                to="/recipes/all" 
+                state={{ categoryName: t("footer.vegetarian") }}
+                className="hover:text-white transition"
+              >
+                {t("footer.vegetarian")}
+              </Link>
+            </li>
           </ul>
         </div>
 
@@ -103,9 +160,9 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto mt-10 border-t border-gray-700 pt-6 flex flex-col md:flex-row items-center justify-between text-sm text-gray-400">
         <div className="mb-4 md:mb-0">© 2025 Kooka. {t("footer.allRightsReserved")}</div>
         <div className="flex gap-6">
-          <a href="#" className="hover:text-white transition">{t("footer.privacyPolicy")}</a>
-          <a href="#" className="hover:text-white transition">{t("footer.termsOfService")}</a>
-          <a href="#" className="hover:text-white transition">{t("footer.cookiePolicy")}</a>
+          <Link to="/" className="hover:text-white transition">{t("footer.privacyPolicy")}</Link>
+          <Link to="/" className="hover:text-white transition">{t("footer.termsOfService")}</Link>
+          <Link to="/" className="hover:text-white transition">{t("footer.cookiePolicy")}</Link>
         </div>
       </div>
     </footer>

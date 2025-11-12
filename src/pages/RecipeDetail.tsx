@@ -8,6 +8,7 @@ import { toggleFavorite, checkUserFavorited } from '../redux/slices/favoriteSlic
 import CommentSection from '../components/CommentSection';
 import axiosInstance from '../utils/axiosInstance';
 import { useLanguage } from '../contexts/LanguageContext';
+import toast from 'react-hot-toast';
 
 export default function RecipeDetail() {
     const { id } = useParams<{ id: string }>();
@@ -72,9 +73,41 @@ export default function RecipeDetail() {
         }
         if (id) {
             try {
-                await dispatch(toggleFavorite({ recipeId: id })).unwrap();
+                const result = await dispatch(toggleFavorite({ recipeId: id })).unwrap();
+                
+                // Show toast based on action
+                if (result.message?.includes('added') || result.message?.includes('thêm')) {
+                    toast.success(
+                        language === 'vi' 
+                            ? '❤️ Đã thêm vào yêu thích!' 
+                            : '❤️ Added to favorites!',
+                        {
+                            duration: 2000,
+                            position: 'top-center',
+                        }
+                    );
+                } else {
+                    toast.success(
+                        language === 'vi' 
+                            ? '💔 Đã bỏ yêu thích!' 
+                            : '💔 Removed from favorites!',
+                        {
+                            duration: 2000,
+                            position: 'top-center',
+                        }
+                    );
+                }
             } catch (error) {
                 console.error("Failed to toggle favorite:", error);
+                toast.error(
+                    language === 'vi' 
+                        ? 'Có lỗi xảy ra. Vui lòng thử lại!' 
+                        : 'An error occurred. Please try again!',
+                    {
+                        duration: 2000,
+                        position: 'top-center',
+                    }
+                );
             }
         }
     };

@@ -848,21 +848,21 @@ const MealPlannerPage: React.FC = () => {
       />
       
       {/* Hero Section */}
-      <div className="bg-gradient-to-br from-green-50 via-white to-blue-50 py-16 lg:py-20">
+      <div className="bg-gradient-to-br from-green-50 via-white to-blue-50 py-8 md:py-12 lg:py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <div className="flex justify-center mb-8">
-              <div className="bg-gradient-to-r from-green-500 to-blue-500 p-4 rounded-2xl">
-                <Calendar className="h-12 w-12 text-white" />
+          <div className="text-center mb-8 md:mb-12">
+            <div className="flex justify-center mb-4 md:mb-8">
+              <div className="bg-gradient-to-r from-green-500 to-blue-500 p-3 md:p-4 rounded-xl md:rounded-2xl">
+                <Calendar className="h-8 w-8 md:h-10 md:w-10 lg:h-12 lg:w-12 text-white" />
               </div>
             </div>
-            <h1 className="text-4xl lg:text-6xl font-bold text-gray-900 mb-6">
+            <h1 className="text-3xl md:text-4xl lg:text-6xl font-bold text-gray-900 mb-4 md:mb-6">
               {language === 'vi' ? 'Lập Kế Hoạch' : 'Meal'}
               <span className="bg-gradient-to-r from-green-500 to-blue-500 bg-clip-text text-transparent block">
                 {language === 'vi' ? 'Bữa Ăn' : 'Planner'}
               </span>
             </h1>
-            <p className="text-lg lg:text-xl text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-sm md:text-base lg:text-xl text-gray-600 mb-6 md:mb-8 max-w-2xl mx-auto leading-relaxed px-4">
               {language === 'vi' 
                 ? 'Lập kế hoạch bữa ăn thông minh, tiết kiệm thời gian và tạo danh sách mua sắm tự động'
                 : 'Plan your meals smartly, save time, and generate automatic shopping lists'
@@ -871,66 +871,68 @@ const MealPlannerPage: React.FC = () => {
           </div>
 
           {/* Week Stats */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-8">
-            <div className="bg-white rounded-2xl shadow-lg p-6 text-center">
-              <div className="bg-gradient-to-r from-green-500 to-teal-500 p-3 rounded-xl inline-block mb-4">
-                <ChefHat className="h-6 w-6 text-white" />
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 lg:gap-6 mb-6 md:mb-8">
+            <div className="bg-white rounded-xl md:rounded-2xl shadow-lg p-4 md:p-6 text-center">
+              <div className="bg-gradient-to-r from-green-500 to-teal-500 p-2 md:p-3 rounded-lg md:rounded-xl inline-block mb-2 md:mb-4">
+                <ChefHat className="h-4 w-4 md:h-5 md:w-5 lg:h-6 lg:w-6 text-white" />
               </div>
-              <div className="text-2xl font-bold text-gray-900 mb-1">{stats.totalRecipes}</div>
-              <div className="text-sm text-gray-600">{language === 'vi' ? 'Công Thức' : 'Recipes'}</div>
+              <div className="text-xl md:text-2xl font-bold text-gray-900 mb-0.5 md:mb-1">{stats.totalRecipes}</div>
+              <div className="text-xs md:text-sm text-gray-600">{language === 'vi' ? 'Công Thức' : 'Recipes'}</div>
             </div>
-            <div className="bg-white rounded-2xl shadow-lg p-6 text-center">
-              <div className="bg-gradient-to-r from-blue-500 to-purple-500 p-3 rounded-xl inline-block mb-4">
-                <Clock className="h-6 w-6 text-white" />
+            <div className="bg-white rounded-xl md:rounded-2xl shadow-lg p-4 md:p-6 text-center">
+              <div className="bg-gradient-to-r from-blue-500 to-purple-500 p-2 md:p-3 rounded-lg md:rounded-xl inline-block mb-2 md:mb-4">
+                <Clock className="h-4 w-4 md:h-5 md:w-5 lg:h-6 lg:w-6 text-white" />
               </div>
-              <div className="text-2xl font-bold text-gray-900 mb-1">{stats.totalCookTime}m</div>
-              <div className="text-sm text-gray-600">{language === 'vi' ? 'Thời Gian' : 'Cook Time'}</div>
+              <div className="text-xl md:text-2xl font-bold text-gray-900 mb-0.5 md:mb-1">{stats.totalCookTime}m</div>
+              <div className="text-xs md:text-sm text-gray-600">{language === 'vi' ? 'Thời Gian' : 'Cook Time'}</div>
             </div>
-            <div className="bg-white rounded-2xl shadow-lg p-6 text-center">
-              <div className="bg-gradient-to-r from-yellow-500 to-orange-500 p-3 rounded-xl inline-block mb-4">
-                <Star className="h-6 w-6 text-white" />
+            <div className="bg-white rounded-xl md:rounded-2xl shadow-lg p-4 md:p-6 text-center">
+              <div className="bg-gradient-to-r from-yellow-500 to-orange-500 p-2 md:p-3 rounded-lg md:rounded-xl inline-block mb-2 md:mb-4">
+                <Star className="h-4 w-4 md:h-5 md:w-5 lg:h-6 lg:w-6 text-white" />
               </div>
-              <div className="text-2xl font-bold text-gray-900 mb-1">{stats.avgRating}</div>
-              <div className="text-sm text-gray-600">{language === 'vi' ? 'Đánh Giá TB' : 'Avg Rating'}</div>
+              <div className="text-xl md:text-2xl font-bold text-gray-900 mb-0.5 md:mb-1">{stats.avgRating}</div>
+              <div className="text-xs md:text-sm text-gray-600">{language === 'vi' ? 'Đánh Giá TB' : 'Avg Rating'}</div>
             </div>
-            <div className="bg-white rounded-2xl shadow-lg p-6 text-center">
-              <div className="bg-gradient-to-r from-pink-500 to-rose-500 p-3 rounded-xl inline-block mb-4">
-                <Calendar className="h-6 w-6 text-white" />
+            <div className="bg-white rounded-xl md:rounded-2xl shadow-lg p-4 md:p-6 text-center">
+              <div className="bg-gradient-to-r from-pink-500 to-rose-500 p-2 md:p-3 rounded-lg md:rounded-xl inline-block mb-2 md:mb-4">
+                <Calendar className="h-4 w-4 md:h-5 md:w-5 lg:h-6 lg:w-6 text-white" />
               </div>
-              <div className="text-2xl font-bold text-gray-900 mb-1">{stats.plannedDays}</div>
-              <div className="text-sm text-gray-600">{language === 'vi' ? 'Ngày Đã Lập' : 'Planned Days'}</div>
+              <div className="text-xl md:text-2xl font-bold text-gray-900 mb-0.5 md:mb-1">{stats.plannedDays}</div>
+              <div className="text-xs md:text-sm text-gray-600">{language === 'vi' ? 'Ngày Đã Lập' : 'Planned Days'}</div>
             </div>
           </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8 lg:py-12">
         {/* Tabs */}
-        <div className="mb-8">
+        <div className="mb-6 md:mb-8">
           <div className="border-b border-gray-200">
-            <nav className="-mb-px flex space-x-8">
+            <nav className="-mb-px flex space-x-4 md:space-x-8">
               <button
                 onClick={() => setActiveTab('planner')}
-                className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 transition-all duration-200 ${
+                className={`py-3 md:py-4 px-1 border-b-2 font-medium text-xs md:text-sm flex items-center space-x-1.5 md:space-x-2 transition-all duration-200 ${
                   activeTab === 'planner'
                     ? 'border-green-500 text-green-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
-                <Calendar className="h-5 w-5" />
-                <span>{language === 'vi' ? 'Lập Kế Hoạch' : 'Meal Planner'}</span>
+                <Calendar className="h-4 w-4 md:h-5 md:w-5" />
+                <span className="hidden sm:inline">{language === 'vi' ? 'Lập Kế Hoạch' : 'Meal Planner'}</span>
+                <span className="sm:hidden">{language === 'vi' ? 'Kế Hoạch' : 'Planner'}</span>
               </button>
               <button
                 onClick={() => setActiveTab('shopping')}
-                className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 transition-all duration-200 ${
+                className={`py-3 md:py-4 px-1 border-b-2 font-medium text-xs md:text-sm flex items-center space-x-1.5 md:space-x-2 transition-all duration-200 ${
                   activeTab === 'shopping'
                     ? 'border-green-500 text-green-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
-                <ShoppingCart className="h-5 w-5" />
-                <span>{language === 'vi' ? 'Danh Sách Mua Sắm' : 'Shopping List'}</span>
+                <ShoppingCart className="h-4 w-4 md:h-5 md:w-5" />
+                <span className="hidden sm:inline">{language === 'vi' ? 'Danh Sách Mua Sắm' : 'Shopping List'}</span>
+                <span className="sm:hidden">{language === 'vi' ? 'Mua Sắm' : 'Shopping'}</span>
               </button>
             </nav>
           </div>
@@ -940,8 +942,8 @@ const MealPlannerPage: React.FC = () => {
         {activeTab === 'planner' && (
           <div className="space-y-8">
             {/* Week Navigation */}
-            <div className="bg-white rounded-2xl shadow-lg p-6">
-              <div className="flex items-center justify-between mb-4">
+            <div className="bg-white rounded-xl md:rounded-2xl shadow-lg p-4 md:p-6">
+              <div className="flex items-center justify-between mb-3 md:mb-4">
                 {viewMode === 'browse' ? (
                   <button
                     onClick={goToPreviousWeek}
@@ -971,7 +973,7 @@ const MealPlannerPage: React.FC = () => {
                 )}
 
                 <div ref={mealPlanTableRef} className="text-center flex-1">
-                  <h2 className="text-xl font-bold text-gray-900">
+                  <h2 className="text-base md:text-lg lg:text-xl font-bold text-gray-900">
                     {viewMode === 'viewing' && currentPlan ? (
                       <>
                         {new Date(currentPlan.startDate).toLocaleDateString(language === 'vi' ? 'vi-VN' : 'en-US', { 
@@ -996,7 +998,7 @@ const MealPlannerPage: React.FC = () => {
                       </>
                     )}
                   </h2>
-                  <p className="text-gray-600 text-sm mt-1">
+                  <p className="text-gray-600 text-xs md:text-sm mt-1">
                     {viewMode === 'browse' && (
                       selectedWeek === 0 
                         ? (language === 'vi' ? 'Tuần này' : 'This week')
@@ -1052,30 +1054,32 @@ const MealPlannerPage: React.FC = () => {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-0 pt-3 md:pt-4 border-t border-gray-200">
                 <div className="flex items-center space-x-2">
                   {viewMode === 'browse' && (
                     <button
                       onClick={startCreatingNewPlan}
-                      className="px-4 py-2 bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-lg hover:from-green-600 hover:to-blue-600 transition-all duration-200 flex items-center space-x-2"
+                      className="px-3 md:px-4 py-2 bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-lg hover:from-green-600 hover:to-blue-600 transition-all duration-200 flex items-center justify-center space-x-1.5 md:space-x-2 text-xs md:text-sm"
                     >
-                      <Plus className="h-4 w-4" />
-                      <span>{language === 'vi' ? 'Tạo Kế Hoạch Mới' : 'Create New Plan'}</span>
+                      <Plus className="h-3.5 w-3.5 md:h-4 md:w-4" />
+                      <span className="hidden sm:inline">{language === 'vi' ? 'Tạo Kế Hoạch Mới' : 'Create New Plan'}</span>
+                      <span className="sm:hidden">{language === 'vi' ? 'Tạo Mới' : 'Create'}</span>
                     </button>
                   )}
                   {viewMode === 'viewing' && (
                     <button
                       onClick={startCreatingNewPlan}
-                      className="px-4 py-2 bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-lg hover:from-green-600 hover:to-blue-600 transition-all duration-200 flex items-center space-x-2"
+                      className="px-3 md:px-4 py-2 bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-lg hover:from-green-600 hover:to-blue-600 transition-all duration-200 flex items-center justify-center space-x-1.5 md:space-x-2 text-xs md:text-sm"
                     >
-                      <Plus className="h-4 w-4" />
-                      <span>{language === 'vi' ? 'Tạo Kế Hoạch Mới' : 'Create New Plan'}</span>
+                      <Plus className="h-3.5 w-3.5 md:h-4 md:w-4" />
+                      <span className="hidden sm:inline">{language === 'vi' ? 'Tạo Kế Hoạch Mới' : 'Create New Plan'}</span>
+                      <span className="sm:hidden">{language === 'vi' ? 'Tạo Mới' : 'Create'}</span>
                     </button>
                   )}
                   {viewMode === 'creating' && (
                     <button
                       onClick={cancelCreatingPlan}
-                      className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-all duration-200 flex items-center space-x-2"
+                      className="px-3 md:px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-all duration-200 flex items-center space-x-1.5 md:space-x-2 text-xs md:text-sm"
                     >
                       <span>{language === 'vi' ? 'Hủy' : 'Cancel'}</span>
                     </button>
@@ -1087,9 +1091,9 @@ const MealPlannerPage: React.FC = () => {
                       {currentMealPlanId && currentPlan?.status === 'pending' && (
                         <button
                           onClick={deletePlan}
-                          className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all duration-200 flex items-center space-x-2"
+                          className="px-3 md:px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all duration-200 flex items-center justify-center space-x-1.5 md:space-x-2 text-xs md:text-sm"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-3.5 w-3.5 md:h-4 md:w-4" />
                           <span>{language === 'vi' ? 'Xóa' : 'Delete'}</span>
                         </button>
                       )}
@@ -1097,25 +1101,32 @@ const MealPlannerPage: React.FC = () => {
                         <button
                           onClick={saveMealPlan}
                           disabled={viewMode === 'viewing' && !hasChanges}
-                          className={`px-4 py-2 rounded-lg transition-all duration-200 flex items-center space-x-2 ${
+                          className={`px-3 md:px-4 py-2 rounded-lg transition-all duration-200 flex items-center justify-center space-x-1.5 md:space-x-2 text-xs md:text-sm ${
                             viewMode === 'viewing' && !hasChanges
                               ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                               : 'bg-gradient-to-r from-green-500 to-blue-500 text-white hover:from-green-600 hover:to-blue-600'
                           }`}
                         >
-                          <Download className="h-4 w-4" />
-                          <span>
+                          <Download className="h-3.5 w-3.5 md:h-4 md:w-4" />
+                          <span className="hidden sm:inline">
                             {viewMode === 'creating' 
                               ? (language === 'vi' ? 'Lưu Kế Hoạch' : 'Save Plan')
                               : (language === 'vi' ? 'Cập Nhật Kế Hoạch' : 'Update Plan')
                             }
                           </span>
+                          <span className="sm:hidden">
+                            {viewMode === 'creating' 
+                              ? (language === 'vi' ? 'Lưu' : 'Save')
+                              : (language === 'vi' ? 'Cập Nhật' : 'Update')
+                            }
+                          </span>
                         </button>
                       )}
                       {currentMealPlanId && currentPlan?.status === 'completed' && (
-                        <div className="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg flex items-center space-x-2">
-                          <CheckCircle className="h-4 w-4" />
-                          <span>{language === 'vi' ? 'Kế hoạch đã hoàn thành (chỉ xem)' : 'Completed plan (view only)'}</span>
+                        <div className="px-3 md:px-4 py-2 bg-gray-100 text-gray-600 rounded-lg flex items-center space-x-1.5 md:space-x-2 text-xs md:text-sm">
+                          <CheckCircle className="h-3.5 w-3.5 md:h-4 md:w-4" />
+                          <span className="hidden sm:inline">{language === 'vi' ? 'Kế hoạch đã hoàn thành (chỉ xem)' : 'Completed plan (view only)'}</span>
+                          <span className="sm:hidden">{language === 'vi' ? 'Đã hoàn thành' : 'Completed'}</span>
                         </div>
                       )}
                     </>
@@ -1126,24 +1137,24 @@ const MealPlannerPage: React.FC = () => {
 
             {/* Empty State cho Browse Mode */}
             {viewMode === 'browse' && mealPlans.length === 0 ? (
-              <div className="bg-white rounded-2xl shadow-lg p-12">
+              <div className="bg-white rounded-xl md:rounded-2xl shadow-lg p-8 md:p-12">
                 <div className="text-center max-w-md mx-auto">
-                  <div className="bg-gradient-to-r from-green-100 to-blue-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <Calendar className="h-10 w-10 text-green-600" />
+                  <div className="bg-gradient-to-r from-green-100 to-blue-100 w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center mx-auto mb-4 md:mb-6">
+                    <Calendar className="h-8 w-8 md:h-10 md:w-10 text-green-600" />
                   </div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-3">
+                  <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-2 md:mb-3">
                     {language === 'vi' ? 'Chưa Có Kế Hoạch Bữa Ăn' : 'No Meal Plans Yet'}
                   </h3>
-                  <p className="text-gray-600 mb-8 leading-relaxed">
+                  <p className="text-sm md:text-base text-gray-600 mb-6 md:mb-8 leading-relaxed">
                     {language === 'vi' 
                       ? 'Bắt đầu tạo kế hoạch bữa ăn của bạn ngay hôm nay! Chọn các công thức yêu thích và lên kế hoạch cho cả tuần.' 
                       : 'Start creating your meal plans today! Choose your favorite recipes and plan for the whole week.'}
                   </p>
                   <button
                     onClick={startCreatingNewPlan}
-                    className="px-6 py-3 bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-lg hover:from-green-600 hover:to-blue-600 transition-all duration-200 flex items-center space-x-2 mx-auto shadow-lg hover:shadow-xl"
+                    className="px-5 md:px-6 py-2.5 md:py-3 bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-lg hover:from-green-600 hover:to-blue-600 transition-all duration-200 flex items-center space-x-2 mx-auto shadow-lg hover:shadow-xl text-sm md:text-base"
                   >
-                    <Plus className="h-5 w-5" />
+                    <Plus className="h-4 w-4 md:h-5 md:w-5" />
                     <span className="font-semibold">
                       {language === 'vi' ? 'Tạo Kế Hoạch Đầu Tiên' : 'Create Your First Plan'}
                     </span>
@@ -1152,25 +1163,25 @@ const MealPlannerPage: React.FC = () => {
               </div>
             ) : (
               /* Meal Planning Grid */
-              <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+              <div className="bg-white rounded-xl md:rounded-2xl shadow-lg overflow-hidden">
                 <div className="overflow-x-auto">
-                  <div className="min-w-[1000px]">
+                  <div className="min-w-[600px] md:min-w-[900px] lg:min-w-[1000px]">
                     <table className="w-full">
                       <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
                         <tr>
-                          <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-28 sticky left-0 bg-gray-50 z-10">
+                          <th className="px-2 md:px-4 py-3 md:py-4 text-left text-[10px] md:text-xs font-semibold text-gray-600 uppercase tracking-wider w-20 md:w-28 sticky left-0 bg-gray-50 z-10">
                             {language === 'vi' ? 'Bữa' : 'Meal'}
                           </th>
                           {weekDates.map((date) => {
                             const dayOfWeek = date.getDay();
                             const isToday = new Date().toDateString() === date.toDateString();
                             return (
-                              <th key={date.toISOString()} className="px-2 py-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                              <th key={date.toISOString()} className="px-1.5 md:px-2 py-3 md:py-4 text-center text-[10px] md:text-xs font-semibold text-gray-600 uppercase tracking-wider">
                                 <div className={`${isToday ? 'text-green-600' : ''}`}>
-                                  <div className="font-bold text-sm">
+                                  <div className="font-bold text-xs md:text-sm">
                                     {language === 'vi' ? weekDaysVi[dayOfWeek] : weekDays[dayOfWeek]}
                                   </div>
-                                  <div className={`text-xs mt-1 ${isToday ? 'text-green-500 font-semibold' : 'text-gray-500'}`}>
+                                  <div className={`text-[10px] md:text-xs mt-0.5 md:mt-1 ${isToday ? 'text-green-500 font-semibold' : 'text-gray-500'}`}>
                                     {date.getDate()}/{date.getMonth() + 1}
                                   </div>
                                 </div>
@@ -1184,12 +1195,12 @@ const MealPlannerPage: React.FC = () => {
                           const IconComponent = mealType.icon;
                           return (
                             <tr key={mealType.id} className="hover:bg-gray-50/50 transition-colors duration-150">
-                              <td className="px-4 py-3 whitespace-nowrap sticky left-0 bg-white z-10 border-r border-gray-100">
-                                <div className="flex items-center space-x-2">
-                                  <div className={`bg-gradient-to-r ${mealType.color} p-1.5 rounded-lg shadow-sm`}>
-                                    <IconComponent className="h-4 w-4 text-white" />
+                              <td className="px-2 md:px-4 py-2 md:py-3 whitespace-nowrap sticky left-0 bg-white z-10 border-r border-gray-100">
+                                <div className="flex items-center space-x-1 md:space-x-2">
+                                  <div className={`bg-gradient-to-r ${mealType.color} p-1 md:p-1.5 rounded-md md:rounded-lg shadow-sm`}>
+                                    <IconComponent className="h-3 w-3 md:h-4 md:w-4 text-white" />
                                   </div>
-                                  <span className="font-medium text-gray-800 text-sm">{mealType.name}</span>
+                                  <span className="font-medium text-gray-800 text-xs md:text-sm">{mealType.name}</span>
                                 </div>
                               </td>
                               {weekDates.map((date) => {
@@ -1204,20 +1215,20 @@ const MealPlannerPage: React.FC = () => {
                                 const recipe = getRecipeFromMeal(meal);
                                 
                                 return (
-                                  <td key={dateStr} className="px-2 py-3">
+                                  <td key={dateStr} className="px-1.5 md:px-2 py-2 md:py-3">
                                     {recipe ? (
                                       <div 
-                                        className="relative rounded-lg overflow-hidden h-24 group cursor-pointer hover:shadow-md transition-all duration-200 transform hover:scale-[1.02]"
+                                        className="relative rounded-md md:rounded-lg overflow-hidden h-20 md:h-24 group cursor-pointer hover:shadow-md transition-all duration-200 transform hover:scale-[1.02]"
                                         style={{
                                           backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.5)), url(${recipe.image})`,
                                           backgroundSize: 'cover',
                                           backgroundPosition: 'center'
                                         }}
                                       >
-                                        <div className="absolute inset-0 p-2 flex flex-col justify-between">
-                                          <div className="flex items-start justify-between gap-1">
+                                        <div className="absolute inset-0 p-1.5 md:p-2 flex flex-col justify-between">
+                                          <div className="flex items-start justify-between gap-0.5 md:gap-1">
                                             <h4 
-                                              className="font-semibold text-white text-xs line-clamp-2 flex-1 drop-shadow-lg leading-tight"
+                                              className="font-semibold text-white text-[10px] md:text-xs line-clamp-2 flex-1 drop-shadow-lg leading-tight"
                                               onClick={() => handleRecipeClick(recipe._id)}
                                             >
                                               {recipe.name}
@@ -1226,29 +1237,29 @@ const MealPlannerPage: React.FC = () => {
                                               <div className="flex space-x-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                                                 <button
                                                   onClick={() => handleRecipeClick(recipe._id)}
-                                                  className="p-1 bg-white/95 rounded hover:bg-white transition-colors duration-200 shadow-sm"
+                                                  className="p-0.5 md:p-1 bg-white/95 rounded hover:bg-white transition-colors duration-200 shadow-sm"
                                                   title={language === 'vi' ? 'Xem chi tiết' : 'View details'}
                                                 >
-                                                  <Edit className="h-3 w-3 text-blue-600" />
+                                                  <Edit className="h-2.5 w-2.5 md:h-3 md:w-3 text-blue-600" />
                                                 </button>
                                                 <button
                                                   onClick={() => removeRecipeFromMeal(dateStr, mealType.id)}
-                                                  className="p-1 bg-white/95 rounded hover:bg-white transition-colors duration-200 shadow-sm"
+                                                  className="p-0.5 md:p-1 bg-white/95 rounded hover:bg-white transition-colors duration-200 shadow-sm"
                                                   title={language === 'vi' ? 'Xóa' : 'Remove'}
                                                 >
-                                                  <Trash2 className="h-3 w-3 text-red-600" />
+                                                  <Trash2 className="h-2.5 w-2.5 md:h-3 md:w-3 text-red-600" />
                                                 </button>
                                               </div>
                                             )}
                                           </div>
-                                          <div className="flex items-center justify-between text-[10px] text-white drop-shadow">
-                                            <div className="flex items-center space-x-1">
-                                              <div className="flex items-center space-x-0.5 bg-black/40 px-1.5 py-0.5 rounded backdrop-blur-sm">
-                                                <Clock className="h-2.5 w-2.5" />
+                                          <div className="flex items-center justify-between text-[9px] md:text-[10px] text-white drop-shadow">
+                                            <div className="flex items-center space-x-0.5 md:space-x-1">
+                                              <div className="flex items-center space-x-0.5 bg-black/40 px-1 md:px-1.5 py-0.5 rounded backdrop-blur-sm">
+                                                <Clock className="h-2 w-2 md:h-2.5 md:w-2.5" />
                                                 <span className="font-medium">{recipe.time}m</span>
                                               </div>
-                                              <div className="flex items-center space-x-0.5 bg-black/40 px-1.5 py-0.5 rounded backdrop-blur-sm">
-                                                <Star className="h-2.5 w-2.5 text-yellow-400 fill-yellow-400" />
+                                              <div className="flex items-center space-x-0.5 bg-black/40 px-1 md:px-1.5 py-0.5 rounded backdrop-blur-sm">
+                                                <Star className="h-2 w-2 md:h-2.5 md:w-2.5 text-yellow-400 fill-yellow-400" />
                                                 <span className="font-medium">{(recipe.rate || 0).toFixed(1)}</span>
                                               </div>
                                             </div>
@@ -1262,18 +1273,18 @@ const MealPlannerPage: React.FC = () => {
                                             setSelectedSlot({ date: dateStr, mealType: mealType.id });
                                             setShowRecipeSelector(true);
                                           }}
-                                          className="w-full h-24 border-2 border-dashed border-gray-200 rounded-lg hover:border-green-400 hover:bg-green-50/50 transition-all duration-200 flex items-center justify-center group"
+                                          className="w-full h-20 md:h-24 border-2 border-dashed border-gray-200 rounded-md md:rounded-lg hover:border-green-400 hover:bg-green-50/50 transition-all duration-200 flex items-center justify-center group"
                                         >
                                           <div className="text-center">
-                                            <Plus className="h-5 w-5 text-gray-300 group-hover:text-green-500 mx-auto mb-0.5 transition-colors duration-200" />
-                                            <span className="text-[10px] text-gray-400 group-hover:text-green-600 transition-colors duration-200 font-medium">
+                                            <Plus className="h-4 w-4 md:h-5 md:w-5 text-gray-300 group-hover:text-green-500 mx-auto mb-0.5 transition-colors duration-200" />
+                                            <span className="text-[9px] md:text-[10px] text-gray-400 group-hover:text-green-600 transition-colors duration-200 font-medium">
                                               {language === 'vi' ? 'Thêm' : 'Add'}
                                             </span>
                                           </div>
                                         </button>
                                       ) : (
-                                        <div className="w-full h-24 border-2 border-dashed border-gray-100 rounded-lg bg-gray-50/30 flex items-center justify-center">
-                                          <span className="text-[10px] text-gray-300 font-medium">
+                                        <div className="w-full h-20 md:h-24 border-2 border-dashed border-gray-100 rounded-md md:rounded-lg bg-gray-50/30 flex items-center justify-center">
+                                          <span className="text-[9px] md:text-[10px] text-gray-300 font-medium">
                                             {language === 'vi' ? 'Trống' : 'Empty'}
                                           </span>
                                         </div>
@@ -1296,61 +1307,61 @@ const MealPlannerPage: React.FC = () => {
 
         {/* Shopping List Tab */}
         {activeTab === 'shopping' && (
-          <div className="space-y-8">
-            <div className="bg-white rounded-2xl shadow-lg p-8">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-gray-900">
+          <div className="space-y-6 md:space-y-8">
+            <div className="bg-white rounded-xl md:rounded-2xl shadow-lg p-4 md:p-6 lg:p-8">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4 md:mb-6">
+                <h2 className="text-xl md:text-2xl font-bold text-gray-900">
                   {language === 'vi' ? 'Danh Sách Mua Sắm' : 'Shopping List'}
                 </h2>
                 {generateShoppingList().length > 0 && (
                   <button 
                     onClick={downloadShoppingList}
-                    className="bg-gradient-to-r from-green-500 to-blue-500 text-white px-4 py-2 rounded-lg hover:from-green-600 hover:to-blue-600 transition-all duration-200 flex items-center space-x-2"
+                    className="w-full sm:w-auto bg-gradient-to-r from-green-500 to-blue-500 text-white px-3 md:px-4 py-2 rounded-lg hover:from-green-600 hover:to-blue-600 transition-all duration-200 flex items-center justify-center space-x-1.5 md:space-x-2 text-xs md:text-sm"
                   >
-                    <Download className="h-4 w-4" />
+                    <Download className="h-3.5 w-3.5 md:h-4 md:w-4" />
                     <span>{language === 'vi' ? 'Tải Xuống' : 'Download'}</span>
                   </button>
                 )}
               </div>
 
               {generateShoppingList().length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
                   {generateShoppingList().map((item, index) => (
                     <div 
                       key={index} 
-                      className={`flex items-center space-x-3 p-3 rounded-lg transition-colors duration-200 cursor-pointer ${
+                      className={`flex items-center space-x-2 md:space-x-3 p-2.5 md:p-3 rounded-lg transition-colors duration-200 cursor-pointer ${
                         checkedIngredients.has(item.name)
                           ? 'bg-green-50 hover:bg-green-100'
                           : 'bg-gray-50 hover:bg-gray-100'
                       }`}
                       onClick={() => toggleIngredientCheck(item.name)}
                     >
-                      <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
+                      <div className={`w-4 h-4 md:w-5 md:h-5 rounded border-2 flex items-center justify-center flex-shrink-0 ${
                         checkedIngredients.has(item.name)
                           ? 'bg-green-500 border-green-500'
                           : 'border-gray-300'
                       }`}>
                         {checkedIngredients.has(item.name) && (
-                          <CheckCircle className="h-4 w-4 text-white" />
+                          <CheckCircle className="h-3 w-3 md:h-4 md:w-4 text-white" />
                         )}
                       </div>
-                      <span className={`flex-1 ${
+                      <span className={`flex-1 text-sm md:text-base ${
                         checkedIngredients.has(item.name) 
                           ? 'line-through text-gray-500' 
                           : 'text-gray-900'
                       }`}>
                         {item.name}
                       </span>
-                      <span className="text-sm text-gray-500">
+                      <span className="text-xs md:text-sm text-gray-500">
                         {item.count}x
                       </span>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-12">
-                  <ShoppingCart className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                  <p className="text-gray-500">
+                <div className="text-center py-8 md:py-12">
+                  <ShoppingCart className="h-12 w-12 md:h-16 md:w-16 text-gray-300 mx-auto mb-3 md:mb-4" />
+                  <p className="text-sm md:text-base text-gray-500">
                     {language === 'vi' 
                       ? 'Chưa có nguyên liệu nào trong kế hoạch' 
                       : 'No ingredients in your meal plan yet'}
@@ -1542,11 +1553,11 @@ const MealPlannerPage: React.FC = () => {
 
       {/* Recipe Selector Modal */}
       {showRecipeSelector && (
-        <div className="fixed inset-0 bg-gray-800/20 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[80vh] overflow-hidden">
-            <div className="p-6 border-b border-gray-200">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-bold text-gray-900">
+        <div className="fixed inset-0 bg-gray-800/20 flex items-center justify-center p-2 md:p-4 z-50">
+          <div className="bg-white rounded-xl md:rounded-2xl max-w-4xl w-full max-h-[85vh] md:max-h-[80vh] overflow-hidden">
+            <div className="p-4 md:p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between mb-3 md:mb-4">
+                <h3 className="text-lg md:text-xl font-bold text-gray-900">
                   {language === 'vi' ? 'Chọn Công Thức' : 'Select Recipe'}
                 </h3>
                 <button
@@ -1556,21 +1567,21 @@ const MealPlannerPage: React.FC = () => {
                   }}
                   className="text-gray-400 hover:text-gray-600 transition-colors duration-200"
                 >
-                  <Plus className="h-6 w-6 transform rotate-45" />
+                  <Plus className="h-5 w-5 md:h-6 md:w-6 transform rotate-45" />
                 </button>
               </div>
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 md:h-5 md:w-5 text-gray-400" />
                 <input
                   type="text"
                   placeholder={language === 'vi' ? 'Tìm kiếm công thức...' : 'Search recipes...'}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  className="w-full pl-9 md:pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm md:text-base"
                 />
               </div>
             </div>
-            <div className="p-6 overflow-y-auto max-h-[60vh]">
+            <div className="p-4 md:p-6 overflow-y-auto max-h-[55vh] md:max-h-[60vh]">
               {recipesLoading ? (
                 <div className="text-center py-12">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500 mx-auto"></div>
@@ -1579,29 +1590,29 @@ const MealPlannerPage: React.FC = () => {
                   </p>
                 </div>
               ) : filteredRecipes.length === 0 ? (
-                <div className="text-center py-12">
-                  <p className="text-gray-500">
+                <div className="text-center py-8 md:py-12">
+                  <p className="text-sm md:text-base text-gray-500">
                     {language === 'vi' ? 'Không tìm thấy công thức nào' : 'No recipes found'}
                   </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                   {filteredRecipes.map((recipe) => (
                     <div
                       key={recipe._id}
                       onClick={() => selectedSlot && addRecipeToMeal(selectedSlot.date, selectedSlot.mealType, recipe)}
-                      className="bg-gray-50 rounded-xl p-4 hover:bg-gray-100 transition-colors duration-200 cursor-pointer group"
+                      className="bg-gray-50 rounded-lg md:rounded-xl p-3 md:p-4 hover:bg-gray-100 transition-colors duration-200 cursor-pointer group"
                     >
-                      <div className="flex items-start space-x-4">
+                      <div className="flex items-start space-x-3 md:space-x-4">
                         <img
                           src={recipe.image || 'https://via.placeholder.com/150'}
                           alt={recipe.name}
-                          className="w-16 h-16 rounded-lg object-cover group-hover:scale-105 transition-transform duration-200"
+                          className="w-14 h-14 md:w-16 md:h-16 rounded-lg object-cover group-hover:scale-105 transition-transform duration-200 flex-shrink-0"
                         />
-                        <div className="flex-1">
-                          <h4 className="font-medium text-gray-900 mb-1">{recipe.name}</h4>
-                          <p className="text-sm text-gray-600 mb-2 line-clamp-2">{recipe.short}</p>
-                          <div className="flex items-center space-x-4 text-xs text-gray-500">
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-medium text-gray-900 mb-1 text-sm md:text-base truncate">{recipe.name}</h4>
+                          <p className="text-xs md:text-sm text-gray-600 mb-2 line-clamp-2">{recipe.short}</p>
+                          <div className="flex items-center space-x-3 md:space-x-4 text-xs text-gray-500">
                             <div className="flex items-center space-x-1">
                               <Clock className="h-3 w-3" />
                               <span>{recipe.time}m</span>

@@ -7,6 +7,8 @@ import { fetchNewestRecipes, fetchPopularRecipes, fetchRecipes, fetchTags, fetch
 import { toggleFavorite, checkMultipleRecipes } from '../redux/slices/favoriteSlice';
 import type { Recipe as ReduxRecipe } from '../redux/slices/recipeSlice';
 import FilterModal from '../components/FilterModal';
+import toast from 'react-hot-toast';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface Recipe {
   id: string;
@@ -26,15 +28,18 @@ const AllRecipes = () => {
   const { type } = useParams<{ type: 'new' | 'popular' | 'all' }>();
   const location = useLocation();
   const dispatch = useDispatch<AppDispatch>();
-  const { newestRecipes, popularRecipes, recipes: allRecipes, loading } = useSelector((state: RootState) => state.recipes);
+  const { newestRecipes, popularRecipes, recipes: allRecipes, loading, categories } = useSelector((state: RootState) => state.recipes);
   const { favoriteRecipeIds } = useSelector((state: RootState) => state.favorites);
   const { user } = useSelector((state: RootState) => state.auth);
+  const { language } = useLanguage();
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 12;
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   
   // Initialize filters with category from navigation state if available
   const initialCategoryId = (location.state as { categoryId?: string })?.categoryId || "";
+  const categoryNameFromState = (location.state as { categoryName?: string })?.categoryName || "";
+  
   const [filters, setFilters] = useState({
     selectedCategory: initialCategoryId,
     selectedTags: [] as string[],
@@ -52,6 +57,21 @@ const AllRecipes = () => {
     dispatch(fetchCuisines());
     dispatch(fetchCategories());
   }, [dispatch]);
+
+  // Auto-select category when navigating from footer
+  useEffect(() => {
+    if (categoryNameFromState && categories.length > 0) {
+      const matchedCategory = categories.find(
+        cat => cat.name.toLowerCase() === categoryNameFromState.toLowerCase()
+      );
+      if (matchedCategory && matchedCategory._id !== filters.selectedCategory) {
+        setFilters(prev => ({
+          ...prev,
+          selectedCategory: matchedCategory._id
+        }));
+      }
+    }
+  }, [categoryNameFromState, categories]);
 
   useEffect(() => {
     // Fetch recipes based on type
@@ -84,9 +104,41 @@ const AllRecipes = () => {
     }
     
     try {
-      await dispatch(toggleFavorite({ recipeId })).unwrap();
+      const result = await dispatch(toggleFavorite({ recipeId })).unwrap();
+      
+      // Show toast based on action
+      if (result.message?.includes('added') || result.message?.includes('thêm')) {
+        toast.success(
+          language === 'vi' 
+            ? '❤️ Đã thêm vào yêu thích!' 
+            : '❤️ Added to favorites!',
+          {
+            duration: 2000,
+            position: 'top-center',
+          }
+        );
+      } else {
+        toast.success(
+          language === 'vi' 
+            ? '💔 Đã bỏ yêu thích!' 
+            : '💔 Removed from favorites!',
+          {
+            duration: 2000,
+            position: 'top-center',
+          }
+        );
+      }
     } catch (error) {
       console.error('Failed to toggle favorite:', error);
+      toast.error(
+        language === 'vi' 
+          ? 'Có lỗi xảy ra. Vui lòng thử lại!' 
+          : 'An error occurred. Please try again!',
+        {
+          duration: 2000,
+          position: 'top-center',
+        }
+      );
     }
   };
 
@@ -195,7 +247,7 @@ const AllRecipes = () => {
         onClick={() => navigate(`/recipe/${recipe.id}`)}
       >
         {/* Image */}
-        <div className="relative h-[200px]">
+        <div className="relative h-[160px] sm:h-[180px] md:h-[200px]">
           <img
             src={recipe.image}
             alt={recipe.title}
@@ -203,28 +255,28 @@ const AllRecipes = () => {
           />
 
           {/* Rating badge */}
-          <div className="absolute top-3 left-3 flex items-center gap-1 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full">
-            <Star size={14} fill="#fbbf24" className="text-amber-400" />
-            <span className="text-sm font-medium">{recipe.rating}</span>
+          <div className="absolute top-2 left-2 md:top-3 md:left-3 flex items-center gap-1 bg-white/90 backdrop-blur-sm px-1.5 py-0.5 md:px-2 md:py-1 rounded-full">
+            <Star size={12} fill="#fbbf24" className="text-amber-400 md:w-3.5 md:h-3.5" />
+            <span className="text-xs md:text-sm font-medium">{recipe.rating}</span>
           </div>
 
           {/* Favorite button */}
           <button
             type="button"
             onClick={(e) => handleFavoriteClick(e, recipe.id)}
-            className="absolute top-3 right-3 p-2 bg-white/90 backdrop-blur-sm rounded-full hover:bg-white transition-all duration-200 z-20 hover:scale-110 active:scale-95"
+            className="absolute top-2 right-2 md:top-3 md:right-3 p-1.5 md:p-2 bg-white/90 backdrop-blur-sm rounded-full hover:bg-white transition-all duration-200 z-20 hover:scale-110 active:scale-95"
             aria-label={isFavorited ? "Bỏ yêu thích" : "Yêu thích"}
           >
             <Heart 
-              size={18} 
-              className={`transition-all duration-200 ${
+              size={16} 
+              className={`md:w-[18px] md:h-[18px] transition-all duration-200 ${
                 isFavorited ? 'fill-red-500 text-red-500' : 'text-gray-600 hover:text-red-500'
               }`} 
             />
           </button>
 
           {/* Difficulty badge */}
-          <div className={`absolute bottom-3 right-3 px-2 py-1 rounded-full text-xs font-medium ${
+          <div className={`absolute bottom-2 right-2 md:bottom-3 md:right-3 px-1.5 py-0.5 md:px-2 md:py-1 rounded-full text-xs font-medium ${
             recipe.difficulty === 'Dễ'
               ? 'bg-green-100 text-green-800'
               : recipe.difficulty === 'Khó'
@@ -236,15 +288,15 @@ const AllRecipes = () => {
         </div>
 
         {/* Content */}
-        <div className="p-4">
-          <h3 className="font-bold text-lg mb-2 text-gray-900 group-hover:text-orange-600 transition-colors line-clamp-2">
+        <div className="p-3 md:p-4">
+          <h3 className="font-bold text-base md:text-lg mb-2 text-gray-900 group-hover:text-orange-600 transition-colors line-clamp-2">
             {recipe.title}
           </h3>
 
           {/* Meta Info */}
-          <div className="flex items-center gap-3 text-sm text-gray-500 mb-3">
+          <div className="flex items-center gap-2 md:gap-3 text-xs md:text-sm text-gray-500 mb-2 md:mb-3">
             <div className="flex items-center gap-1">
-              <Clock size={16} />
+              <Clock size={14} className="md:w-4 md:h-4" />
               <span>{recipe.duration}</span>
             </div>
             <span className="text-gray-400">•</span>
@@ -253,18 +305,18 @@ const AllRecipes = () => {
 
           {/* Ingredients */}
           {recipe.ingredients && recipe.ingredients.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 mb-3">
+            <div className="flex flex-wrap gap-1 md:gap-1.5 mb-2 md:mb-3">
               {recipe.ingredients.slice(0, 3).map((ingredient, index) => (
                 <span
                   key={index}
-                  className="px-2 py-0.5 bg-gray-100 text-gray-700 text-xs rounded-md"
+                  className="px-1.5 py-0.5 md:px-2 bg-gray-100 text-gray-700 text-xs rounded-md"
                 >
                   {ingredient}
                 </span>
               ))}
               {recipe.ingredients.length > 3 && (
-                <span className="px-2 py-0.5 bg-gray-100 text-gray-700 text-xs rounded-md">
-                  +{recipe.ingredients.length - 3} more
+                <span className="px-1.5 py-0.5 md:px-2 bg-gray-100 text-gray-700 text-xs rounded-md">
+                  +{recipe.ingredients.length - 3}
                 </span>
               )}
             </div>
@@ -272,7 +324,7 @@ const AllRecipes = () => {
 
           {/* Rating and Action button */}
           <div className="flex items-center justify-between gap-2">
-            <div className="text-sm text-gray-600">
+            <div className="text-xs md:text-sm text-gray-600">
               {recipe.reviews ? `${recipe.reviews} đánh giá` : '0 đánh giá'}
             </div>
             <button
@@ -281,7 +333,7 @@ const AllRecipes = () => {
                 e.stopPropagation();
                 navigate(`/recipe/${recipe.id}`);
               }}
-              className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm"
+              className="bg-orange-500 hover:bg-orange-600 text-white px-2 py-1.5 md:px-4 md:py-2 rounded-lg font-medium transition-colors text-xs md:text-sm whitespace-nowrap"
             >
               Xem Công Thức
             </button>
@@ -294,20 +346,20 @@ const AllRecipes = () => {
   return (
     <div className="bg-white min-h-screen">
       {/* Header Section */}
-      <div className="py-8">
-        <div className="px-12">
-          <div className="flex items-center gap-3 mb-3">
-            <Icon className={config.iconColor} size={36} />
-            <h1 className="text-4xl font-bold text-gray-900">{config.title}</h1>
+      <div className="py-6 md:py-8">
+        <div className="px-4 md:px-8 lg:px-12">
+          <div className="flex items-center gap-2 md:gap-3 mb-2 md:mb-3">
+            <Icon className={config.iconColor} size={28} strokeWidth={2} />
+            <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900">{config.title}</h1>
           </div>
-          <p className="text-gray-600 text-base">
+          <p className="text-gray-600 text-sm md:text-base">
             {config.description}
           </p>
         </div>
       </div>
 
       {/* Content Section */}
-      <div className="px-12 py-12">
+      <div className="px-4 md:px-8 lg:px-12 py-6 md:py-12">
         {loading ? (
           // Loading skeleton
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -347,21 +399,21 @@ const AllRecipes = () => {
         ) : (
           <>
             {/* Filter Bar */}
-            <div className="flex items-center justify-between mb-6">
-              <div className="text-gray-600 text-sm">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
+              <div className="text-gray-600 text-xs sm:text-sm">
                 Hiển thị <span className="font-semibold">{startIndex + 1}-{Math.min(endIndex, filteredRecipes.length)}</span> trong tổng số <span className="font-semibold">{filteredRecipes.length}</span> món ăn
               </div>
               
               <button
                 type="button"
                 onClick={() => setIsFilterOpen(true)}
-                className={`px-4 py-2 border rounded-lg flex items-center gap-2 transition-all relative ${
+                className={`px-3 sm:px-4 py-2 border rounded-lg flex items-center gap-2 transition-all relative text-sm ${
                   getFilterCount() > 0
                     ? `${config.buttonColor} text-white border-transparent`
                     : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
                 }`}
               >
-                <Filter size={18} />
+                <Filter size={16} />
                 <span className="font-medium">Bộ lọc</span>
                 {getFilterCount() > 0 && (
                   <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
@@ -380,23 +432,23 @@ const AllRecipes = () => {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-center gap-4 mt-12">
+              <div className="flex items-center justify-center gap-2 sm:gap-4 mt-8 md:mt-12">
                 {/* Previous Button */}
                 <button
                   onClick={() => handlePageChange(currentPage - 1)}
                   disabled={currentPage === 1}
-                  className={`p-3 rounded-full transition-all ${
+                  className={`p-2 sm:p-3 rounded-full transition-all ${
                     currentPage === 1
                       ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
                       : 'bg-orange-500 hover:bg-orange-600 text-white shadow-md hover:shadow-lg'
                   }`}
                 >
-                  <ChevronLeft size={20} />
+                  <ChevronLeft size={18} className="sm:w-5 sm:h-5" />
                 </button>
 
                 {/* Page Info */}
-                <div className="flex items-center gap-3 bg-orange-500 rounded-full px-6 py-3 shadow-md">
-                  <span className="text-white font-semibold">Trang</span>
+                <div className="flex items-center gap-2 sm:gap-3 bg-orange-500 rounded-full px-3 sm:px-6 py-2 sm:py-3 shadow-md">
+                  <span className="text-white font-semibold text-xs sm:text-base">Trang</span>
                   <input
                     type="number"
                     min="1"
@@ -408,22 +460,22 @@ const AllRecipes = () => {
                         handlePageChange(page);
                       }
                     }}
-                    className="w-12 bg-orange-600 text-white text-center rounded px-2 py-1.5 font-semibold focus:outline-none focus:ring-2 focus:ring-orange-300"
+                    className="w-10 sm:w-12 bg-orange-600 text-white text-center rounded px-1 sm:px-2 py-1 sm:py-1.5 font-semibold focus:outline-none focus:ring-2 focus:ring-orange-300 text-sm sm:text-base"
                   />
-                  <span className="text-white font-medium">/ {totalPages}</span>
+                  <span className="text-white font-medium text-xs sm:text-base">/ {totalPages}</span>
                 </div>
 
                 {/* Next Button */}
                 <button
                   onClick={() => handlePageChange(currentPage + 1)}
                   disabled={currentPage === totalPages}
-                  className={`p-3 rounded-full transition-all ${
+                  className={`p-2 sm:p-3 rounded-full transition-all ${
                     currentPage === totalPages
                       ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
                       : 'bg-orange-500 hover:bg-orange-600 text-white shadow-md hover:shadow-lg'
                   }`}
                 >
-                  <ChevronRight size={20} />
+                  <ChevronRight size={18} className="sm:w-5 sm:h-5" />
                 </button>
               </div>
             )}
