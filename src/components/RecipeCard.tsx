@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom"
 import { useAppDispatch, useAppSelector } from "../redux/hooks"
 import { toggleFavorite } from "../redux/slices/favoriteSlice"
 import { useEffect, useState } from "react"
+import toast from "react-hot-toast"
+import { useLanguage } from "../contexts/LanguageContext"
 
 interface RecipeCardProps {
   id: string
@@ -38,6 +40,7 @@ export function RecipeCard({
   const { favoriteRecipeIds } = useAppSelector((state: any) => state.favorites)
   const { user } = useAppSelector((state: any) => state.auth)
   const [isFavorited, setIsFavorited] = useState(false)
+  const { language } = useLanguage()
   
   useEffect(() => {
     setIsFavorited(favoriteRecipeIds.includes(id))
@@ -59,9 +62,41 @@ export function RecipeCard({
       return
     }
     try {
-      await dispatch(toggleFavorite({ recipeId: id })).unwrap()
+      const result = await dispatch(toggleFavorite({ recipeId: id })).unwrap()
+      
+      // Show toast based on action
+      if (result.message?.includes('added') || result.message?.includes('thêm')) {
+        toast.success(
+          language === 'vi' 
+            ? '❤️ Đã thêm vào yêu thích!' 
+            : '❤️ Added to favorites!',
+          {
+            duration: 2000,
+            position: 'top-center',
+          }
+        )
+      } else {
+        toast.success(
+          language === 'vi' 
+            ? '💔 Đã bỏ yêu thích!' 
+            : '💔 Removed from favorites!',
+          {
+            duration: 2000,
+            position: 'top-center',
+          }
+        )
+      }
     } catch (error) {
       console.error("Failed to toggle favorite:", error)
+      toast.error(
+        language === 'vi' 
+          ? 'Có lỗi xảy ra. Vui lòng thử lại!' 
+          : 'An error occurred. Please try again!',
+        {
+          duration: 2000,
+          position: 'top-center',
+        }
+      )
     }
   }
 

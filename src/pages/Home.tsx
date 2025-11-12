@@ -5,6 +5,8 @@ import { useNavigate } from 'react-router-dom';
 import type { AppDispatch, RootState } from '../redux/store';
 import { fetchNewestRecipes, fetchPopularRecipes } from '../redux/slices/recipeSlice';
 import { toggleFavorite, checkMultipleRecipes } from '../redux/slices/favoriteSlice';
+import toast from 'react-hot-toast';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface Recipe {
   id: string;
@@ -26,6 +28,7 @@ const Home = () => {
   const { topComments, newestComments } = useSelector((state: RootState) => state.comments);
   const { mostFavorited, favoriteRecipeIds } = useSelector((state: RootState) => state.favorites);
   const { user } = useSelector((state: RootState) => state.auth);
+  const { language } = useLanguage();
   
   const [selectedRecipeIndex, setSelectedRecipeIndex] = useState(0);
   const [canScrollLeft, setCanScrollLeft] = useState<{ [key: string]: boolean }>({
@@ -196,9 +199,41 @@ const Home = () => {
     }
     
     try {
-      await dispatch(toggleFavorite({ recipeId })).unwrap();
+      const result = await dispatch(toggleFavorite({ recipeId })).unwrap();
+      
+      // Show toast based on action
+      if (result.message?.includes('added') || result.message?.includes('thêm')) {
+        toast.success(
+          language === 'vi' 
+            ? '❤️ Đã thêm vào yêu thích!' 
+            : '❤️ Added to favorites!',
+          {
+            duration: 2000,
+            position: 'top-center',
+          }
+        );
+      } else {
+        toast.success(
+          language === 'vi' 
+            ? '💔 Đã bỏ yêu thích!' 
+            : '💔 Removed from favorites!',
+          {
+            duration: 2000,
+            position: 'top-center',
+          }
+        );
+      }
     } catch (error) {
       console.error('Failed to toggle favorite:', error);
+      toast.error(
+        language === 'vi' 
+          ? 'Có lỗi xảy ra. Vui lòng thử lại!' 
+          : 'An error occurred. Please try again!',
+        {
+          duration: 2000,
+          position: 'top-center',
+        }
+      );
     }
   };
 
