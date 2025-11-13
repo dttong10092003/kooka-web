@@ -10,13 +10,14 @@ import {
   Settings,
   Star,
   Shield,
-  Bell,
 } from "lucide-react";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useSelector, useDispatch } from "react-redux";
 import type { RootState, AppDispatch } from "../redux/store";
 import { logout } from "../redux/slices/authSlice";
 import { clearProfile } from "../redux/slices/userSlice";
+import { NotificationBadge } from "./NotificationBadge";
+import { NotificationDropdown } from "./NotificationDropdown";
 
 export default function Header() {
   const { t } = useLanguage();
@@ -29,7 +30,6 @@ export default function Header() {
   const [showUserDropdown, setShowUserDropdown] = React.useState(false);
   const [logoutConfirmOpen, setLogoutConfirmOpen] = React.useState(false);
   const [showNotifications, setShowNotifications] = React.useState(false);
-  const [notificationTab, setNotificationTab] = React.useState<'recipes' | 'community'>('recipes');
   const [showAppDownload, setShowAppDownload] = React.useState(false);
   const [showMobileMenu, setShowMobileMenu] = React.useState(false);
 
@@ -274,200 +274,11 @@ export default function Header() {
           {/* Notifications - Only show when logged in */}
           {!forceGuest && token && user && location.pathname !== "/login" && (
             <div className="relative" ref={notificationRef}>
-              <button
-                onClick={() => setShowNotifications(!showNotifications)}
-                className="relative p-2.5 rounded-full bg-white hover:bg-gray-100 transition-all duration-200"
-              >
-                <Bell className="w-5 h-5 text-black" />
-                {/* Notification badge */}
-                <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full ring-2 ring-white"></span>
-              </button>
+              <NotificationBadge onClick={() => setShowNotifications(!showNotifications)} />
 
               {/* Notifications Dropdown */}
               {showNotifications && (
-                <>
-                  {/* Mobile Overlay */}
-                  <div className="md:hidden fixed inset-0 bg-black/40 z-[60]" onClick={() => setShowNotifications(false)} />
-                  
-                  {/* Dropdown Content */}
-                  <div className="fixed md:absolute right-0 md:right-0 bottom-0 md:bottom-auto md:top-full md:mt-3 left-0 md:left-auto w-full md:w-96 max-h-[85vh] md:max-h-[600px] bg-white md:rounded-xl rounded-t-2xl shadow-2xl border border-gray-200 overflow-hidden z-[70] animate-in fade-in slide-in-from-bottom md:slide-in-from-top-2 duration-200">
-                  {/* Header with Tabs */}
-                  <div className="bg-gradient-to-r from-indigo-900 via-indigo-800 to-indigo-900 px-5 py-3 flex items-center justify-between">
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={() => setNotificationTab('recipes')}
-                        className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${notificationTab === 'recipes'
-                          ? 'bg-white text-indigo-900'
-                          : 'text-white/80 hover:text-white hover:bg-white/15'
-                          }`}
-                      >
-                        Công thức
-                      </button>
-                      <button
-                        onClick={() => setNotificationTab('community')}
-                        className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${notificationTab === 'community'
-                          ? 'bg-white text-indigo-900'
-                          : 'text-white/80 hover:text-white hover:bg-white/15'
-                          }`}
-                      >
-                        Cộng đồng
-                      </button>
-                    </div>
-                    <button
-                      className="text-white text-sm font-medium px-3 py-1.5 rounded-lg hover:bg-white/15 transition-colors flex items-center gap-1.5"
-                    >
-                      <span className="text-base">✓</span>
-                      <span>Đã đọc</span>
-                    </button>
-                  </div>
-
-                  {/* Notifications List */}
-                  <div className="max-h-[480px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
-                    {notificationTab === 'recipes' ? (
-                      <>
-                        {/* Recipe Notifications */}
-                        <div className="px-5 py-4 hover:bg-orange-50 cursor-pointer border-b border-gray-100 transition-colors group">
-                          <div className="flex gap-3">
-                            <div className="relative flex-shrink-0">
-                              <img
-                                src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=100"
-                                alt="Recipe"
-                                className="w-14 h-14 rounded-lg object-cover ring-2 ring-gray-200 group-hover:ring-orange-300 transition-all"
-                              />
-                              <div className="absolute -top-1 -right-1 w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center">
-                                <span className="text-white text-xs">⚡</span>
-                              </div>
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm text-gray-800 leading-relaxed">
-                                <strong className="text-gray-900 font-semibold">Bún Chả Hà Nội</strong> vừa được thêm vào danh sách món ăn mới
-                              </p>
-                              <p className="text-xs text-gray-500 mt-1.5 flex items-center gap-1">
-                                <span className="w-1 h-1 bg-gray-400 rounded-full"></span>
-                                5 ngày trước
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="px-5 py-4 hover:bg-orange-50 cursor-pointer border-b border-gray-100 transition-colors group">
-                          <div className="flex gap-3">
-                            <div className="relative flex-shrink-0">
-                              <img
-                                src="https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=100"
-                                alt="Recipe"
-                                className="w-14 h-14 rounded-lg object-cover ring-2 ring-gray-200 group-hover:ring-orange-300 transition-all"
-                              />
-                              <div className="absolute -top-1 -right-1 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
-                                <span className="text-white text-xs">✨</span>
-                              </div>
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm text-gray-800 leading-relaxed">
-                                <strong className="text-gray-900 font-semibold">Phở Bò Truyền Thống</strong> có công thức mới được cập nhật
-                              </p>
-                              <p className="text-xs text-gray-500 mt-1.5 flex items-center gap-1">
-                                <span className="w-1 h-1 bg-gray-400 rounded-full"></span>
-                                1 tuần trước
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="px-5 py-4 hover:bg-orange-50 cursor-pointer border-b border-gray-100 transition-colors group">
-                          <div className="flex gap-3">
-                            <div className="relative flex-shrink-0">
-                              <img
-                                src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=100"
-                                alt="Recipe"
-                                className="w-14 h-14 rounded-lg object-cover ring-2 ring-gray-200 group-hover:ring-orange-300 transition-all"
-                              />
-                              <div className="absolute -top-1 -right-1 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
-                                <span className="text-white text-xs">🎉</span>
-                              </div>
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm text-gray-800 leading-relaxed">
-                                <strong className="text-gray-900 font-semibold">Bánh Xèo Miền Tây</strong> vừa ra mắt trên Kooka
-                              </p>
-                              <p className="text-xs text-gray-500 mt-1.5 flex items-center gap-1">
-                                <span className="w-1 h-1 bg-gray-400 rounded-full"></span>
-                                1 tháng trước
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="px-5 py-4 hover:bg-orange-50 cursor-pointer border-b border-gray-100 transition-colors group">
-                          <div className="flex gap-3">
-                            <div className="relative flex-shrink-0">
-                              <img
-                                src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=100"
-                                alt="Recipe"
-                                className="w-14 h-14 rounded-lg object-cover ring-2 ring-gray-200 group-hover:ring-orange-300 transition-all"
-                              />
-                              <div className="absolute -top-1 -right-1 w-5 h-5 bg-purple-500 rounded-full flex items-center justify-center">
-                                <span className="text-white text-xs">📹</span>
-                              </div>
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm text-gray-800 leading-relaxed">
-                                <strong className="text-gray-900 font-semibold">Cơm Tấm Sườn Bì</strong> có video hướng dẫn chi tiết
-                              </p>
-                              <p className="text-xs text-gray-500 mt-1.5 flex items-center gap-1">
-                                <span className="w-1 h-1 bg-gray-400 rounded-full"></span>
-                                2 tháng trước
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="px-5 py-4 hover:bg-orange-50 cursor-pointer transition-colors group">
-                          <div className="flex gap-3">
-                            <div className="relative flex-shrink-0">
-                              <img
-                                src="https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=100"
-                                alt="Recipe"
-                                className="w-14 h-14 rounded-lg object-cover ring-2 ring-gray-200 group-hover:ring-orange-300 transition-all"
-                              />
-                              <div className="absolute -top-1 -right-1 w-5 h-5 bg-pink-500 rounded-full flex items-center justify-center">
-                                <span className="text-white text-xs">💡</span>
-                              </div>
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm text-gray-800 leading-relaxed">
-                                <strong className="text-gray-900 font-semibold">Gỏi Cuốn Tôm Thịt</strong> có mẹo hay được cập nhật
-                              </p>
-                              <p className="text-xs text-gray-500 mt-1.5 flex items-center gap-1">
-                                <span className="w-1 h-1 bg-gray-400 rounded-full"></span>
-                                3 tháng trước
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      </>
-                    ) : (
-                      /* Community Tab - Empty State */
-                      <div className="px-5 py-20 text-center">
-                        <Bell className="mx-auto text-gray-300 mb-4" size={48} />
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                          Chưa có thông báo cộng đồng
-                        </h3>
-                        <p className="text-sm text-gray-500">
-                          Các thông báo về bình luận, lượt thích sẽ hiển thị tại đây
-                        </p>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Footer */}
-                  <div className="px-5 py-3.5 bg-gradient-to-r from-gray-50 to-orange-50 border-t border-gray-200">
-                    <button className="w-full text-sm text-orange-600 hover:text-orange-700 font-semibold py-2 rounded-lg hover:bg-white/60 transition-all">
-                      Xem tất cả thông báo →
-                    </button>
-                  </div>
-                </div>
-                </>
+                <NotificationDropdown onClose={() => setShowNotifications(false)} />
               )}
             </div>
           )}
