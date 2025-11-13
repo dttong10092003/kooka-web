@@ -16,9 +16,12 @@ const MyFavourite: React.FC = () => {
   useEffect(() => {
     if (user?._id) {
       dispatch(getUserFavorites({ userId: user._id }))
-      dispatch(fetchRecipes())
+      // Only fetch recipes if not already loaded from App
+      if (recipes.length === 0) {
+        dispatch(fetchRecipes())
+      }
     }
-  }, [dispatch, user])
+  }, [dispatch, user?._id, recipes.length])
 
   useEffect(() => {
     if (favorites.length > 0 && recipes.length > 0) {

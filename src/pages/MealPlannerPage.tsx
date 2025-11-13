@@ -74,13 +74,14 @@ const MealPlannerPage: React.FC = () => {
 
   // Load recipes and meal plans on mount
   useEffect(() => {
+    // Only fetch recipes if not already loaded from App
     if (recipes.length === 0) {
       dispatch(fetchRecipes());
     }
     if (user?._id) {
       dispatch(fetchMealPlansByUser(user._id));
     }
-  }, [dispatch, recipes.length, user]);
+  }, [dispatch, recipes.length, user?._id]);
 
   // Handle AI-generated meal plan from chatbot
   useEffect(() => {

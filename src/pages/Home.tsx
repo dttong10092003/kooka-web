@@ -21,6 +21,9 @@ interface Recipe {
   ingredients?: string[];
 }
 
+// Biến global để track xem đã load lần đầu chưa (persist qua các lần mount/unmount)
+let hasLoadedOnce = false;
+
 const Home = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
@@ -42,15 +45,51 @@ const Home = () => {
     'top-comments': true
   });
 
-  // Lazy load newest và popular recipes khi component mount
+  // State để kiểm soát hiển thị loading screen (chỉ lần đầu tiên)
+  const [showLoading, setShowLoading] = useState(!hasLoadedOnce);
+
+  // Load toàn bộ data khi component mount - CHỈ lần đầu tiên
   useEffect(() => {
-    if (newestRecipes.length === 0) {
+    // Nếu đã load rồi, chỉ fetch data thôi, không hiện loading
+    if (hasLoadedOnce) {
       dispatch(fetchNewestRecipes(5));
-    }
-    if (popularRecipesData.length === 0) {
       dispatch(fetchPopularRecipes(5));
+      return;
     }
-  }, [dispatch, newestRecipes.length, popularRecipesData.length]);
+
+    // Lần đầu tiên: hiện loading screen và load data
+    const loadAllData = async () => {
+      const startTime = Date.now();
+      
+      try {
+        // Load song song tất cả data cần thiết cho toàn bộ trang Home
+        await Promise.all([
+          dispatch(fetchNewestRecipes(5)),
+          dispatch(fetchPopularRecipes(5)),
+        ]);
+        
+        // Đảm bảo loading hiển thị ít nhất 1.5 giây để user thấy branding
+        const elapsedTime = Date.now() - startTime;
+        const remainingTime = Math.max(0, 1500 - elapsedTime);
+        
+        setTimeout(() => {
+          setShowLoading(false);
+          hasLoadedOnce = true; // Đánh dấu đã load lần đầu (biến global)
+        }, remainingTime);
+      } catch (error) {
+        console.error('Error loading data:', error);
+        // Vẫn ẩn loading sau 1.5s ngay cả khi có lỗi
+        const elapsedTime = Date.now() - startTime;
+        const remainingTime = Math.max(0, 1500 - elapsedTime);
+        setTimeout(() => {
+          setShowLoading(false);
+          hasLoadedOnce = true; // Đánh dấu đã load lần đầu (biến global)
+        }, remainingTime);
+      }
+    };
+
+    loadAllData();
+  }, [dispatch]);
 
   // Check favorites for displayed recipes when user is logged in
   useEffect(() => {
@@ -359,82 +398,83 @@ const Home = () => {
 
   return (
     <div className="bg-white min-h-screen relative overflow-hidden">
-      {/* Animated background elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-orange-100/40 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-yellow-100/40 rounded-full blur-3xl"></div>
-      </div>
-
-      {/* Hero Section - Redesigned */}
-      <div className="relative h-[400px] sm:h-[500px] md:h-[600px] lg:h-[660px] mb-6 sm:mb-8 overflow-hidden">
-        {loading || featuredRecipes.length === 0 ? (
-          // Loading state với skeleton UI
-          <div className="absolute inset-0 bg-gradient-to-br from-orange-50 via-yellow-50 to-orange-50 animate-gradient">
-            {/* Animated background */}
+      {/* Loading Screen toàn màn hình - chỉ hiện lần đầu */}
+      {showLoading ? (
+        <div className="fixed inset-0 z-50 bg-gradient-to-br from-orange-500 via-red-500 to-pink-600 flex items-center justify-center overflow-hidden">
+            {/* Animated background circles với hiệu ứng mượt */}
             <div className="absolute inset-0 overflow-hidden">
-              <div className="absolute top-20 left-20 w-72 h-72 bg-orange-200/30 rounded-full blur-3xl animate-pulse"></div>
-              <div className="absolute bottom-20 right-20 w-96 h-96 bg-yellow-200/30 rounded-full blur-3xl animate-pulse delay-700"></div>
-            </div>
-            
-            <div className="relative h-full flex items-center px-4 sm:px-6 md:px-8 lg:px-12">
-              <div className="w-full max-w-2xl space-y-6 animate-pulse">
-                {/* Badge skeleton */}
-                <div className="inline-block h-9 w-48 bg-gradient-to-r from-orange-300/40 to-yellow-300/40 rounded-full"></div>
-                
-                {/* Title skeleton */}
-                <div className="space-y-3">
-                  <div className="h-12 bg-gradient-to-r from-gray-300/60 to-gray-200/60 rounded-lg w-3/4"></div>
-                  <div className="h-12 bg-gradient-to-r from-gray-300/60 to-gray-200/60 rounded-lg w-2/3"></div>
-                </div>
-                
-                {/* Ingredients skeleton */}
-                <div className="flex gap-2">
-                  {[...Array(4)].map((_, i) => (
-                    <div key={i} className="h-8 w-24 bg-gradient-to-r from-gray-200/60 to-gray-300/60 rounded-md"></div>
-                  ))}
-                </div>
-                
-                {/* Description skeleton */}
-                <div className="space-y-2">
-                  <div className="h-4 bg-gradient-to-r from-gray-200/50 to-gray-300/50 rounded w-full"></div>
-                  <div className="h-4 bg-gradient-to-r from-gray-200/50 to-gray-300/50 rounded w-5/6"></div>
-                </div>
-                
-                {/* Meta info skeleton */}
-                <div className="flex gap-6">
-                  {[...Array(3)].map((_, i) => (
-                    <div key={i} className="h-6 w-20 bg-gradient-to-r from-gray-300/60 to-gray-200/60 rounded"></div>
-                  ))}
-                </div>
-                
-                {/* Buttons skeleton */}
-                <div className="flex gap-4 pt-2">
-                  <div className="h-14 w-48 bg-gradient-to-r from-emerald-400/60 to-emerald-500/60 rounded-full"></div>
-                  <div className="h-14 w-14 bg-gradient-to-r from-gray-400/40 to-gray-500/40 rounded-full"></div>
-                  <div className="h-14 w-14 bg-gradient-to-r from-gray-400/40 to-gray-500/40 rounded-full"></div>
-                </div>
-              </div>
+              <div className="absolute top-10 left-10 w-64 h-64 bg-white/10 rounded-full blur-3xl animate-pulse"></div>
+              <div className="absolute bottom-10 right-10 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-white/5 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '0.5s' }}></div>
               
-              {/* Spinner */}
-              <div className="absolute top-1/2 right-12 -translate-y-1/2">
-                <div className="relative">
-                  <ChefHat className="w-16 h-16 text-orange-400 animate-bounce" />
+              {/* Particles effect */}
+              <div className="absolute top-20 left-1/4 w-2 h-2 bg-white/40 rounded-full animate-ping"></div>
+              <div className="absolute bottom-40 right-1/3 w-2 h-2 bg-white/40 rounded-full animate-ping" style={{ animationDelay: '0.5s' }}></div>
+              <div className="absolute top-1/3 right-1/4 w-2 h-2 bg-white/40 rounded-full animate-ping" style={{ animationDelay: '1s' }}></div>
+            </div>
+
+            {/* Main content */}
+            <div className="relative z-10 text-center px-6 animate-fadeInUp">
+              {/* Logo/Icon với hiệu ứng đẹp */}
+              <div className="mb-8 relative animate-float">
+                <div className="inline-block relative">
+                  {/* Vòng tròn xoay nền */}
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-24 h-24 border-4 border-orange-200 border-t-orange-500 rounded-full animate-spin"></div>
+                    <div className="w-32 h-32 border-4 border-white/20 border-t-white rounded-full animate-spin"></div>
+                  </div>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-24 h-24 border-4 border-white/30 border-b-white rounded-full animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}></div>
+                  </div>
+                  
+                  {/* Icon ChefHat với animation và glow effect */}
+                  <div className="relative bg-white/20 backdrop-blur-md rounded-full p-8 animate-glow">
+                    <ChefHat className="w-16 h-16 text-white drop-shadow-2xl" strokeWidth={2.5} />
                   </div>
                 </div>
               </div>
+
+              {/* Brand name với gradient text */}
+              <h1 className="text-5xl md:text-7xl font-extrabold text-white mb-3 tracking-tight drop-shadow-lg">
+                Kooka
+              </h1>
+              
+              <div className="w-24 h-1 bg-white/60 mx-auto rounded-full mb-6"></div>
+
+              {/* Slogan với hiệu ứng fade in/out */}
+              <div className="space-y-3 mb-8">
+                <p className="text-xl md:text-2xl text-white/95 font-semibold animate-pulse">
+                   Nấu ăn ngon mỗi ngày 
+                </p>
+                <p className="text-base md:text-lg text-white/80 italic font-light max-w-md mx-auto">
+                  "Mỗi món ăn là một câu chuyện<br/>
+                  Mỗi công thức là một hành trình khám phá"
+                </p>
+              </div>
+
+              {/* Loading dots với animation mượt */}
+              <div className="flex items-center justify-center gap-2 mb-6">
+                <div className="w-3 h-3 bg-white rounded-full animate-bounce shadow-lg" style={{ animationDelay: '0s' }}></div>
+                <div className="w-3 h-3 bg-white rounded-full animate-bounce shadow-lg" style={{ animationDelay: '0.15s' }}></div>
+                <div className="w-3 h-3 bg-white rounded-full animate-bounce shadow-lg" style={{ animationDelay: '0.3s' }}></div>
+              </div>
+
+         
             </div>
-            
-            {/* Thumbnail gallery skeleton */}
-            <div className="absolute bottom-6 right-6 flex gap-2">
-              {[...Array(5)].map((_, i) => (
-                <div key={i} className="w-20 h-14 bg-gradient-to-br from-gray-300/50 to-gray-400/50 rounded-md animate-pulse" style={{ animationDelay: `${i * 100}ms` }}></div>
-              ))}
-            </div>
+
+            {/* Decorative gradient overlay */}
+            <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-black/30 to-transparent pointer-events-none"></div>
+            <div className="absolute top-0 left-0 right-0 h-40 bg-gradient-to-b from-black/20 to-transparent pointer-events-none"></div>
+        </div>
+      ) : (
+        <>
+          {/* Animated background elements */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute top-0 left-1/4 w-96 h-96 bg-orange-100/40 rounded-full blur-3xl"></div>
+            <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-yellow-100/40 rounded-full blur-3xl"></div>
           </div>
-        ) : featuredRecipe ? (
-          <>
+
+          {/* Hero Section - Redesigned */}
+          <div className="relative h-[400px] sm:h-[500px] md:h-[600px] lg:h-[660px] mb-6 sm:mb-8 overflow-hidden">
             {/* Background image with parallax effect */}
             <div className="absolute inset-0">
               <img
@@ -582,12 +622,10 @@ const Home = () => {
                 </div>
               ))}
             </div>
-          </>
-        ) : null}
-      </div>
+          </div>
 
-      {/* New Recipes Section */}
-      <div className="relative px-4 sm:px-6 md:px-8 lg:px-12 mb-8 sm:mb-10">
+          {/* New Recipes Section */}
+          <div className="relative px-4 sm:px-6 md:px-8 lg:px-12 mb-8 sm:mb-10">
         <div className="mb-6 sm:mb-8">
           <div className="flex items-center gap-3 sm:gap-4 mb-2">
             <Sparkles className="text-orange-500" size={24} />
@@ -609,13 +647,15 @@ const Home = () => {
         </div>
 
         <div className="relative">
-          {loading ? (
-            // Loading skeleton
+          {newRecipes.length === 0 ? (
+            // Loading skeleton - chỉ hiện khi chưa có data
             <div className="flex gap-4 overflow-hidden">
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="flex-shrink-0 w-[280px] animate-pulse">
+                <div key={i} className="flex-shrink-0 w-[calc(25%-12px)]">
                   <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    <div className="h-[180px] bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 animate-shimmer"></div>
+                    <div className="h-[180px] bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 relative overflow-hidden">
+                      <div className="absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-white/30 to-transparent"></div>
+                    </div>
                     <div className="p-4 space-y-3">
                       <div className="h-6 bg-gray-200 rounded w-3/4"></div>
                       <div className="flex gap-3">
@@ -704,13 +744,15 @@ const Home = () => {
         </div>
 
         <div className="relative">
-          {loading ? (
-            // Loading skeleton
+          {popularRecipes.length === 0 ? (
+            // Loading skeleton - chỉ hiện khi chưa có data
             <div className="flex gap-4 overflow-hidden">
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="flex-shrink-0 w-[280px] animate-pulse" style={{ animationDelay: `${i * 100}ms` }}>
+                <div key={i} className="flex-shrink-0 w-[calc(25%-12px)]">
                   <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    <div className="h-[180px] bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 animate-shimmer"></div>
+                    <div className="h-[180px] bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 relative overflow-hidden">
+                      <div className="absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-white/30 to-transparent"></div>
+                    </div>
                     <div className="p-4 space-y-3">
                       <div className="h-6 bg-gray-200 rounded w-3/4"></div>
                       <div className="flex gap-3">
@@ -1038,8 +1080,10 @@ const Home = () => {
         </div>
       </div>
 
-      {/* Footer decoration */}
-      <div className="h-32 bg-gradient-to-t from-gray-50 to-transparent"></div>
+          {/* Footer decoration */}
+          <div className="h-32 bg-gradient-to-t from-gray-50 to-transparent"></div>
+        </>
+      )}
     </div>
   );
 };

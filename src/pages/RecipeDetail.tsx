@@ -18,10 +18,9 @@ export default function RecipeDetail() {
     const [isFavorited, setIsFavorited] = useState(false);
     const [openSteps, setOpenSteps] = useState<number[]>([]);
 
-    // Get recipe from Redux store
-    const recipes = useSelector((state: RootState) => state.recipes.recipes);
+    // Get currentRecipe from Redux store (recipe with full instructions)
+    const currentRecipe = useSelector((state: RootState) => state.recipes.currentRecipe);
     const loading = useSelector((state: RootState) => state.recipes.loading);
-    const recipe = recipes.find(r => r._id === id);
 
     // Get user and favorite state
     const user = useSelector((state: RootState) => state.auth.user);
@@ -120,8 +119,8 @@ export default function RecipeDetail() {
         );
     };
 
-    // Chỉ show loading spinner khi đang load VÀ chưa có recipe
-    if (loading && !recipe) {
+    // Chỉ show loading spinner khi đang load VÀ chưa có currentRecipe
+    if (loading && !currentRecipe) {
         return (
             <div className="flex items-center justify-center h-screen">
                 <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500"></div>
@@ -129,8 +128,8 @@ export default function RecipeDetail() {
         );
     }
 
-    // Show not found nếu không loading và không có recipe
-    if (!loading && !recipe) {
+    // Show not found nếu không loading và không có currentRecipe
+    if (!loading && !currentRecipe) {
         return (
             <div className="container mx-auto px-4 py-10 text-center">
                 <h2 className="text-2xl font-semibold">
@@ -143,8 +142,8 @@ export default function RecipeDetail() {
         );
     }
 
-    // Nếu vẫn chưa có recipe (đang load lần đầu), show loading
-    if (!recipe) {
+    // Nếu currentRecipe tồn tại NHƯNG chưa có instructions (đang load), show loading
+    if (!currentRecipe || !currentRecipe.instructions || currentRecipe.instructions.length === 0) {
         return (
             <div className="flex items-center justify-center h-screen">
                 <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500"></div>
@@ -158,8 +157,8 @@ export default function RecipeDetail() {
             <div className="relative h-[50vh] md:h-[60vh] w-full">
                 <div className="absolute inset-0 bg-black/40 z-10"></div>
                 <img
-                    src={recipe.image}
-                    alt={recipe.name}
+                    src={currentRecipe.image}
+                    alt={currentRecipe.name}
                     className="w-full h-full object-cover"
                 />
                 <Link
@@ -184,17 +183,17 @@ export default function RecipeDetail() {
                     <div className="container mx-auto max-w-6xl px-4">
                         <div className="flex flex-wrap gap-2 mb-4">
                             <span className="bg-green-500/80 px-4 py-1 rounded-full text-sm font-medium">
-                                {recipe.difficulty}
+                                {currentRecipe.difficulty}
                             </span>
                             <span className="bg-orange-500/80 px-4 py-1 rounded-full text-sm font-medium">
-                                {recipe.cuisine.name}
+                                {currentRecipe.cuisine.name}
                             </span>
                         </div>
                         <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-2">
-                            {recipe.name}
+                            {currentRecipe.name}
                         </h1>
                         <p className="text-base sm:text-lg opacity-95 max-w-2xl mb-4 md:mb-6">
-                            {recipe.short}
+                            {currentRecipe.short}
                         </p>
 
                         {/* Recipe Info - Moved here as shown in image */}
@@ -202,20 +201,20 @@ export default function RecipeDetail() {
                             <div className="flex items-center gap-2">
                                 <Clock className="h-4 w-4 sm:h-5 sm:w-5" />
                                 <span className="text-sm sm:text-base">
-                                    {recipe.time} {language === 'vi' ? 'phút' : 'minutes'}
+                                    {currentRecipe.time} {language === 'vi' ? 'phút' : 'minutes'}
                                 </span>
                             </div>
                             <div className="flex items-center gap-2">
                                 <Users className="h-4 w-4 sm:h-5 sm:w-5" />
                                 <span className="text-sm sm:text-base">
-                                    {recipe.size} {language === 'vi' ? 'người ăn' : 'servings'}
+                                    {currentRecipe.size} {language === 'vi' ? 'người ăn' : 'servings'}
                                 </span>
                             </div>
                             <div className="flex items-center gap-2">
                                 <Star className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-400 fill-yellow-400" />
-                                <span className="font-medium text-sm sm:text-base">{(recipe.rate || 0).toFixed(1)}</span>
+                                <span className="font-medium text-sm sm:text-base">{(currentRecipe.rate || 0).toFixed(1)}</span>
                                 <span className="opacity-80 text-sm sm:text-base">
-                                    ({recipe.numberOfRate || 0} {language === 'vi' ? 'đánh giá' : 'reviews'})
+                                    ({currentRecipe.numberOfRate || 0} {language === 'vi' ? 'đánh giá' : 'reviews'})
                                 </span>
                             </div>
                         </div>
@@ -249,22 +248,28 @@ export default function RecipeDetail() {
 
                             <div className="p-4 sm:p-5">
                                 <div className="space-y-2">
-                                    {recipe.ingredients.map((ingredient, index) => (
-                                        <label 
-                                            key={index} 
-                                            htmlFor={`ingredient-${index}`}
-                                            className="flex items-center gap-3 py-2.5 px-3 bg-gray-50 rounded-lg hover:bg-orange-50 border border-transparent hover:border-orange-200 transition-all duration-300 cursor-pointer group"
-                                        >
-                                            <input
-                                                type="checkbox"
-                                                id={`ingredient-${index}`}
-                                                className="h-5 w-5 text-orange-500 border-2 border-gray-300 rounded focus:ring-orange-500 focus:ring-2 checked:bg-orange-500 checked:border-orange-500 transition-all duration-200 cursor-pointer"
-                                            />
-                                            <span className="text-xs sm:text-sm text-gray-700 group-hover:text-gray-900 font-medium flex-1 transition-colors duration-200">
-                                                {ingredient.name}
-                                            </span>
-                                        </label>
-                                    ))}
+                                    {currentRecipe.ingredients && currentRecipe.ingredients.length > 0 ? (
+                                        currentRecipe.ingredients.map((ingredient, index) => (
+                                            <label 
+                                                key={index} 
+                                                htmlFor={`ingredient-${index}`}
+                                                className="flex items-center gap-3 py-2.5 px-3 bg-gray-50 rounded-lg hover:bg-orange-50 border border-transparent hover:border-orange-200 transition-all duration-300 cursor-pointer group"
+                                            >
+                                                <input
+                                                    type="checkbox"
+                                                    id={`ingredient-${index}`}
+                                                    className="h-5 w-5 text-orange-500 border-2 border-gray-300 rounded focus:ring-orange-500 focus:ring-2 checked:bg-orange-500 checked:border-orange-500 transition-all duration-200 cursor-pointer"
+                                                />
+                                                <span className="text-xs sm:text-sm text-gray-700 group-hover:text-gray-900 font-medium flex-1 transition-colors duration-200">
+                                                    {ingredient.name}
+                                                </span>
+                                            </label>
+                                        ))
+                                    ) : (
+                                        <p className="text-gray-500 text-center py-4">
+                                            {language === 'vi' ? 'Đang tải nguyên liệu...' : 'Loading ingredients...'}
+                                        </p>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -284,7 +289,7 @@ export default function RecipeDetail() {
 
                             <div className="p-4 sm:p-6">
                                 <div className="space-y-3">
-                                    {recipe.instructions.map((instruction, index) => (
+                                    {currentRecipe.instructions.map((instruction, index) => (
                                         <div key={index} className="border border-gray-200 rounded-lg overflow-hidden hover:border-orange-300 transition-all">
                                             {/* Step Header - Clickable */}
                                             <button
@@ -509,7 +514,7 @@ export default function RecipeDetail() {
                     </div>
 
                     {/* Video Tutorial - Right Side (1/3) */}
-                    {recipe.video && (
+                    {currentRecipe.video && (
                         <div className="lg:col-span-1">
                             <div className="bg-white rounded-xl shadow-md border-2 border-orange-100 overflow-hidden h-full">
                                 <div className="bg-gradient-to-r from-orange-50 to-orange-100 p-3 sm:p-4 border-b border-orange-200">
@@ -522,8 +527,8 @@ export default function RecipeDetail() {
                                 </div>
                                 <div className="relative w-full" style={{ paddingTop: '56.25%' }}>
                                     <iframe
-                                        src={recipe.video.replace("watch?v=", "embed/")}
-                                        title={`${recipe.name} video tutorial`}
+                                        src={currentRecipe.video.replace("watch?v=", "embed/")}
+                                        title={`${currentRecipe.name} video tutorial`}
                                         frameBorder="0"
                                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                                         allowFullScreen
@@ -536,7 +541,7 @@ export default function RecipeDetail() {
                 </div>
 
                 {/* Comment Section */}
-                <CommentSection recipeId={recipe._id} />
+                <CommentSection recipeId={currentRecipe._id} />
             </div>
         </div>
     );

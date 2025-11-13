@@ -3,7 +3,7 @@ import { useState, useEffect } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { useNavigate } from "react-router-dom"
 import type { AppDispatch, RootState } from "../redux/store"
-import { fetchRecipes, deleteRecipe, fetchNewestRecipes } from "../redux/slices/recipeSlice"
+import { fetchRecipes, deleteRecipe, fetchNewestRecipes, getRecipeById } from "../redux/slices/recipeSlice"
 import type { Recipe } from "../redux/slices/recipeSlice"
 import {
     BarChart3,
@@ -63,11 +63,13 @@ const AdminDashboard: React.FC = () => {
     const dispatch = useDispatch<AppDispatch>()
     const { recipes, loading, error, newestRecipes } = useSelector((state: RootState) => state.recipes)
 
-    // Load initial data
+    // Load initial data - only fetch if not already loaded from App
     useEffect(() => {
-        dispatch(fetchRecipes())
+        if (recipes.length === 0) {
+            dispatch(fetchRecipes())
+        }
         dispatch(fetchNewestRecipes(4))
-    }, [dispatch])
+    }, [dispatch, recipes.length])
 
     // Load dashboard data
     useEffect(() => {
@@ -312,9 +314,16 @@ const AdminDashboard: React.FC = () => {
         setRecipeToDelete(null)
     }
 
-    const handleEditClick = (recipe: Recipe) => {
-        setSelectedRecipe(recipe)
-        setIsEditModalOpen(true)
+    const handleEditClick = async (recipe: Recipe) => {
+        // Fetch full recipe data including instructions before opening modal
+        try {
+            const result = await dispatch(getRecipeById(recipe._id)).unwrap()
+            setSelectedRecipe(result)
+            setIsEditModalOpen(true)
+        } catch (error) {
+            console.error("Failed to fetch recipe details:", error)
+            toast.error("Không thể tải chi tiết công thức. Vui lòng thử lại.", { duration: 2500 })
+        }
     }
 
     const handleEditModalClose = () => {
