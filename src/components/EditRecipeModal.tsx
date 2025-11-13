@@ -531,35 +531,47 @@ const EditRecipeModal: React.FC<EditRecipeModalProps> = ({ isOpen, onClose, reci
 
                         {/* ==== Thông số dinh dưỡng ==== */}
                         <div>
-                            <h3 className="text-md font-semibold text-gray-700 mb-2">Thông số</h3>
+                            <h3 className="text-md font-semibold text-gray-700 mb-2">Thông số (Số)</h3>
                             <div className="grid md:grid-cols-3 gap-4">
-                                <input
-                                    name="calories"
-                                    type="number"
-                                    placeholder="Calories"
-                                    value={editedRecipe.calories}
-                                    onChange={handleInputChange}
-                                    min="1"
-                                    className="border rounded-lg p-2 w-full focus:ring-2 focus:ring-blue-400 outline-none"
-                                />
-                                <input
-                                    name="time"
-                                    type="number"
-                                    placeholder="Thời gian (phút)"
-                                    value={editedRecipe.time}
-                                    onChange={handleInputChange}
-                                    min="1"
-                                    className="border rounded-lg p-2 w-full focus:ring-2 focus:ring-blue-400 outline-none"
-                                />
-                                <input
-                                    name="size"
-                                    type="number"
-                                    placeholder="Khẩu phần"
-                                    value={editedRecipe.size}
-                                    onChange={handleInputChange}
-                                    min="1"
-                                    className="border rounded-lg p-2 w-full focus:ring-2 focus:ring-blue-400 outline-none"
-                                />
+                                <div>
+                                    <label className="block text-sm text-gray-600 mb-1">
+                                        Calories
+                                    </label>
+                                    <input
+                                        name="calories"
+                                        type="number"
+                                        value={editedRecipe.calories}
+                                        onChange={handleInputChange}
+                                        min="0"
+                                        className="border rounded-lg p-2 w-full focus:ring-2 focus:ring-blue-400 outline-none"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm text-gray-600 mb-1">
+                                        Thời gian (phút)
+                                    </label>
+                                    <input
+                                        name="time"
+                                        type="number"
+                                        value={editedRecipe.time}
+                                        onChange={handleInputChange}
+                                        min="0"
+                                        className="border rounded-lg p-2 w-full focus:ring-2 focus:ring-blue-400 outline-none"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm text-gray-600 mb-1">
+                                        Khẩu phần
+                                    </label>
+                                    <input
+                                        name="size"
+                                        type="number"
+                                        value={editedRecipe.size}
+                                        onChange={handleInputChange}
+                                        min="1"
+                                        className="border rounded-lg p-2 w-full focus:ring-2 focus:ring-blue-400 outline-none"
+                                    />
+                                </div>
                             </div>
                         </div>
 
