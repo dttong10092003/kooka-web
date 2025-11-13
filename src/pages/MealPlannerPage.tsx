@@ -137,10 +137,9 @@ const MealPlannerPage: React.FC = () => {
     }
   }, [location.state, user, mealPlans, language, navigate]);
 
-  // Sort meal plans by startDate (pending first, then by date)
+  // Sort meal plans by startDate ascending (oldest first)
+  // Completed plans naturally come first (older dates), pending plans come after (newer dates)
   const sortedMealPlans = [...mealPlans].sort((a, b) => {
-    if (a.status === 'pending' && b.status !== 'pending') return -1;
-    if (a.status !== 'pending' && b.status === 'pending') return 1;
     return new Date(a.startDate).getTime() - new Date(b.startDate).getTime();
   });
 
@@ -166,21 +165,27 @@ const MealPlannerPage: React.FC = () => {
             setOriginalPlans(JSON.parse(JSON.stringify(sortedMealPlans[currentIndex].plans)));
           }
         } else {
-          // Plan không tìm thấy, chuyển về plan đầu tiên
-          setCurrentMealPlanIndex(0);
-          const firstPlan = sortedMealPlans[0];
-          setCurrentMealPlanId(firstPlan._id);
-          setEditingPlans(firstPlan.plans);
-          setOriginalPlans(JSON.parse(JSON.stringify(firstPlan.plans)));
+          // Plan không tìm thấy, chuyển về plan pending đầu tiên (hoặc plan đầu tiên nếu không có pending)
+          const firstPendingIndex = sortedMealPlans.findIndex(p => p.status === 'pending');
+          const targetIndex = firstPendingIndex !== -1 ? firstPendingIndex : 0;
+          
+          setCurrentMealPlanIndex(targetIndex);
+          const targetPlan = sortedMealPlans[targetIndex];
+          setCurrentMealPlanId(targetPlan._id);
+          setEditingPlans(targetPlan.plans);
+          setOriginalPlans(JSON.parse(JSON.stringify(targetPlan.plans)));
         }
       } else {
-        // Không có plan nào đang xem, hiển thị plan đầu tiên
+        // Không có plan nào đang xem, ưu tiên hiển thị plan pending đầu tiên
+        const firstPendingIndex = sortedMealPlans.findIndex(p => p.status === 'pending');
+        const targetIndex = firstPendingIndex !== -1 ? firstPendingIndex : 0;
+        
         setViewMode('viewing');
-        setCurrentMealPlanIndex(0);
-        const firstPlan = sortedMealPlans[0];
-        setCurrentMealPlanId(firstPlan._id);
-        setEditingPlans(firstPlan.plans);
-        setOriginalPlans(JSON.parse(JSON.stringify(firstPlan.plans)));
+        setCurrentMealPlanIndex(targetIndex);
+        const targetPlan = sortedMealPlans[targetIndex];
+        setCurrentMealPlanId(targetPlan._id);
+        setEditingPlans(targetPlan.plans);
+        setOriginalPlans(JSON.parse(JSON.stringify(targetPlan.plans)));
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -451,11 +456,15 @@ const MealPlannerPage: React.FC = () => {
     setAiGeneratedPlans(null); // Clear AI plans nếu cancel
     
     if (sortedMealPlans.length > 0) {
-      setCurrentMealPlanIndex(0);
-      const firstPlan = sortedMealPlans[0];
-      setCurrentMealPlanId(firstPlan._id);
-      setEditingPlans(firstPlan.plans);
-      setOriginalPlans(JSON.parse(JSON.stringify(firstPlan.plans)));
+      // Ưu tiên hiển thị plan pending đầu tiên
+      const firstPendingIndex = sortedMealPlans.findIndex(p => p.status === 'pending');
+      const targetIndex = firstPendingIndex !== -1 ? firstPendingIndex : 0;
+      
+      setCurrentMealPlanIndex(targetIndex);
+      const targetPlan = sortedMealPlans[targetIndex];
+      setCurrentMealPlanId(targetPlan._id);
+      setEditingPlans(targetPlan.plans);
+      setOriginalPlans(JSON.parse(JSON.stringify(targetPlan.plans)));
     } else {
       setCurrentMealPlanId(null);
       setSelectedWeek(0);
@@ -635,9 +644,13 @@ const MealPlannerPage: React.FC = () => {
       const remainingPlans = sortedMealPlans.filter(p => p._id !== currentMealPlanId);
       
       if (remainingPlans.length > 0) {
+        // Ưu tiên hiển thị plan pending đầu tiên sau khi xóa
+        const firstPendingIndex = remainingPlans.findIndex(p => p.status === 'pending');
+        const targetIndex = firstPendingIndex !== -1 ? firstPendingIndex : 0;
+        
         setViewMode('viewing');
-        setCurrentMealPlanIndex(0);
-        const nextPlan = remainingPlans[0];
+        setCurrentMealPlanIndex(targetIndex);
+        const nextPlan = remainingPlans[targetIndex];
         setCurrentMealPlanId(nextPlan._id);
         setEditingPlans(nextPlan.plans);
       } else {
