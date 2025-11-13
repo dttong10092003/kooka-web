@@ -20,7 +20,6 @@ export default function RecipeDetail() {
 
     // Get recipe from Redux store
     const recipes = useSelector((state: RootState) => state.recipes.recipes);
-    const loading = useSelector((state: RootState) => state.recipes.loading);
     const recipe = recipes.find(r => r._id === id);
 
     // Get user and favorite state
@@ -120,30 +119,7 @@ export default function RecipeDetail() {
         );
     };
 
-    // Chỉ show loading spinner khi đang load VÀ chưa có recipe
-    if (loading && !recipe) {
-        return (
-            <div className="flex items-center justify-center h-screen">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500"></div>
-            </div>
-        );
-    }
-
-    // Show not found nếu không loading và không có recipe
-    if (!loading && !recipe) {
-        return (
-            <div className="container mx-auto px-4 py-10 text-center">
-                <h2 className="text-2xl font-semibold">
-                    {language === 'vi' ? 'Không tìm thấy công thức' : 'Recipe not found'}
-                </h2>
-                <Link to="/recipes" className="text-orange-500 hover:underline mt-4 block">
-                    {language === 'vi' ? 'Quay lại danh sách công thức' : 'Return to recipes'}
-                </Link>
-            </div>
-        );
-    }
-
-    // Nếu vẫn chưa có recipe (đang load lần đầu), show loading
+    // Show loading khi chưa có recipe
     if (!recipe) {
         return (
             <div className="flex items-center justify-center h-screen">
@@ -249,7 +225,7 @@ export default function RecipeDetail() {
 
                             <div className="p-4 sm:p-5">
                                 <div className="space-y-2">
-                                    {recipe.ingredients.map((ingredient, index) => (
+                                    {recipe.ingredients?.map((ingredient, index) => (
                                         <label 
                                             key={index} 
                                             htmlFor={`ingredient-${index}`}
@@ -284,7 +260,7 @@ export default function RecipeDetail() {
 
                             <div className="p-4 sm:p-6">
                                 <div className="space-y-3">
-                                    {recipe.instructions.map((instruction, index) => (
+                                    {recipe.instructions?.map((instruction, index) => (
                                         <div key={index} className="border border-gray-200 rounded-lg overflow-hidden hover:border-orange-300 transition-all">
                                             {/* Step Header - Clickable */}
                                             <button
@@ -430,7 +406,7 @@ export default function RecipeDetail() {
 
                                                     {/* Step Details */}
                                                     <div className="space-y-2">
-                                                        {instruction.subTitle.map((step: string, stepIndex: number) => (
+                                                        {instruction.subTitle?.map((step: string, stepIndex: number) => (
                                                             <div key={stepIndex} className="flex gap-2">
                                                                 <span className="text-orange-500 font-bold mt-1">•</span>
                                                                 <p className="text-sm sm:text-base text-gray-700 leading-relaxed flex-1">
