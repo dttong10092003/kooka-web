@@ -33,7 +33,7 @@ const AllRecipes = () => {
   const { user } = useSelector((state: RootState) => state.auth);
   const { language } = useLanguage();
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 12;
+  const [itemsPerPage, setItemsPerPage] = useState(12);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   
   // Initialize filters with category from navigation state if available
@@ -194,6 +194,12 @@ const AllRecipes = () => {
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleItemsPerPageChange = (newItemsPerPage: number) => {
+    setItemsPerPage(newItemsPerPage);
+    setCurrentPage(1);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -434,51 +440,80 @@ const AllRecipes = () => {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-center gap-2 sm:gap-4 mt-8 md:mt-12">
-                {/* Previous Button */}
-                <button
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  disabled={currentPage === 1}
-                  className={`p-2 sm:p-3 rounded-full transition-all ${
-                    currentPage === 1
-                      ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                      : 'bg-orange-500 hover:bg-orange-600 text-white shadow-md hover:shadow-lg'
-                  }`}
-                >
-                  <ChevronLeft size={18} className="sm:w-5 sm:h-5" />
-                </button>
+              <div className="bg-white px-4 sm:px-6 py-4 border-t border-gray-200 rounded-b-lg">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                  {/* Items per page selector */}
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm text-gray-700">Show</span>
+                    <select
+                      value={itemsPerPage}
+                      onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
+                      className="px-3 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none text-sm"
+                    >
+                      <option value={5}>5</option>
+                      <option value={10}>10</option>
+                      <option value={15}>15</option>
+                      <option value={20}>20</option>
+                      <option value={50}>50</option>
+                    </select>
+                    <span className="text-sm text-gray-700">
+                      of {filteredRecipes.length} recipes
+                    </span>
+                  </div>
 
-                {/* Page Info */}
-                <div className="flex items-center gap-2 sm:gap-3 bg-orange-500 rounded-full px-3 sm:px-6 py-2 sm:py-3 shadow-md">
-                  <span className="text-white font-semibold text-xs sm:text-base">Trang</span>
-                  <input
-                    type="number"
-                    min="1"
-                    max={totalPages}
-                    value={currentPage}
-                    onChange={(e) => {
-                      const page = parseInt(e.target.value);
-                      if (page >= 1 && page <= totalPages) {
-                        handlePageChange(page);
-                      }
-                    }}
-                    className="w-10 sm:w-12 bg-orange-600 text-white text-center rounded px-1 sm:px-2 py-1 sm:py-1.5 font-semibold focus:outline-none focus:ring-2 focus:ring-orange-300 text-sm sm:text-base"
-                  />
-                  <span className="text-white font-medium text-xs sm:text-base">/ {totalPages}</span>
+                  {/* Page navigation */}
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={currentPage === 1}
+                      className="p-2 rounded-lg border border-gray-300 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                    >
+                      <ChevronLeft className="h-5 w-5 text-gray-600" />
+                    </button>
+
+                    <div className="flex items-center space-x-1">
+                      {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                        let pageNum: number;
+                        if (totalPages <= 5) {
+                          pageNum = i + 1;
+                        } else if (currentPage <= 3) {
+                          pageNum = i + 1;
+                        } else if (currentPage >= totalPages - 2) {
+                          pageNum = totalPages - 4 + i;
+                        } else {
+                          pageNum = currentPage - 2 + i;
+                        }
+
+                        return (
+                          <button
+                            key={pageNum}
+                            onClick={() => handlePageChange(pageNum)}
+                            className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
+                              currentPage === pageNum
+                                ? "bg-orange-500 text-white"
+                                : "border border-gray-300 text-gray-700 hover:bg-gray-100"
+                            }`}
+                          >
+                            {pageNum}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    <button
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                      className="p-2 rounded-lg border border-gray-300 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                    >
+                      <ChevronRight className="h-5 w-5 text-gray-600" />
+                    </button>
+                  </div>
+
+                  {/* Page info */}
+                  <div className="text-sm text-gray-700">
+                    Page {currentPage} of {totalPages}
+                  </div>
                 </div>
-
-                {/* Next Button */}
-                <button
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                  className={`p-2 sm:p-3 rounded-full transition-all ${
-                    currentPage === totalPages
-                      ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                      : 'bg-orange-500 hover:bg-orange-600 text-white shadow-md hover:shadow-lg'
-                  }`}
-                >
-                  <ChevronRight size={18} className="sm:w-5 sm:h-5" />
-                </button>
               </div>
             )}
           </>

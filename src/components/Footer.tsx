@@ -101,15 +101,7 @@ export default function Footer() {
                 {t("footer.desserts")}
               </Link>
             </li>
-            <li>
-              <Link 
-                to="/recipes/all" 
-                state={{ categoryName: t("footer.vegetarian") }}
-                className="hover:text-white transition"
-              >
-                {t("footer.vegetarian")}
-              </Link>
-            </li>
+         
           </ul>
         </div>
 
