@@ -73,11 +73,13 @@ function App() {
   useEffect(() => {
     if (token && !user) {
       console.log("📡 Loading user data with token...");
-      dispatch(loadUser()).catch((err) => {
+      dispatch(loadUser()).unwrap().catch((err) => {
         console.error("❌ Failed to load user:", err);
-        // Nếu load user thất bại, clear token
+        // Nếu load user thất bại, clear token và user
         localStorage.removeItem("token");
         localStorage.removeItem("persist:root");
+        // Reload để reset về trạng thái guest
+        window.location.reload();
       });
     }
   }, [dispatch, token, user]);
@@ -93,7 +95,7 @@ function App() {
   const hideHeader = location.pathname.startsWith("/admin");
   return (
     <>
-      <Toaster position="top-right" reverseOrder={false} />
+      <Toaster position="bottom-right" reverseOrder={false} />
       {!hideHeader && <Header />}
       <Routes>
         <Route path="/" element={<Home />} />

@@ -26,7 +26,9 @@ axiosInstance.interceptors.response.use(
         if (error.response?.status === 401) {
             // Token hết hạn hoặc không hợp lệ
             localStorage.removeItem("token");
-            // Có thể dispatch logout action ở đây nếu cần
+            localStorage.removeItem("persist:root");
+            // Reload trang để clear state và quay về trạng thái guest
+            window.location.href = "/";
         }
         return Promise.reject(error);
     }
