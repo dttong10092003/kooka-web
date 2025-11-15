@@ -370,6 +370,15 @@ const MealPlannerPage: React.FC = () => {
   };
 
   const startCreatingNewPlan = () => {
+    // Check pending plans limit TRƯỚC KHI mở modal
+    const pendingPlans = sortedMealPlans.filter(p => p.status === 'pending');
+    if (pendingPlans.length >= 3) {
+      toast.error(language === 'vi' 
+        ? 'Bạn đã có 3 kế hoạch chưa hoàn thành. Vui lòng hoàn thành hoặc xóa bớt trước khi tạo mới.' 
+        : 'You already have 3 pending plans. Please complete or delete some before creating a new one.');
+      return; // Dừng lại, không mở modal
+    }
+    
     setShowStartDateModal(true);
     setStartDateError(''); // Reset error khi mở modal
   };
@@ -398,17 +407,6 @@ const MealPlannerPage: React.FC = () => {
     const conflictCheck = isStartDateConflict(selectedStartDate);
     if (conflictCheck.hasConflict) {
       setStartDateError(conflictCheck.conflictMessage || '');
-      return;
-    }
-    
-    const pendingPlans = sortedMealPlans.filter(p => p.status === 'pending');
-    if (pendingPlans.length >= 3) {
-      toast.error(language === 'vi' 
-        ? 'Bạn đã có 3 kế hoạch chưa hoàn thành. Vui lòng hoàn thành hoặc xóa bớt trước khi tạo mới.' 
-        : 'You already have 3 pending plans. Please complete or delete some before creating a new one.');
-      setShowStartDateModal(false);
-      setSelectedStartDate(null);
-      setStartDateError('');
       return;
     }
     
