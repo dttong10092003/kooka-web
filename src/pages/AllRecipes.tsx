@@ -394,22 +394,12 @@ const AllRecipes = () => {
               </div>
             ))}
           </div>
-        ) : filteredRecipes.length === 0 ? (
-          <div className="text-center py-20">
-            <EmptyIcon className="mx-auto text-gray-300 mb-4" size={64} />
-            <h3 className="text-2xl font-bold text-gray-900 mb-2">
-              {getFilterCount() > 0 ? 'Không tìm thấy món ăn phù hợp' : `Chưa có ${config.title.toLowerCase()}`}
-            </h3>
-            <p className="text-gray-600">
-              {getFilterCount() > 0 ? 'Thử thay đổi bộ lọc để xem thêm món ăn' : 'Hãy quay lại sau để khám phá các công thức mới nhất!'}
-            </p>
-          </div>
         ) : (
           <>
-            {/* Filter Bar */}
+            {/* Filter Bar - Always visible */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
               <div className="text-gray-600 text-xs sm:text-sm">
-                Hiển thị <span className="font-semibold">{startIndex + 1}-{Math.min(endIndex, filteredRecipes.length)}</span> trong tổng số <span className="font-semibold">{filteredRecipes.length}</span> món ăn
+                Hiển thị <span className="font-semibold">{filteredRecipes.length > 0 ? startIndex + 1 : 0}-{filteredRecipes.length > 0 ? Math.min(endIndex, filteredRecipes.length) : 0}</span> trong tổng số <span className="font-semibold">{filteredRecipes.length}</span> món ăn
               </div>
               
               <button
@@ -431,15 +421,27 @@ const AllRecipes = () => {
               </button>
             </div>
 
-            {/* Recipe Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-12">
-              {displayedRecipes.map((recipe) => (
-                <RecipeCard key={recipe.id} recipe={recipe} />
-              ))}
-            </div>
+            {filteredRecipes.length === 0 ? (
+              <div className="text-center py-20">
+                <EmptyIcon className="mx-auto text-gray-300 mb-4" size={64} />
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                  {getFilterCount() > 0 ? 'Không tìm thấy món ăn phù hợp' : `Chưa có ${config.title.toLowerCase()}`}
+                </h3>
+                <p className="text-gray-600">
+                  {getFilterCount() > 0 ? 'Thử thay đổi bộ lọc để xem thêm món ăn' : 'Hãy quay lại sau để khám phá các công thức mới nhất!'}
+                </p>
+              </div>
+            ) : (
+              <>
+                {/* Recipe Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-12">
+                  {displayedRecipes.map((recipe) => (
+                    <RecipeCard key={recipe.id} recipe={recipe} />
+                  ))}
+                </div>
 
-            {/* Pagination */}
-            {totalPages > 1 && (
+                {/* Pagination */}
+                {totalPages > 1 && (
               <div className="bg-white px-4 sm:px-6 py-4 border-t border-gray-200 rounded-b-lg">
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                   {/* Items per page selector */}
@@ -516,6 +518,8 @@ const AllRecipes = () => {
                 </div>
               </div>
             )}
+            </>
+          )}
           </>
         )}
       </div>
