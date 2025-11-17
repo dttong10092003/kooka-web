@@ -79,21 +79,13 @@ export default function RecipeDetail() {
                     toast.success(
                         language === 'vi' 
                             ? '❤️ Đã thêm vào yêu thích!' 
-                            : '❤️ Added to favorites!',
-                        {
-                            duration: 2000,
-                            position: 'top-center',
-                        }
+                            : '❤️ Added to favorites!'
                     );
                 } else {
                     toast.success(
                         language === 'vi' 
                             ? '💔 Đã bỏ yêu thích!' 
-                            : '💔 Removed from favorites!',
-                        {
-                            duration: 2000,
-                            position: 'top-center',
-                        }
+                            : '💔 Removed from favorites!'
                     );
                 }
             } catch (error) {
@@ -101,11 +93,7 @@ export default function RecipeDetail() {
                 toast.error(
                     language === 'vi' 
                         ? 'Có lỗi xảy ra. Vui lòng thử lại!' 
-                        : 'An error occurred. Please try again!',
-                    {
-                        duration: 2000,
-                        position: 'top-center',
-                    }
+                        : 'An error occurred. Please try again!'
                 );
             }
         }
