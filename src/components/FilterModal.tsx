@@ -132,11 +132,11 @@ export default function FilterModal({ isOpen, onClose, onApply, initialFilters, 
                             tags.map((tag) => (
                                 <button
                                     key={tag._id}
-                                    className={`px-4 py-2 rounded-md border transition-colors ${selectedTags.includes(tag.name)
+                                    className={`px-4 py-2 rounded-md border transition-colors ${selectedTags.includes(tag._id)
                                             ? currentColors.tagActive
                                             : `bg-white text-gray-700 border-gray-300 ${currentColors.tagHover}`
                                         }`}
-                                    onClick={() => handleTagToggle(tag.name)}
+                                    onClick={() => handleTagToggle(tag._id)}
                                 >
                                     {tag.name}
                                 </button>
@@ -158,7 +158,7 @@ export default function FilterModal({ isOpen, onClose, onApply, initialFilters, 
                         >
                             <option value="">All Categories</option>
                             {categories.map((cat) => (
-                                <option key={cat._id} value={cat.name}>
+                                <option key={cat._id} value={cat._id}>
                                     {cat.name}
                                 </option>
                             ))}
@@ -182,7 +182,7 @@ export default function FilterModal({ isOpen, onClose, onApply, initialFilters, 
                         >
                             <option value="">All Cuisines</option>
                             {cuisines.map((cuisine) => (
-                                <option key={cuisine._id} value={cuisine.name}>
+                                <option key={cuisine._id} value={cuisine._id}>
                                     {cuisine.name}
                                 </option>
                             ))}

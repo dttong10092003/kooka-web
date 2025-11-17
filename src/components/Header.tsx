@@ -9,7 +9,6 @@ import {
   LogOut,
   Settings,
   Star,
-  Shield,
 } from "lucide-react";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useSelector, useDispatch } from "react-redux";
@@ -375,16 +374,6 @@ export default function Header() {
                   >
                     <Star className="h-4 w-4" /> {t("header.authReviews")}
                   </Link>
-
-                  {user.isAdmin && (
-                    <Link
-                      to="/admin"
-                      onClick={() => setShowUserDropdown(false)}
-                      className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-50"
-                    >
-                      <Shield className="h-4 w-4" /> {t("header.authAdmin")}
-                    </Link>
-                  )}
 
                   <div className="border-t border-gray-100 my-1" />
                   <Link
