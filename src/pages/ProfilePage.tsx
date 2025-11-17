@@ -5,6 +5,7 @@ import { Calendar, MapPin, Edit, Save, X, Camera } from "lucide-react"
 import type { RootState, AppDispatch } from "../redux/store"
 import { fetchProfile, updateProfile } from "../redux/slices/userSlice"
 import { useRef } from "react"
+import toast from "react-hot-toast"
 
 const ProfilePage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>()
@@ -53,13 +54,13 @@ const ProfilePage: React.FC = () => {
 
     // Validate file type
     if (!file.type.startsWith('image/')) {
-      alert('Please select an image file')
+      toast.error('Please select an image file')
       return
     }
 
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      alert('File size must be less than 5MB')
+      toast.error('File size must be less than 5MB')
       return
     }
 
@@ -71,7 +72,7 @@ const ProfilePage: React.FC = () => {
       handleInputChange('avatar', base64)
     }
     reader.onerror = () => {
-      alert('Failed to read file')
+      toast.error('Failed to read file')
     }
     reader.readAsDataURL(file)
   }

@@ -5,6 +5,7 @@ import axiosInstance from '../utils/axiosInstance';
 import { useSelector } from 'react-redux';
 import type { RootState } from '../redux/store';
 import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 
 interface Recipe {
     id: string;
@@ -241,7 +242,7 @@ const AIChatBot: React.FC = () => {
 
         // Backend only supports 1 image at a time
         if (selectedImages.length >= 1) {
-            alert(language === 'vi' ? 'Chỉ có thể gửi 1 ảnh mỗi lần!' : 'Only 1 image allowed per message!');
+            toast.error(language === 'vi' ? 'Chỉ có thể gửi 1 ảnh mỗi lần!' : 'Only 1 image allowed per message!');
             e.target.value = '';
             return;
         }
@@ -250,14 +251,14 @@ const AIChatBot: React.FC = () => {
 
         // Validate file type
         if (!file.type.startsWith('image/')) {
-            alert(language === 'vi' ? 'Vui lòng chỉ chọn file ảnh!' : 'Please select image files only!');
+            toast.error(language === 'vi' ? 'Vui lòng chỉ chọn file ảnh!' : 'Please select image files only!');
             e.target.value = '';
             return;
         }
 
         // Validate file size (max 5MB)
         if (file.size > 5 * 1024 * 1024) {
-            alert(language === 'vi' ? 'Kích thước ảnh không được vượt quá 5MB!' : 'Image size must not exceed 5MB!');
+            toast.error(language === 'vi' ? 'Kích thước ảnh không được vượt quá 5MB!' : 'Image size must not exceed 5MB!');
             e.target.value = '';
             return;
         }
@@ -270,7 +271,7 @@ const AIChatBot: React.FC = () => {
         };
         reader.onerror = () => {
             console.error('Error reading file:', file.name);
-            alert(language === 'vi' ? 'Lỗi khi đọc file!' : 'Error reading file!');
+            toast.error(language === 'vi' ? 'Lỗi khi đọc file!' : 'Error reading file!');
         };
         reader.readAsDataURL(file);
 
@@ -285,7 +286,7 @@ const AIChatBot: React.FC = () => {
 
         // Backend only supports 1 image at a time
         if (selectedImages.length >= 1) {
-            alert(language === 'vi' ? 'Chỉ có thể gửi 1 ảnh mỗi lần!' : 'Only 1 image allowed per message!');
+            toast.error(language === 'vi' ? 'Chỉ có thể gửi 1 ảnh mỗi lần!' : 'Only 1 image allowed per message!');
             return;
         }
 
@@ -300,7 +301,7 @@ const AIChatBot: React.FC = () => {
 
                 // Validate file size
                 if (blob.size > 5 * 1024 * 1024) {
-                    alert(language === 'vi' ? 'Kích thước ảnh không được vượt quá 5MB!' : 'Image size must not exceed 5MB!');
+                    toast.error(language === 'vi' ? 'Kích thước ảnh không được vượt quá 5MB!' : 'Image size must not exceed 5MB!');
                     continue;
                 }
 
@@ -600,15 +601,13 @@ const AIChatBot: React.FC = () => {
                                                 <div className="mt-3">
                                                     <button
                                                         onClick={() => {
-                                                            // Check if user is logged in
-                                                            if (!user) {
-                                                                alert(language === 'vi'
-                                                                    ? 'Vui lòng đăng nhập để sử dụng tính năng này!'
-                                                                    : 'Please login to use this feature!');
-                                                                return;
-                                                            }
-
-                                                            // Navigate to meal planner with meal plan data
+                                            // Check if user is logged in
+                                            if (!user) {
+                                                toast.error(language === 'vi'
+                                                    ? 'Vui lòng đăng nhập để sử dụng tính năng này!'
+                                                    : 'Please login to use this feature!');
+                                                return;
+                                            }                                                            // Navigate to meal planner with meal plan data
                                                             navigate('/meal-planner', {
                                                                 state: {
                                                                     aiGeneratedPlan: message.mealPlan

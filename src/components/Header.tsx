@@ -91,7 +91,7 @@ export default function Header() {
   const handleMealPlannerClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     if (!token || !user) {
       e.preventDefault();
-      alert(t("header.loginRequired") || "Please login to access Meal Planner");
+      toast.error(t("header.loginRequired") || "Please login to access Meal Planner");
       navigate("/login");
     }
   };

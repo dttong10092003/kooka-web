@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import { Camera, Upload, X } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 interface AvatarUploadProps {
     currentAvatar?: string;
@@ -48,13 +49,13 @@ export default function AvatarUpload({
 
         // Validate file type
         if (!file.type.startsWith('image/')) {
-            alert('Please select an image file');
+            toast.error('Please select an image file');
             return;
         }
 
         // Validate file size (max 5MB)
         if (file.size > 5 * 1024 * 1024) {
-            alert('File size must be less than 5MB');
+            toast.error('File size must be less than 5MB');
             return;
         }
 
@@ -64,7 +65,7 @@ export default function AvatarUpload({
             onUpload(base64);
         } catch (error) {
             console.error('Error converting file:', error);
-            alert('Failed to process image');
+            toast.error('Failed to process image');
         }
     };
 
@@ -95,12 +96,12 @@ export default function AvatarUpload({
         if (!file) return;
 
         if (!file.type.startsWith('image/')) {
-            alert('Please drop an image file');
+            toast.error('Please drop an image file');
             return;
         }
 
         if (file.size > 5 * 1024 * 1024) {
-            alert('File size must be less than 5MB');
+            toast.error('File size must be less than 5MB');
             return;
         }
 
@@ -110,7 +111,7 @@ export default function AvatarUpload({
             onUpload(base64);
         } catch (error) {
             console.error('Error converting file:', error);
-            alert('Failed to process image');
+            toast.error('Failed to process image');
         }
     };
 
