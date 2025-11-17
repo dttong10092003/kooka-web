@@ -4,6 +4,8 @@ import { useDispatch, useSelector } from "react-redux"
 import { useNavigate } from "react-router-dom"
 import type { AppDispatch, RootState } from "../redux/store"
 import { fetchRecipes, deleteRecipe, fetchNewestRecipes, getRecipeById } from "../redux/slices/recipeSlice"
+import { logout } from "../redux/slices/authSlice"
+import { clearProfile } from "../redux/slices/userSlice"
 import type { Recipe } from "../redux/slices/recipeSlice"
 import {
     BarChart3,
@@ -21,10 +23,11 @@ import {
     Eye,
     MessageSquare,
     LogOut,
-    ArrowLeft,
     ChevronLeft,
     ChevronRight,
     Database,
+    UserPlus,
+    X,
 } from "lucide-react"
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import AddRecipeModal from "../components/AddRecipeModal";
@@ -42,6 +45,15 @@ const AdminDashboard: React.FC = () => {
     const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
     const [recipeToDelete, setRecipeToDelete] = useState<Recipe | null>(null)
     const [recentUsers, setRecentUsers] = useState<any[]>([])
+    const [isAddAdminModalOpen, setIsAddAdminModalOpen] = useState(false)
+    const [adminFormData, setAdminFormData] = useState({
+        firstName: "",
+        lastName: "",
+        email: "",
+        password: "",
+        confirmPassword: "",
+    })
+    const [adminFormLoading, setAdminFormLoading] = useState(false)
     const [weeklyData, setWeeklyData] = useState<any[]>([])
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
     const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1)
@@ -219,16 +231,16 @@ const AdminDashboard: React.FC = () => {
     }
 
     const currentUser = {
-        name: "Admin User",
+        name: "Người quản trị",
         email: "admin@supercook.com",
         avatar: "AU",
-        role: "Administrator",
+        role: "Quản trị viên",
     }
 
     // Mock data
     const stats = [
         {
-            title: "Total Recipes",
+            title: "Tổng số công thức",
             value: loadingStats ? "..." : formatNumber(dashboardStats.totalRecipes),
             change: "+12%",
             trend: "up",
@@ -236,7 +248,7 @@ const AdminDashboard: React.FC = () => {
             color: "from-blue-500 to-blue-600",
         },
         {
-            title: "Active Users",
+            title: "Người dùng hoạt động",
             value: loadingStats ? "..." : formatNumber(dashboardStats.activeUsers),
             change: "+8%",
             trend: "up",
@@ -244,7 +256,7 @@ const AdminDashboard: React.FC = () => {
             color: "from-green-500 to-green-600",
         },
         {
-            title: "Recipe Views (This Month)",
+            title: "Lượt xem hàng tháng",
             value: loadingStats ? "..." : formatNumber(dashboardStats.recipeViews),
             change: "+23%",
             trend: "up",
@@ -252,7 +264,7 @@ const AdminDashboard: React.FC = () => {
             color: "from-purple-500 to-purple-600",
         },
         {
-            title: "User Reviews",
+            title: "Đánh giá của người dùng",
             value: loadingStats ? "..." : formatNumber(dashboardStats.userReviews),
             change: "+15%",
             trend: "up",
@@ -265,12 +277,12 @@ const AdminDashboard: React.FC = () => {
     const recentRecipes = newestRecipes
 
     const tabs = [
-        { id: "overview", label: "Overview", icon: BarChart3 },
-        { id: "recipes", label: "Recipes", icon: ChefHat },
-        { id: "users", label: "Users", icon: Users },
-        { id: "data", label: "Data Management", icon: Database },
-        { id: "analytics", label: "Analytics", icon: TrendingUp },
-        { id: "settings", label: "Settings", icon: Settings },
+        { id: "overview", label: "Tổng quan", icon: BarChart3 },
+        { id: "recipes", label: "Công thức", icon: ChefHat },
+        { id: "users", label: "Người dùng", icon: Users },
+        { id: "data", label: "Quản lý dữ liệu", icon: Database },
+        { id: "analytics", label: "Phân tích", icon: TrendingUp },
+        { id: "settings", label: "Cài đặt", icon: Settings },
     ]
 
     const getStatusColor = (status: string) => {
@@ -364,17 +376,7 @@ const AdminDashboard: React.FC = () => {
     return (
         <div className="h-screen bg-gray-50 flex overflow-hidden">
             <div className="w-64 bg-white shadow-lg border-r border-gray-200 flex flex-col h-full overflow-y-auto">
-                {/* Back Button */}
-                <div className="p-6 border-b border-gray-200 flex-shrink-0">
-                    <button
-                        onClick={() => navigate("/")}
-                        className="flex items-center gap-2 text-gray-700 hover:text-orange-600 transition-colors duration-200 w-full"
-                    >
-                        <ArrowLeft className="w-5 h-5" />
-                        <span className="text-lg font-semibold">Back</span>
-                    </button>
-                </div>
-
+           
                 {/* User Profile Section */}
                 <div className="p-6 border-b border-gray-200 flex-shrink-0">
                     <div className="flex items-center space-x-3">
@@ -413,7 +415,7 @@ const AdminDashboard: React.FC = () => {
                         className="w-full flex items-center space-x-3 px-4 py-3 text-gray-600 hover:bg-gray-100 hover:text-gray-900 rounded-xl transition-all duration-200 cursor-pointer"
                     >
                         <LogOut className="h-5 w-5" />
-                        <span className="font-medium">Logout</span>
+                        <span className="font-medium">Đăng xuất</span>
                     </button>
                 </nav>
             </div>
@@ -514,19 +516,19 @@ const AdminDashboard: React.FC = () => {
                                                     <Bar 
                                                         dataKey="views" 
                                                         fill="#8b5cf6" 
-                                                        name="Views"
+                                                        name="Lượt xem"
                                                         radius={[8, 8, 0, 0]}
                                                     />
                                                     <Bar 
                                                         dataKey="reviews" 
                                                         fill="#f97316" 
-                                                        name="Reviews"
+                                                        name="Đánh giá"
                                                         radius={[8, 8, 0, 0]}
                                                     />
                                                     <Bar 
                                                         dataKey="favorites" 
                                                         fill="#ef4444" 
-                                                        name="Favorites"
+                                                        name="Yêu thích"
                                                         radius={[8, 8, 0, 0]}
                                                     />
                                                 </BarChart>
@@ -536,7 +538,7 @@ const AdminDashboard: React.FC = () => {
                                         <div className="h-64 bg-gradient-to-br from-orange-50 to-red-50 rounded-xl flex items-center justify-center">
                                             <div className="text-center">
                                                 <BarChart3 className="h-16 w-16 text-orange-400 mx-auto mb-4" />
-                                                <p className="text-gray-600">No recipe performance data available</p>
+                                                <p className="text-gray-600">Không có dữ liệu hiệu suất công thức</p>
                                             </div>
                                         </div>
                                     )}
@@ -546,7 +548,7 @@ const AdminDashboard: React.FC = () => {
                                 <div className="bg-white rounded-2xl shadow-lg p-6">
                                     <div className="flex items-center justify-between mb-4">
                                         <h3 className="text-lg font-semibold text-gray-900">
-                                            User Activity
+                                            Hoạt động người dùng
                                         </h3>
                                         <button className="text-gray-400 hover:text-gray-600">
                                             <Download className="h-5 w-5" />
@@ -563,9 +565,9 @@ const AdminDashboard: React.FC = () => {
                                         </button>
                                         <div className="text-center">
                                             <h4 className="text-base font-semibold text-gray-900">
-                                                {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][selectedMonth - 1]} {selectedYear}
+                                                {['Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6', 'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12'][selectedMonth - 1]}, {selectedYear}
                                             </h4>
-                                            <p className="text-xs text-gray-500 mt-1">Weekly new users registration</p>
+                                            <p className="text-xs text-gray-500 mt-1">Đăng ký người dùng mới theo tuần</p>
                                         </div>
                                         <button
                                             onClick={handleNextMonth}
@@ -608,7 +610,7 @@ const AdminDashboard: React.FC = () => {
                                                         strokeWidth={3}
                                                         dot={{ fill: '#f97316', strokeWidth: 2, r: 5 }}
                                                         activeDot={{ r: 7 }}
-                                                        name="New Users"
+                                                        name="Người dùng mới"
                                                     />
                                                 </LineChart>
                                             </ResponsiveContainer>
@@ -617,8 +619,8 @@ const AdminDashboard: React.FC = () => {
                                         <div className="h-64 bg-gradient-to-br from-orange-50 to-red-50 rounded-xl flex items-center justify-center">
                                             <div className="text-center">
                                                 <Users className="h-16 w-16 text-orange-400 mx-auto mb-4" />
-                                                <p className="text-gray-600">No user activity data available</p>
-                                                <p className="text-sm text-gray-500 mt-1">for {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][selectedMonth - 1]} {selectedYear}</p>
+                                                <p className="text-gray-600">Không có dữ liệu hoạt động người dùng</p>
+                                                <p className="text-sm text-gray-500 mt-1">cho {['Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6', 'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12'][selectedMonth - 1]}, {selectedYear}</p>
                                             </div>
                                         </div>
                                     )}
@@ -630,8 +632,8 @@ const AdminDashboard: React.FC = () => {
                                 {/* Recent Recipes */}
                                 <div className="bg-white rounded-2xl shadow-lg p-6">
                                     <div className="flex items-center justify-between mb-6">
-                                        <h3 className="text-lg font-semibold text-gray-900">Recent Recipes</h3>
-                                        <button className="text-orange-600 hover:text-orange-700 text-sm font-medium">View All</button>
+                                        <h3 className="text-lg font-semibold text-gray-900">Công thức gần đây</h3>
+                                        <button className="text-orange-600 hover:text-orange-700 text-sm font-medium">Xem tất cả</button>
                                     </div>
                                     <div className="space-y-4">
                                         {recentRecipes.length > 0 ? (
@@ -669,7 +671,7 @@ const AdminDashboard: React.FC = () => {
                                             ))
                                         ) : (
                                             <div className="text-center py-8 text-gray-500">
-                                                No recent recipes available
+                                                Không có công thức gần đây
                                             </div>
                                         )}
                                     </div>
@@ -678,8 +680,8 @@ const AdminDashboard: React.FC = () => {
                                 {/* Recent Users */}
                                 <div className="bg-white rounded-2xl shadow-lg p-6">
                                     <div className="flex items-center justify-between mb-6">
-                                        <h3 className="text-lg font-semibold text-gray-900">Recent Users</h3>
-                                        <button className="text-orange-600 hover:text-orange-700 text-sm font-medium">View All</button>
+                                        <h3 className="text-lg font-semibold text-gray-900">Người dùng gần đây</h3>
+                                        <button className="text-orange-600 hover:text-orange-700 text-sm font-medium">Xem tất cả</button>
                                     </div>
                                     <div className="space-y-4">
                                         {recentUsers.map((user) => (
@@ -704,7 +706,7 @@ const AdminDashboard: React.FC = () => {
                                                 </div>
                                                 <div className="text-right">
                                                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor("Active")}`}>
-                                                        Active
+                                                        Hoạt động
                                                     </span>
                                                     <p className="text-xs text-gray-500 mt-1">
                                                         {new Date(user.createdAt).toLocaleDateString()}
@@ -729,7 +731,7 @@ const AdminDashboard: React.FC = () => {
                                             type="text"
                                             value={searchQuery}
                                             onChange={(e) => setSearchQuery(e.target.value)}
-                                            placeholder="Search recipes..."
+                                            placeholder="Tìm kiếm công thức..."
                                             className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
                                         />
                                     </div>
@@ -739,7 +741,7 @@ const AdminDashboard: React.FC = () => {
                                             className="bg-orange-500 bg-gradient-to-r from-orange-500 to-red-500 text-white px-4 py-3 rounded-xl hover:from-orange-600 hover:to-red-600 transition-all duration-200 flex items-center space-x-2"
                                         >
                                             <Plus className="h-5 w-5" />
-                                            <span>Add Recipe</span>
+                                            <span>Thêm công thức</span>
                                         </button>
                                     </div>
                                 </div>
@@ -748,27 +750,27 @@ const AdminDashboard: React.FC = () => {
                             {/* Recipes Table */}
                             <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
                                 {loading ? (
-                                    <div className="p-6 text-center text-gray-500">Loading recipes...</div>
+                                    <div className="p-6 text-center text-gray-500">Đang tải công thức...</div>
                                 ) : error ? (
-                                    <div className="p-6 text-center text-red-500">Error: {error}</div>
+                                    <div className="p-6 text-center text-red-500">Lỗi: {error}</div>
                                 ) : (
                                     <>
                                         <div className="overflow-x-auto">
                                             <table className="w-full">
                                                 <thead className="bg-gray-50">
                                                     <tr>
-                                                        <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                                                        <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Cuisine</th>
-                                                        <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Difficulty</th>
-                                                        <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Rating</th>
-                                                        <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                                                        <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Tên</th>
+                                                        <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Phương thức nấu ăn</th>
+                                                        <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Mức độ khó</th>
+                                                        <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Đánh giá</th>
+                                                        <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Hành động</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody className="bg-white divide-y divide-gray-200">
                                                     {currentRecipes.length === 0 ? (
                                                         <tr>
                                                             <td colSpan={5} className="text-center py-6 text-gray-500">
-                                                                {searchQuery ? "No recipes found matching your search" : "No recipes found"}
+                                                                {searchQuery ? "Không tìm thấy công thức phù hợp" : "Không có công thức"}
                                                             </td>
                                                         </tr>
                                                     ) : (
@@ -816,7 +818,7 @@ const AdminDashboard: React.FC = () => {
                                                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                                                     {/* Items per page selector */}
                                                     <div className="flex items-center space-x-2">
-                                                        <span className="text-sm text-gray-700">Show</span>
+                                                        <span className="text-sm text-gray-700">Hiển thị</span>
                                                         <select
                                                             value={itemsPerPage}
                                                             onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
@@ -829,7 +831,7 @@ const AdminDashboard: React.FC = () => {
                                                             <option value={50}>50</option>
                                                         </select>
                                                         <span className="text-sm text-gray-700">
-                                                            of {filteredRecipes.length} recipes
+                                                            trong số {filteredRecipes.length} công thức
                                                         </span>
                                                     </div>
 
@@ -883,7 +885,7 @@ const AdminDashboard: React.FC = () => {
 
                                                     {/* Page info */}
                                                     <div className="text-sm text-gray-700">
-                                                        Page {currentPage} of {totalPages}
+                                                        Trang {currentPage} / {totalPages}
                                                     </div>
                                                 </div>
                                             </div>
@@ -902,15 +904,19 @@ const AdminDashboard: React.FC = () => {
                             <div className="bg-white rounded-2xl shadow-lg p-6">
                                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                                     <div>
-                                        <h2 className="text-2xl font-bold text-gray-900">User Management</h2>
-                                        <p className="text-gray-600 mt-1">Manage and monitor user accounts</p>
+                                        <h2 className="text-2xl font-bold text-gray-900">Quản lý người dùng</h2>
+                                        <p className="text-gray-600 mt-1">Quản lý và theo dõi tài khoản người dùng</p>
                                     </div>
                                     <div className="flex space-x-3">
                                         <button className="px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors duration-200">
-                                            Export Users
+                                            Xuất dữ liệu
                                         </button>
-                                        <button className="bg-orange-500 bg-gradient-to-r from-orange-500 to-red-500 text-white px-4 py-2 rounded-lg hover:from-orange-600 hover:to-red-600 transition-all duration-200">
-                                            Add User
+                                        <button 
+                                            onClick={() => setIsAddAdminModalOpen(true)}
+                                            className="bg-orange-500 bg-gradient-to-r from-orange-500 to-red-500 text-white px-4 py-2 rounded-lg hover:from-orange-600 hover:to-red-600 transition-all duration-200 flex items-center space-x-2"
+                                        >
+                                            <UserPlus className="h-4 w-4" />
+                                            <span>Thêm tài khoản admin phụ</span>
                                         </button>
                                     </div>
                                 </div>
@@ -923,22 +929,22 @@ const AdminDashboard: React.FC = () => {
                                         <thead className="bg-gray-50">
                                             <tr>
                                                 <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                    User
+                                                    Người dùng
                                                 </th>
                                                 <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                     Email
                                                 </th>
                                                 <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                    Join Date
+                                                    Ngày tham gia
                                                 </th>
                                                 <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                    Recipes
+                                                    Công thức
                                                 </th>
                                                 <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                    Status
+                                                    Trạng thái
                                                 </th>
                                                 <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                    Actions
+                                                    Hành động
                                                 </th>
                                             </tr>
                                         </thead>
@@ -994,20 +1000,20 @@ const AdminDashboard: React.FC = () => {
                     {activeTab === "analytics" && (
                         <div className="space-y-8">
                             <div className="bg-white rounded-2xl shadow-lg p-6">
-                                <h2 className="text-2xl font-bold text-gray-900 mb-6">Analytics Dashboard</h2>
+                                <h2 className="text-2xl font-bold text-gray-900 mb-6">Bảng điều khiển phân tích</h2>
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                                     <div className="h-80 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl flex items-center justify-center">
                                         <div className="text-center">
                                             <BarChart3 className="h-20 w-20 text-blue-400 mx-auto mb-4" />
-                                            <p className="text-gray-600 text-lg">Advanced Analytics Charts</p>
-                                            <p className="text-gray-500 text-sm">Coming Soon</p>
+                                            <p className="text-gray-600 text-lg">Biểu đồ phân tích nâng cao</p>
+                                            <p className="text-gray-500 text-sm">Sắp ra mắt</p>
                                         </div>
                                     </div>
                                     <div className="h-80 bg-gradient-to-br from-green-50 to-teal-50 rounded-xl flex items-center justify-center">
                                         <div className="text-center">
                                             <TrendingUp className="h-20 w-20 text-green-400 mx-auto mb-4" />
-                                            <p className="text-gray-600 text-lg">Performance Metrics</p>
-                                            <p className="text-gray-500 text-sm">Coming Soon</p>
+                                            <p className="text-gray-600 text-lg">Chỉ số hiệu suất</p>
+                                            <p className="text-gray-500 text-sm">Sắp ra mắt</p>
                                         </div>
                                     </div>
                                 </div>
@@ -1024,14 +1030,14 @@ const AdminDashboard: React.FC = () => {
                     {activeTab === "settings" && (
                         <div className="space-y-8">
                             <div className="bg-white rounded-2xl shadow-lg p-6">
-                                <h2 className="text-2xl font-bold text-gray-900 mb-6">System Settings</h2>
+                                <h2 className="text-2xl font-bold text-gray-900 mb-6">Cài đặt hệ thống</h2>
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                                     <div className="space-y-6">
                                         <div>
-                                            <h3 className="text-lg font-semibold text-gray-900 mb-4">General Settings</h3>
+                                            <h3 className="text-lg font-semibold text-gray-900 mb-4">Cài đặt chung</h3>
                                             <div className="space-y-4">
                                                 <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-2">Site Name</label>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-2">Tên trang web</label>
                                                     <input
                                                         type="text"
                                                         defaultValue="Kooka"
@@ -1039,9 +1045,9 @@ const AdminDashboard: React.FC = () => {
                                                     />
                                                 </div>
                                                 <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-2">Site Description</label>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-2">Mô tả trang web</label>
                                                     <textarea
-                                                        defaultValue="Find recipes with ingredients you already have"
+                                                        defaultValue="Tìm công thức với nguyên liệu bạn đã có"
                                                         className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
                                                         rows={3}
                                                     />
@@ -1051,18 +1057,18 @@ const AdminDashboard: React.FC = () => {
                                     </div>
                                     <div className="space-y-6">
                                         <div>
-                                            <h3 className="text-lg font-semibold text-gray-900 mb-4">Notification Settings</h3>
+                                            <h3 className="text-lg font-semibold text-gray-900 mb-4">Cài đặt thông báo</h3>
                                             <div className="space-y-4">
                                                 <div className="flex items-center justify-between">
-                                                    <span className="text-sm text-gray-700">Email Notifications</span>
+                                                    <span className="text-sm text-gray-700">Thông báo Email</span>
                                                     <input type="checkbox" defaultChecked className="rounded" />
                                                 </div>
                                                 <div className="flex items-center justify-between">
-                                                    <span className="text-sm text-gray-700">Push Notifications</span>
+                                                    <span className="text-sm text-gray-700">Thông báo đẩy</span>
                                                     <input type="checkbox" defaultChecked className="rounded" />
                                                 </div>
                                                 <div className="flex items-center justify-between">
-                                                    <span className="text-sm text-gray-700">SMS Notifications</span>
+                                                    <span className="text-sm text-gray-700">Thông báo SMS</span>
                                                     <input type="checkbox" className="rounded" />
                                                 </div>
                                             </div>
@@ -1129,15 +1135,219 @@ const AdminDashboard: React.FC = () => {
                                 <button
                                     onClick={() => {
                                         setLogoutConfirmOpen(false)
-                                        // Implement logout logic here
+                                        // Xóa token và về trang Home
+                                        dispatch(logout())
+                                        dispatch(clearProfile())
                                         toast.success("Đăng xuất thành công!", { duration: 2500 })
-                                        navigate("/login")
+                                        navigate("/")
                                     }}
                                     className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors duration-200"
                                 >
                                     Đăng xuất
                                 </button>
                             </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Add Admin Modal */}
+                {isAddAdminModalOpen && (
+                    <div className="fixed inset-0 bg-gray-800/40 flex items-center justify-center z-50 p-4">
+                        <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl max-h-[90vh] overflow-y-auto">
+                            {/* Header */}
+                            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between rounded-t-2xl">
+                                <div className="flex items-center space-x-3">
+                                    <div className="w-10 h-10 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg flex items-center justify-center">
+                                        <UserPlus className="h-5 w-5 text-white" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-lg font-semibold text-gray-900">Thêm tài khoản admin phụ</h3>
+                                        <p className="text-xs text-gray-500">Tạo tài khoản quản trị viên mới</p>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => {
+                                        setIsAddAdminModalOpen(false)
+                                        setAdminFormData({
+                                            firstName: "",
+                                            lastName: "",
+                                            email: "",
+                                            password: "",
+                                            confirmPassword: "",
+                                        })
+                                    }}
+                                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                                >
+                                    <X className="h-5 w-5" />
+                                </button>
+                            </div>
+
+                            {/* Form */}
+                            <form
+                                onSubmit={async (e) => {
+                                    e.preventDefault()
+                                    setAdminFormLoading(true)
+
+                                    // Validation
+                                    if (adminFormData.password !== adminFormData.confirmPassword) {
+                                        toast.error("Mật khẩu xác nhận không khớp!", { duration: 2500 })
+                                        setAdminFormLoading(false)
+                                        return
+                                    }
+
+                                    if (adminFormData.password.length < 6) {
+                                        toast.error("Mật khẩu phải có ít nhất 6 ký tự!", { duration: 2500 })
+                                        setAdminFormLoading(false)
+                                        return
+                                    }
+
+                                    try {
+                                        // Gọi API tạo admin phụ
+                                        const response = await axiosInstance.post("/auth/create-admin", {
+                                            firstName: adminFormData.firstName,
+                                            lastName: adminFormData.lastName,
+                                            email: adminFormData.email,
+                                            password: adminFormData.password,
+                                        })
+                                        
+                                        toast.success(response.data.message || "Tạo tài khoản admin phụ thành công!", { duration: 2500 })
+                                        setIsAddAdminModalOpen(false)
+                                        setAdminFormData({
+                                            firstName: "",
+                                            lastName: "",
+                                            email: "",
+                                            password: "",
+                                            confirmPassword: "",
+                                        })
+                                        // Refresh user list
+                                        fetchRecentUsers()
+                                    } catch (error: any) {
+                                        console.error("Error creating admin:", error)
+                                        const errorMsg = error.response?.data?.message || "Tạo tài khoản thất bại!"
+                                        toast.error(errorMsg, { duration: 2500 })
+                                    } finally {
+                                        setAdminFormLoading(false)
+                                    }
+                                }}
+                                className="p-6 space-y-4"
+                            >
+                                {/* First Name */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Họ <span className="text-red-500">*</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={adminFormData.firstName}
+                                        onChange={(e) => setAdminFormData({ ...adminFormData, firstName: e.target.value })}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                                        placeholder="Nguyễn Văn"
+                                        required
+                                    />
+                                </div>
+
+                                {/* Last Name */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Tên <span className="text-red-500">*</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={adminFormData.lastName}
+                                        onChange={(e) => setAdminFormData({ ...adminFormData, lastName: e.target.value })}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                                        placeholder="An"
+                                        required
+                                    />
+                                </div>
+
+                                {/* Email */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Email <span className="text-red-500">*</span>
+                                    </label>
+                                    <input
+                                        type="email"
+                                        value={adminFormData.email}
+                                        onChange={(e) => setAdminFormData({ ...adminFormData, email: e.target.value })}
+                                        className="w-full px-3 py-2 border  rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                                        placeholder="admin@kooka.com"
+                                        required
+                                    />
+                                </div>
+
+                                {/* Password */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Mật khẩu <span className="text-red-500">*</span>
+                                    </label>
+                                    <input
+                                        type="password"
+                                        value={adminFormData.password}
+                                        onChange={(e) => setAdminFormData({ ...adminFormData, password: e.target.value })}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                                        placeholder="••••••••"
+                                        required
+                                    />
+                                </div>
+
+                                {/* Confirm Password */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Xác nhận mật khẩu <span className="text-red-500">*</span>
+                                    </label>
+                                    <input
+                                        type="password"
+                                        value={adminFormData.confirmPassword}
+                                        onChange={(e) => setAdminFormData({ ...adminFormData, confirmPassword: e.target.value })}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                                        placeholder="••••••••"
+                                        required
+                                    />
+                                </div>
+
+                                {/* Info Note */}
+                                <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+                                    <p className="text-xs text-orange-800">
+                                        <strong>Lưu ý:</strong> Tài khoản admin phụ sẽ có toàn quyền quản trị hệ thống. Vui lòng cấp quyền cẩn thận.
+                                    </p>
+                                </div>
+
+                                {/* Buttons */}
+                                <div className="flex space-x-3 pt-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setIsAddAdminModalOpen(false)
+                                            setAdminFormData({
+                                                firstName: "",
+                                                lastName: "",
+                                                email: "",
+                                                password: "",
+                                                confirmPassword: "",
+                                            })
+                                        }}
+                                        className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors duration-200"
+                                        disabled={adminFormLoading}
+                                    >
+                                        Hủy
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={adminFormLoading}
+                                        className="flex-1 px-4 py-2 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-lg hover:from-orange-600 hover:to-red-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        {adminFormLoading ? (
+                                            <div className="flex items-center justify-center space-x-2">
+                                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                                <span>Đang tạo...</span>
+                                            </div>
+                                        ) : (
+                                            "Tạo tài khoản"
+                                        )}
+                                    </button>
+                                </div>
+                            </form>
                         </div>
                     </div>
                 )}

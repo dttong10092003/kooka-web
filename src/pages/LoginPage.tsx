@@ -49,7 +49,13 @@ const LoginPage: React.FC<LoginPageProps> = ({ onBack }) => {
       setShowSuccess(true); // Hiển thị success message
       // delay 1s rồi chuyển trang
       setTimeout(() => {
-        navigate("/", { replace: true }); // replace để không quay lại được
+        // Kiểm tra nếu là admin thì vào /admin, không thì vào /
+        const isAdmin = result.payload.user?.isAdmin;
+        if (isAdmin) {
+          navigate("/admin", { replace: true });
+        } else {
+          navigate("/", { replace: true });
+        }
         setButtonLoading(false);
       }, 1000);
     } else {
