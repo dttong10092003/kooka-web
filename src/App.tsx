@@ -99,6 +99,7 @@ function App() {
         position="top-right" 
         reverseOrder={false}
         toastOptions={{
+          duration: 2500,
           style: {
             marginTop: '40px',
           },

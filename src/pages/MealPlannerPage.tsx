@@ -13,7 +13,7 @@ import type { DayPlan, Meal } from '../redux/slices/mealPlanSlice';
 import { Calendar, Plus, ChefHat, Clock, Users, Star, Edit, Trash2, ShoppingCart, Download, ChevronLeft, ChevronRight, Coffee, Sun, Moon, CheckCircle, Search } from 'lucide-react';
 import type { Recipe } from '../redux/slices/recipeSlice';
 import { useLanguage } from '../contexts/LanguageContext';
-import toast, { Toaster } from 'react-hot-toast';
+import toast from 'react-hot-toast';
 
 interface MealPlanDay {
   morning?: {
@@ -825,39 +825,6 @@ const MealPlannerPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Toaster for notifications */}
-      <Toaster 
-        position="top-right"
-        toastOptions={{
-          duration: 3000,
-          style: {
-            background: '#fff',
-            color: '#363636',
-            borderRadius: '10px',
-            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-            padding: '16px',
-            fontSize: '14px',
-          },
-          success: {
-            iconTheme: {
-              primary: '#10b981',
-              secondary: '#fff',
-            },
-            style: {
-              border: '1px solid #10b981',
-            },
-          },
-          error: {
-            iconTheme: {
-              primary: '#ef4444',
-              secondary: '#fff',
-            },
-            style: {
-              border: '1px solid #ef4444',
-            },
-          },
-        }}
-      />
       
       {/* Hero Section */}
       <div className="bg-gradient-to-br from-green-50 via-white to-blue-50 py-8 md:py-12 lg:py-20">
