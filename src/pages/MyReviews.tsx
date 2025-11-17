@@ -5,6 +5,7 @@ import { useAppDispatch, useAppSelector } from "../redux/hooks"
 import { fetchUserReviews } from "../redux/slices/commentSlice"
 import { useNavigate } from "react-router-dom"
 import axiosInstance from "../utils/axiosInstance"
+import toast from "react-hot-toast"
 
 const MyReviews: React.FC = () => {
   const dispatch = useAppDispatch()
@@ -50,10 +51,10 @@ const MyReviews: React.FC = () => {
       await axiosInstance.delete(`/comments/${commentId}`)
       // Reload reviews after delete
       dispatch(fetchUserReviews())
-      alert("Đã xóa đánh giá thành công!")
+      toast.success("Đã xóa đánh giá thành công!")
     } catch (error) {
       console.error("Error deleting review:", error)
-      alert("Không thể xóa đánh giá. Vui lòng thử lại!")
+      toast.error("Không thể xóa đánh giá. Vui lòng thử lại!")
     }
   }
 

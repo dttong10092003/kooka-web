@@ -95,7 +95,15 @@ function App() {
   const hideHeader = location.pathname.startsWith("/admin");
   return (
     <>
-      <Toaster position="bottom-right" reverseOrder={false} />
+      <Toaster 
+        position="top-right" 
+        reverseOrder={false}
+        toastOptions={{
+          style: {
+            marginTop: '40px',
+          },
+        }}
+      />
       {!hideHeader && <Header />}
       <Routes>
         <Route path="/" element={<Home />} />

@@ -13,6 +13,7 @@ import {
 } from '../redux/slices/commentSlice';
 import { toggleLike, getUserLikes } from '../redux/slices/likeSlice';
 import { getRecipeById } from '../redux/slices/recipeSlice';
+import toast from 'react-hot-toast';
 
 interface CommentSectionProps {
     recipeId: string;
@@ -86,7 +87,7 @@ export default function CommentSection({ recipeId }: CommentSectionProps) {
 
         // Validate rating (phải chọn số sao từ 1-5)
         if (!rating || rating < 1 || rating > 5) {
-            alert('Please select a rating (1-5 stars) for this recipe');
+            toast.error('Please select a rating (1-5 stars) for this recipe');
             return;
         }
 
@@ -100,7 +101,7 @@ export default function CommentSection({ recipeId }: CommentSectionProps) {
         } catch (error: any) {
             console.error('Failed to create comment:', error);
             if (error.message) {
-                alert(error.message);
+                toast.error(error.message);
             }
         }
     };
@@ -132,7 +133,7 @@ export default function CommentSection({ recipeId }: CommentSectionProps) {
     // Handle like/unlike comment
     const handleToggleLike = async (commentId: string) => {
         if (!currentUser) {
-            alert('Please login to like comments');
+            toast.error('Please login to like comments');
             return;
         }
 
@@ -181,7 +182,7 @@ export default function CommentSection({ recipeId }: CommentSectionProps) {
             dispatch(updateCommentLikes({ commentId, likes: currentLikes }));
             
             const errorMsg = error.message || error.response?.data?.message || 'Failed to like/unlike comment';
-            alert(`Error: ${errorMsg}`);
+            toast.error(`Error: ${errorMsg}`);
         }
     };
 
@@ -257,13 +258,13 @@ export default function CommentSection({ recipeId }: CommentSectionProps) {
 
     // Handle report
     const handleReport = (commentId: string) => {
-        alert('Báo cáo comment: ' + commentId);
+        toast.success('Báo cáo comment: ' + commentId);
         setOpenMenuId(null);
     };
 
     // Handle hide
     const handleHide = (commentId: string) => {
-        alert('Ẩn comment: ' + commentId);
+        toast.success('Ẩn comment: ' + commentId);
         setOpenMenuId(null);
     };
 

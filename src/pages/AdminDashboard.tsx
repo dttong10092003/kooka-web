@@ -760,7 +760,7 @@ const AdminDashboard: React.FC = () => {
                                                 <thead className="bg-gray-50">
                                                     <tr>
                                                         <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Tên</th>
-                                                        <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Phương thức nấu ăn</th>
+                                                        <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Ẩm thực</th>
                                                         <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Mức độ khó</th>
                                                         <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Đánh giá</th>
                                                         <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Hành động</th>
