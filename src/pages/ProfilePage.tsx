@@ -92,22 +92,22 @@ const ProfilePage: React.FC = () => {
       .toUpperCase()
 
   if (loading && !profile) {
-    return <div className="p-8">Loading profile...</div>
+    return <div className="p-8 text-center text-gray-600">Đang tải thông tin...</div>
   }
 
   if (!formData) {
-    return <div className="p-8">No profile data available</div>
+    return <div className="p-8 text-center text-gray-600">Không có dữ liệu hồ sơ</div>
   }
 
   return (
     <div className="bg-white rounded-2xl shadow-sm">
       {/* Header */}
-      <div className="bg-gradient-to-r from-orange-500 to-red-500 p-8 rounded-t-2xl">
+      <div className="bg-gradient-to-r from-orange-500 to-red-500 p-8 rounded-t-2xl shadow-2xl">
         <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-6">
             {/* Avatar with Camera Button */}
             <div className="relative">
-              <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white text-2xl font-bold overflow-hidden">
+              <div className="w-24 h-24 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white text-2xl font-bold overflow-hidden ring-4 ring-white/30 shadow-xl">
                 {(avatarPreview || formData?.avatar) ? (
                   <img 
                     src={avatarPreview || formData?.avatar} 
@@ -131,10 +131,10 @@ const ProfilePage: React.FC = () => {
                 <button 
                   type="button"
                   onClick={handleCameraClick}
-                  className="absolute bottom-0 right-0 bg-white text-gray-700 p-1.5 rounded-full hover:bg-gray-100 transition-colors duration-200 shadow-lg"
-                  title="Change Avatar"
+                  className="absolute bottom-0 right-0 bg-white text-orange-600 p-2 rounded-full hover:bg-orange-50 transition-all duration-200 shadow-lg hover:scale-110"
+                  title="Thay đổi ảnh đại diện"
                 >
-                  <Camera className="h-3 w-3" />
+                  <Camera className="h-4 w-4" />
                 </button>
               )}
               
@@ -148,19 +148,19 @@ const ProfilePage: React.FC = () => {
               />
             </div>
             <div className="text-white">
-              <h1 className="text-2xl font-bold mb-1">
+              <h1 className="text-3xl font-bold mb-2">
                 {formData.firstName} {formData.lastName}
               </h1>
-              <p className="text-white/90 mb-2">{user?.email}</p>
-              <div className="flex items-center space-x-4 text-sm text-white/80">
+              <p className="text-white/90 mb-3 text-lg">{user?.email}</p>
+              <div className="flex items-center space-x-6 text-sm text-white/80">
                 {formData.createdAt && (
-                  <div className="flex items-center space-x-1">
+                  <div className="flex items-center space-x-2 bg-white/10 px-3 py-1.5 rounded-lg backdrop-blur-sm">
                     <Calendar className="h-4 w-4" />
-                    <span>Joined {formData.createdAt.split("T")[0]}</span>
+                    <span>Tham gia {formData.createdAt.split("T")[0]}</span>
                   </div>
                 )}
                 {formData.location && (
-                  <div className="flex items-center space-x-1">
+                  <div className="flex items-center space-x-2 bg-white/10 px-3 py-1.5 rounded-lg backdrop-blur-sm">
                     <MapPin className="h-4 w-4" />
                     <span>{formData.location}</span>
                   </div>
@@ -177,89 +177,102 @@ const ProfilePage: React.FC = () => {
               }
               setIsEditing(!isEditing)
             }}
-            className="bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-all duration-200 flex items-center space-x-2"
+            className="bg-white/20 backdrop-blur-sm text-white px-6 py-3 rounded-xl hover:bg-white/30 transition-all duration-200 flex items-center space-x-2 shadow-lg hover:scale-105"
           >
-            {isEditing ? <X className="h-4 w-4" /> : <Edit className="h-4 w-4" />}
-            <span>{isEditing ? "Cancel" : "Edit"}</span>
+            {isEditing ? <X className="h-5 w-5" /> : <Edit className="h-5 w-5" />}
+            <span className="font-semibold">{isEditing ? "Hủy" : "Chỉnh sửa"}</span>
           </button>
         </div>
       </div>
 
       {/* Personal Info */}
       <div className="p-8">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-gray-900">Personal Information</h2>
+        <div className="flex items-center justify-between mb-8">
+          <h2 className="text-2xl font-bold text-gray-900 flex items-center space-x-2">
+            <div className="w-1 h-8 bg-gradient-to-b from-orange-500 to-red-500 rounded-full"></div>
+            <span>Thông Tin Cá Nhân</span>
+          </h2>
           {isEditing && (
             <button
               onClick={handleSave}
-              className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-4 py-2 rounded-lg hover:from-orange-600 hover:to-red-600 transition-all duration-200 flex items-center space-x-2"
+              className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-6 py-3 rounded-xl hover:from-orange-600 hover:to-red-600 transition-all duration-200 flex items-center space-x-2 shadow-lg hover:scale-105"
             >
-              <Save className="h-4 w-4" />
-              <span>Save</span>
+              <Save className="h-5 w-5" />
+              <span className="font-semibold">Lưu thay đổi</span>
             </button>
           )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">First Name</label>
+          <div className="group">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Họ</label>
             <input
               type="text"
               value={formData.firstName || ""}
               onChange={(e) => handleInputChange("firstName", e.target.value)}
               disabled={!isEditing}
-              className={`w-full px-4 py-3 border border-gray-200 rounded-lg ${
-                !isEditing ? "bg-gray-50 text-gray-600" : ""
+              className={`w-full px-4 py-3 border-2 rounded-xl transition-all duration-200 ${
+                !isEditing 
+                  ? "bg-gray-50 text-gray-600 border-gray-200" 
+                  : "border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 hover:border-orange-400"
               }`}
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
+          <div className="group">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Tên</label>
             <input
               type="text"
               value={formData.lastName || ""}
               onChange={(e) => handleInputChange("lastName", e.target.value)}
               disabled={!isEditing}
-              className={`w-full px-4 py-3 border border-gray-200 rounded-lg ${
-                !isEditing ? "bg-gray-50 text-gray-600" : ""
+              className={`w-full px-4 py-3 border-2 rounded-xl transition-all duration-200 ${
+                !isEditing 
+                  ? "bg-gray-50 text-gray-600 border-gray-200" 
+                  : "border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 hover:border-orange-400"
               }`}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Email</label>
             <input
               type="email"
               value={user?.email || ""}
               disabled
-              className="w-full px-4 py-3 border border-gray-200 rounded-lg bg-gray-50 text-gray-600"
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl bg-gray-50 text-gray-600 cursor-not-allowed"
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
+          <div className="group">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Số điện thoại</label>
             <input
               type="text"
               value={formData.phone || ""}
               onChange={(e) => handleInputChange("phone", e.target.value)}
               disabled={!isEditing}
-              className={`w-full px-4 py-3 border border-gray-200 rounded-lg ${
-                !isEditing ? "bg-gray-50 text-gray-600" : ""
+              placeholder="Nhập số điện thoại"
+              className={`w-full px-4 py-3 border-2 rounded-xl transition-all duration-200 ${
+                !isEditing 
+                  ? "bg-gray-50 text-gray-600 border-gray-200" 
+                  : "border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 hover:border-orange-400"
               }`}
             />
           </div>
         </div>
 
         <div className="mt-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Bio</label>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">Giới thiệu bản thân</label>
           <textarea
             value={formData.bio || ""}
             onChange={(e) => handleInputChange("bio", e.target.value)}
             disabled={!isEditing}
             rows={4}
-            className={`w-full px-4 py-3 border border-gray-200 rounded-lg ${
-              !isEditing ? "bg-gray-50 text-gray-600" : ""
+            placeholder="Viết vài dòng về bạn..."
+            className={`w-full px-4 py-3 border-2 rounded-xl transition-all duration-200 resize-none ${
+              !isEditing 
+                ? "bg-gray-50 text-gray-600 border-gray-200" 
+                : "border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 hover:border-orange-400"
             }`}
           />
         </div>

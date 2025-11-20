@@ -24,15 +24,15 @@ const ProfileLayout: React.FC = () => {
   }
   
   const displayName = profile ? 
-    `${profile.firstName || ""} ${profile.lastName || ""}`.trim() || user?.username || "Guest User" :
-    user?.username || "Guest User"
+    `${profile.firstName || ""} ${profile.lastName || ""}`.trim() || user?.username || "Khách" :
+    user?.username || "Khách"
     
 
   const sidebarItems = [
-    { id: "profile", label: "Profile", icon: User, path: "/my-profile" },
-    { id: "favorites", label: "Favorites", icon: Heart, path: "/my-favorites" },
-    { id: "reviews", label: "My Reviews", icon: Star, path: "/my-reviews" },
-    { id: "settings", label: "Settings", icon: SettingsIcon, path: "/my-settings" },
+    { id: "profile", label: "Hồ Sơ", icon: User, path: "/my-profile" },
+    { id: "favorites", label: "Yêu Thích", icon: Heart, path: "/my-favorites" },
+    { id: "reviews", label: "Đánh Giá", icon: Star, path: "/my-reviews" },
+    { id: "settings", label: "Cài Đặt", icon: SettingsIcon, path: "/my-settings" },
   ]
 
   const getUserInitials = (firstName?: string, lastName?: string) => {
@@ -46,21 +46,21 @@ const ProfileLayout: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-red-50 to-pink-50 flex">
       {/* Sidebar */}
-      <div className="w-64 bg-white shadow-sm border-r border-gray-200 flex flex-col">
-        <div className="p-4 border-b border-gray-200">
+      <div className="w-72 bg-white shadow-xl border-r border-gray-100 flex flex-col">
+        <div className="p-6 border-b border-gray-100">
           <button
             onClick={() => navigate(-1)}
-            className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors duration-200"
+            className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-all duration-200 hover:translate-x-[-4px]"
           >
             <ArrowLeft className="h-5 w-5" />
-            <span>Back</span>
+            <span className="font-medium">Quay lại</span>
           </button>
         </div>
 
-        <div className="p-4 border-b border-gray-200">
-          <div className="flex items-center space-x-3">
+        <div className="p-6 border-b border-gray-100 bg-gradient-to-br from-white to-orange-50">
+          <div className="flex items-center space-x-4">
             <div className="w-10 h-10 relative">
               {displayAvatar ? (
                 <img
