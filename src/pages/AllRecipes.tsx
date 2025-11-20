@@ -36,14 +36,25 @@ const AllRecipes = () => {
   const [itemsPerPage, setItemsPerPage] = useState(12);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   
-  // Initialize filters with category from navigation state if available
-  const initialCategoryId = (location.state as { categoryId?: string })?.categoryId || "";
-  const categoryNameFromState = (location.state as { categoryName?: string })?.categoryName || "";
+  // Initialize filters with category/tag/cuisine from navigation state if available
+  const locationState = location.state as { 
+    categoryId?: string;
+    categoryName?: string;
+    tagId?: string;
+    tagName?: string;
+    cuisineId?: string;
+    cuisineName?: string;
+  } || {};
+  
+  const initialCategoryId = locationState.categoryId || "";
+  const initialTagId = locationState.tagId || "";
+  const initialCuisineId = locationState.cuisineId || "";
+  const categoryNameFromState = locationState.categoryName || "";
   
   const [filters, setFilters] = useState({
     selectedCategory: initialCategoryId,
-    selectedTags: [] as string[],
-    selectedCuisine: "",
+    selectedTags: initialTagId ? [initialTagId] : [] as string[],
+    selectedCuisine: initialCuisineId,
   });
 
   const isNewRecipes = type === 'new';
