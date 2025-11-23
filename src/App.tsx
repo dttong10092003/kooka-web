@@ -14,6 +14,7 @@ import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
+import VerifyEmailPage from "./pages/VerifyEmailPage";
 import AdminDashboard from "./pages/AdminDashboard";
 import DataManagement from "./pages/DataManagement";
 import Footer from "./components/Footer";
@@ -71,7 +72,10 @@ function App() {
 
   // Auto-load user data khi có token nhưng chưa có user
   useEffect(() => {
-    if (token && !user) {
+    // Không auto-load khi đang ở trang login/register để tránh conflict
+    const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
+    
+    if (token && !user && !isAuthPage) {
       console.log("📡 Loading user data with token...");
       dispatch(loadUser()).unwrap().catch((err) => {
         console.error("❌ Failed to load user:", err);
@@ -82,7 +86,7 @@ function App() {
         window.location.reload();
       });
     }
-  }, [dispatch, token, user]);
+  }, [dispatch, token, user, location.pathname]);
 
   // Auto-load profile data when user is available but profile is not
   useEffect(() => {
@@ -113,6 +117,7 @@ function App() {
         <Route path="/recipe/:id" element={<RecipeDetail />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/verify-email" element={<VerifyEmailPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />

@@ -18,11 +18,20 @@ interface AuthResponse {
   user: AuthUser
 }
 
+interface RegisterResponse {
+  message: string
+  user: AuthUser
+  needVerification?: boolean
+  token?: string
+}
+
 interface AuthState {
   token: string | null
   user: AuthUser | null
   loading: boolean
   error: string | null
+  isVerified?: boolean
+  pendingVerificationEmail?: string
 }
 
 // =====================
@@ -34,6 +43,8 @@ const initialState: AuthState = {
   user: null,
   loading: false,
   error: null,
+  isVerified: undefined,
+  pendingVerificationEmail: undefined,
 }
 
 // =====================
@@ -44,7 +55,7 @@ const initialState: AuthState = {
 export const login = createAsyncThunk<
   AuthResponse,
   { usernameOrEmail: string; password: string },
-  { rejectValue: string }
+  { rejectValue: string | { code: string; isVerified?: boolean; email?: string } }
 >("auth/login", async ({ usernameOrEmail, password }, { rejectWithValue }) => {
   try {
     const res = await axiosInstance.post("/auth/login", {
@@ -53,14 +64,22 @@ export const login = createAsyncThunk<
     })
     return res.data as AuthResponse
   } catch (err: any) {
-    const code = err.response?.data?.code || "auth.loginFailed"
-    return rejectWithValue(code)
+    // Nếu backend trả về isVerified = false, có nghĩa là email chưa verify
+    if (err.response?.data?.isVerified === false) {
+      const code = err.response?.data?.code || err.response?.data?.message || "auth.emailNotVerified"
+      const email = err.response?.data?.email || usernameOrEmail
+      return rejectWithValue({ code, isVerified: false, email })
+    }
+    // Các lỗi khác (sai mật khẩu, user không tồn tại, etc.)
+    // Backend trả về message thay vì code, nên lấy message làm error
+    const errorMessage = err.response?.data?.code || err.response?.data?.message || "auth.loginFailed"
+    return rejectWithValue(errorMessage)
   }
 })
 
 // Register
 export const registerUser = createAsyncThunk<
-  AuthResponse,
+  RegisterResponse,
   {
     firstName: string
     lastName: string
@@ -72,7 +91,7 @@ export const registerUser = createAsyncThunk<
 >("auth/register", async (formData, { rejectWithValue }) => {
   try {
     const res = await axiosInstance.post("/auth/register", formData)
-    return res.data as AuthResponse
+    return res.data as RegisterResponse
   } catch (err: any) {
     return rejectWithValue(err.response?.data?.code || "auth.registerFailed")
   }
@@ -181,7 +200,21 @@ const authSlice = createSlice({
       })
       .addCase(login.rejected, (state, action) => {
         state.loading = false
-        state.error = action.payload || "auth.loginFailed"
+        // Clear token and user when login fails
+        state.token = null
+        state.user = null
+        localStorage.removeItem("token")
+        localStorage.removeItem("persist:root")
+        
+        if (action.payload && typeof action.payload === "object") {
+          state.error = action.payload.code || "auth.loginFailed"
+          state.isVerified = action.payload.isVerified
+          state.pendingVerificationEmail = action.payload.email
+        } else {
+          state.error = action.payload || "auth.loginFailed"
+          state.isVerified = undefined
+          state.pendingVerificationEmail = undefined
+        }
       })
 
       // REGISTER
@@ -191,9 +224,13 @@ const authSlice = createSlice({
       })
       .addCase(registerUser.fulfilled, (state, action) => {
         state.loading = false
-        state.user = action.payload.user
-        state.token = action.payload.token
-        localStorage.setItem("token", action.payload.token)
+        // Chỉ set token và user nếu không cần verify (đăng ký qua Google)
+        if (!action.payload.needVerification && action.payload.token) {
+          state.user = action.payload.user
+          state.token = action.payload.token
+          localStorage.setItem("token", action.payload.token)
+        }
+        // Nếu needVerification = true, không set token, chỉ trả về user info
       })
       .addCase(registerUser.rejected, (state, action) => {
         state.loading = false

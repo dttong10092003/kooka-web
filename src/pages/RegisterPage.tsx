@@ -4,6 +4,7 @@ import { ArrowLeft, Mail, Lock, User, CheckCircle, AlertCircle } from "lucide-re
 import { Link, useNavigate } from "react-router-dom"
 import FormInput from "../components/FormInput"
 import GoogleLoginButton from "../components/GoogleLoginButton"
+import VerifyEmailModal from "../components/VerifyEmailModal"
 import { useLanguage } from "../contexts/LanguageContext"
 
 // Redux
@@ -31,6 +32,12 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onBack }) => {
   })
 
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null)
+  const [showVerifyModal, setShowVerifyModal] = useState(false)
+  const [verifyEmail, setVerifyEmail] = useState("")
+  const [validationErrors, setValidationErrors] = useState({
+    password: "",
+    confirmPassword: "",
+  })
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target
@@ -38,13 +45,46 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onBack }) => {
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }))
+
+    // Clear validation errors when user types
+    if (name === "password" || name === "confirmPassword") {
+      setValidationErrors((prev) => ({
+        ...prev,
+        [name]: "",
+      }))
+    }
+  }
+
+  const validateForm = (): boolean => {
+    const errors = {
+      password: "",
+      confirmPassword: "",
+    }
+
+    // Validate password length
+    if (formData.password.length < 6) {
+      errors.password = "Mật khẩu phải có ít nhất 6 ký tự"
+    }
+
+    // Validate password match
+    if (formData.password !== formData.confirmPassword) {
+      errors.confirmPassword = "Mật khẩu xác nhận không khớp"
+    }
+
+    setValidationErrors(errors)
+    return !errors.password && !errors.confirmPassword
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setMessage(null)
 
-    dispatch(
+    // Validate form before submitting
+    if (!validateForm()) {
+      return
+    }
+
+    const result = await dispatch(
       registerUser({
         firstName: formData.firstName,
         lastName: formData.lastName,
@@ -53,9 +93,25 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onBack }) => {
         confirmPassword: formData.confirmPassword,
       })
     )
+
+    // Xử lý kết quả đăng ký
+    if (registerUser.fulfilled.match(result)) {
+      // Kiểm tra nếu cần verify email
+      if (result.payload.needVerification) {
+        // Hiển thị modal thông báo kiểm tra email
+        setVerifyEmail(result.payload.user.email || "")
+        setShowVerifyModal(true)
+      } else {
+        // Đăng ký thành công không cần verify (Google OAuth)
+        setMessage({ type: "success", text: "auth.registerSuccess" })
+        setTimeout(() => {
+          navigate("/")
+        }, 1500)
+      }
+    }
   }
 
-  // Khi đăng ký thành công
+  // Khi đăng ký thành công qua Google (có token ngay)
   useEffect(() => {
     if (user && token) {
       setMessage({ type: "success", text: "auth.registerSuccess" })
@@ -152,27 +208,37 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onBack }) => {
               required
             />
 
-            <FormInput
-              label={t("auth.password")}
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleInputChange}
-              placeholder="••••••••"
-              icon={Lock}
-              required
-            />
+            <div>
+              <FormInput
+                label={t("auth.password")}
+                type="password"
+                name="password"
+                value={formData.password}
+                onChange={handleInputChange}
+                placeholder="••••••••"
+                icon={Lock}
+                required
+              />
+              {validationErrors.password && (
+                <p className="mt-1 text-xs text-red-600">{validationErrors.password}</p>
+              )}
+            </div>
 
-            <FormInput
-              label={t("auth.confirmPassword")}
-              type="password"
-              name="confirmPassword"
-              value={formData.confirmPassword}
-              onChange={handleInputChange}
-              placeholder="••••••••"
-              icon={Lock}
-              required
-            />
+            <div>
+              <FormInput
+                label={t("auth.confirmPassword")}
+                type="password"
+                name="confirmPassword"
+                value={formData.confirmPassword}
+                onChange={handleInputChange}
+                placeholder="••••••••"
+                icon={Lock}
+                required
+              />
+              {validationErrors.confirmPassword && (
+                <p className="mt-1 text-xs text-red-600">{validationErrors.confirmPassword}</p>
+              )}
+            </div>
 
             <div className="flex items-start space-x-2">
               <input
@@ -248,6 +314,13 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onBack }) => {
           </div>
         </div>
       </div>
+
+      {/* Verify Email Modal */}
+      <VerifyEmailModal 
+        isOpen={showVerifyModal}
+        onClose={() => setShowVerifyModal(false)}
+        email={verifyEmail}
+      />
     </div>
   )
 }

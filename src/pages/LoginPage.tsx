@@ -8,6 +8,9 @@ import { useLanguage } from "../contexts/LanguageContext"
 import { useDispatch, useSelector } from "react-redux"
 import type { AppDispatch, RootState } from "../redux/store"
 import { login } from "../redux/slices/authSlice"
+import axiosInstance from "../utils/axiosInstance"
+import toast from "react-hot-toast"
+import { persistor } from "../redux/store"
 interface LoginPageProps {
   onBack?: () => void
 }
@@ -21,9 +24,10 @@ const LoginPage: React.FC<LoginPageProps> = ({ onBack }) => {
 
   const dispatch = useDispatch<AppDispatch>()
   const navigate = useNavigate()
-  const { error } = useSelector((state: RootState) => state.auth)
+  const { error, isVerified, pendingVerificationEmail } = useSelector((state: RootState) => state.auth)
   const [buttonLoading, setButtonLoading] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false) // State riêng cho success message
+  const [isResending, setIsResending] = useState(false)
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -33,32 +37,63 @@ const LoginPage: React.FC<LoginPageProps> = ({ onBack }) => {
     }))
   }
 
+  const handleResendEmail = async () => {
+    if (!pendingVerificationEmail) return;
+    
+    setIsResending(true);
+    try {
+      await axiosInstance.post("/auth/resend-verification", { 
+        email: pendingVerificationEmail 
+      });
+      toast.success("Email xác thực đã được gửi lại!");
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Có lỗi xảy ra");
+    } finally {
+      setIsResending(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setButtonLoading(true);
     setShowSuccess(false); // Reset success message
 
-    const result = await dispatch(
-      login({
-        usernameOrEmail: formData.email,
-        password: formData.password,
-      })
-    );
+    try {
+      const result = await dispatch(
+        login({
+          usernameOrEmail: formData.email,
+          password: formData.password,
+        })
+      );
 
-    if (login.fulfilled.match(result)) {
-      setShowSuccess(true); // Hiển thị success message
-      // delay 1s rồi chuyển trang
-      setTimeout(() => {
-        // Kiểm tra nếu là admin thì vào /admin, không thì vào /
-        const isAdmin = result.payload.user?.isAdmin;
-        if (isAdmin) {
-          navigate("/admin", { replace: true });
-        } else {
-          navigate("/", { replace: true });
-        }
+      if (login.fulfilled.match(result)) {
+        // Login thành công - có token và user
+        console.log("✅ Login successful, redirecting...");
+        setShowSuccess(true);
+        
+        // delay 1s rồi chuyển trang
+        setTimeout(() => {
+          const isAdmin = result.payload.user?.isAdmin;
+          if (isAdmin) {
+            navigate("/admin", { replace: true });
+          } else {
+            navigate("/", { replace: true });
+          }
+          setButtonLoading(false);
+        }, 1000);
+      } else if (login.rejected.match(result)) {
+        // Login thất bại - dừng loading và hiển thị lỗi
+        console.log("❌ Login failed:", result.payload);
+        
+        // Purge persist store để clear auth state
+        await persistor.purge();
+        
         setButtonLoading(false);
-      }, 1000);
-    } else {
+        // Không navigate, ở lại trang login để user thấy error message
+      }
+    } catch (err) {
+      console.error("❌ Login error:", err);
+      await persistor.purge();
       setButtonLoading(false);
     }
   };
@@ -93,9 +128,20 @@ const LoginPage: React.FC<LoginPageProps> = ({ onBack }) => {
 
           {/* Message */}
           {error && (
-            <div className="mb-3 lg:mb-4 p-2.5 lg:p-3 rounded-lg flex items-center space-x-2 text-xs lg:text-sm bg-red-50 border border-red-200 text-red-800">
-              <AlertCircle className="h-3.5 w-3.5 lg:h-4 lg:w-4" />
-              <span>{t(error)}</span>
+            <div className="mb-3 lg:mb-4 p-2.5 lg:p-3 rounded-lg text-xs lg:text-sm bg-red-50 border border-red-200 text-red-800">
+              <div className="flex items-center space-x-2 mb-2">
+                <AlertCircle className="h-3.5 w-3.5 lg:h-4 lg:w-4 flex-shrink-0" />
+                <span>{t(error)}</span>
+              </div>
+              {isVerified === false && pendingVerificationEmail && (
+                <button
+                  onClick={handleResendEmail}
+                  disabled={isResending}
+                  className="mt-2 w-full py-2 px-3 rounded-md text-xs font-medium bg-orange-500 hover:bg-orange-600 text-white transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isResending ? "Đang gửi..." : "🔄 Gửi lại email xác thực"}
+                </button>
+              )}
             </div>
           )}
 
