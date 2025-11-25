@@ -71,7 +71,6 @@ export const login = createAsyncThunk<
       return rejectWithValue({ code, isVerified: false, email })
     }
     // Các lỗi khác (sai mật khẩu, user không tồn tại, etc.)
-    // Backend trả về message thay vì code, nên lấy message làm error
     const errorMessage = err.response?.data?.code || err.response?.data?.message || "auth.loginFailed"
     return rejectWithValue(errorMessage)
   }
@@ -168,8 +167,9 @@ const authSlice = createSlice({
       state.user = null
       state.loading = false
       state.error = null
+      state.isVerified = undefined
+      state.pendingVerificationEmail = undefined
       localStorage.removeItem("token")
-      // Xóa toàn bộ persisted state khi logout
       localStorage.removeItem("persist:root")
     },
     setToken: (state, action: PayloadAction<string>) => {
@@ -183,6 +183,8 @@ const authSlice = createSlice({
     },
     clearError: (state) => {
       state.error = null
+      state.isVerified = undefined
+      state.pendingVerificationEmail = undefined
     },
   },
   extraReducers: (builder) => {
@@ -191,21 +193,31 @@ const authSlice = createSlice({
       .addCase(login.pending, (state) => {
         state.loading = true
         state.error = null
+        state.isVerified = undefined
+        state.pendingVerificationEmail = undefined
       })
       .addCase(login.fulfilled, (state, action) => {
         state.loading = false
         state.token = action.payload.token
         state.user = action.payload.user
+        state.error = null
+        state.isVerified = undefined
+        state.pendingVerificationEmail = undefined
         localStorage.setItem("token", action.payload.token)
       })
       .addCase(login.rejected, (state, action) => {
+        console.log("🔴 LOGIN REJECTED - Clearing auth state");
+        
+        // ✅ FIX: Clear state NGAY LẬP TỨC khi login failed
         state.loading = false
-        // Clear token and user when login fails
         state.token = null
         state.user = null
+        
+        // Clear localStorage NGAY
         localStorage.removeItem("token")
         localStorage.removeItem("persist:root")
         
+        // Set error info
         if (action.payload && typeof action.payload === "object") {
           state.error = action.payload.code || "auth.loginFailed"
           state.isVerified = action.payload.isVerified
@@ -215,6 +227,12 @@ const authSlice = createSlice({
           state.isVerified = undefined
           state.pendingVerificationEmail = undefined
         }
+        
+        console.log("🔴 State after rejection:", {
+          token: state.token,
+          user: state.user,
+          error: state.error
+        });
       })
 
       // REGISTER
@@ -230,7 +248,6 @@ const authSlice = createSlice({
           state.token = action.payload.token
           localStorage.setItem("token", action.payload.token)
         }
-        // Nếu needVerification = true, không set token, chỉ trả về user info
       })
       .addCase(registerUser.rejected, (state, action) => {
         state.loading = false
@@ -251,7 +268,9 @@ const authSlice = createSlice({
         state.error = action.payload || "Failed to load user"
         // Clear token nếu không load được user
         state.token = null
+        state.user = null
         localStorage.removeItem("token")
+        localStorage.removeItem("persist:root")
       })
 
       // VERIFY TOKEN
@@ -267,6 +286,7 @@ const authSlice = createSlice({
         state.token = null
         state.user = null
         localStorage.removeItem("token")
+        localStorage.removeItem("persist:root")
       })
 
       // FORGOT PASSWORD
