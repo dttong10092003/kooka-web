@@ -109,13 +109,12 @@ export default function CommentSection({ recipeId }: CommentSectionProps) {
     const userAvatar = userProfile?.avatar || currentUser?.avatar;
 
     // Debug: Log liked comments
-    useEffect(() => {
-        console.log('🔍 Liked Comments Array:', likedComments);
-        console.log('🔍 Total comments:', comments.length);
-        comments.forEach(c => {
-            console.log(`  Comment ${c._id}: likes=${c.likes}, isLiked=${likedComments.includes(c._id)}`);
-        });
-    }, [likedComments, comments]);
+    // useEffect(() => {
+
+    //     comments.forEach(c => {
+    //         console.log(`  Comment ${c._id}: likes=${c.likes}, isLiked=${likedComments.includes(c._id)}`);
+    //     });
+    // }, [likedComments, comments]);
 
     // Load comments and user likes when component mounts
     useEffect(() => {
@@ -158,7 +157,7 @@ export default function CommentSection({ recipeId }: CommentSectionProps) {
         try {
             await dispatch(createComment({ recipeId, content: newComment, rating })).unwrap();
             setNewComment('');
-            setRating(0); // Reset rating
+            setRating(0); 
 
             // Reload recipe để cập nhật rating mới
             dispatch(getRecipeById(recipeId));
@@ -220,25 +219,16 @@ export default function CommentSection({ recipeId }: CommentSectionProps) {
         const isCurrentlyLiked = likedComments.includes(commentId);
         const newLikes = isCurrentlyLiked ? currentLikes - 1 : currentLikes + 1;
 
-        console.log('🔵 Toggle like for comment:', commentId);
-        console.log('🔵 Current comment:', currentComment);
-        console.log('🔵 Current likes:', currentLikes);
-        console.log('🔵 Is currently liked:', isCurrentlyLiked);
-        console.log('🔵 New likes will be:', newLikes);
-        console.log('🔵 Comment object before update:', JSON.stringify(currentComment));
 
         // Optimistic update: Update UI ngay lập tức
         dispatch(updateCommentLikes({ commentId, likes: newLikes }));
-        console.log('🔵 Dispatched updateCommentLikes with likes:', newLikes);
 
         try {
             const result = await dispatch(toggleLike(commentId)).unwrap();
-            console.log('✅ Toggle SUCCESS:', result);
-            console.log('✅ Backend returned likes:', result.likes);
+           
 
             // Sync với giá trị chính xác từ server
             dispatch(updateCommentLikes({ commentId, likes: result.likes }));
-            console.log('✅ Synced with server likes:', result.likes);
         } catch (error: any) {
             console.error('❌ Failed to toggle like:', error);
 
@@ -610,7 +600,6 @@ export default function CommentSection({ recipeId }: CommentSectionProps) {
                                         <div className="flex items-center gap-2">
                                             <button
                                                 onClick={() => {
-                                                    console.log('🎯 BEFORE CLICK - comment.likes:', comment.likes);
                                                     handleToggleLike(comment._id);
                                                 }}
                                                 disabled={!currentUser}
@@ -628,7 +617,6 @@ export default function CommentSection({ recipeId }: CommentSectionProps) {
                                             {(() => {
                                                 const likes = comment.likes || 0;
                                                 const shouldShow = likes > 0;
-                                                console.log(`🎯 RENDER comment ${comment._id}: likes=${comment.likes} (${typeof comment.likes}), normalized=${likes}, shouldShow=${shouldShow}`);
                                                 return shouldShow ? (
                                                     <span className={`text-sm font-medium ${likedComments.includes(comment._id) ? 'text-blue-600' : 'text-gray-600'}`}>
                                                         {likes}

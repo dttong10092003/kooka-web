@@ -46,23 +46,14 @@ export default function SearchingRecipes({
         
         // Nếu query giống với lần trước, không dispatch nữa
         if (lastQueryRef.current === currentQuery) {
-            console.log("SearchingRecipes - Query không thay đổi, skip dispatch");
             return;
         }
 
-        console.log("SearchingRecipes useEffect triggered with:", {
-            searchParams,
-            ingredients,
-            cuisine,
-            category,
-            tags
-        });
 
         lastQueryRef.current = currentQuery;
 
         if (searchParams?.keyword) {
             // tìm theo keyword
-            console.log("Dispatching searchRecipesByKeyword");
             dispatch(
                 searchRecipesByKeyword({
                     keywords: searchParams.keyword,
@@ -77,7 +68,6 @@ export default function SearchingRecipes({
             (ingredients.length > 0 || cuisine || category || (tags && tags.length > 0))
         ) {
             // tìm theo ingredients
-            console.log("Dispatching searchRecipes");
             dispatch(
                 searchRecipes({
                     ingredients,
@@ -97,10 +87,6 @@ export default function SearchingRecipes({
             dispatch(checkMultipleRecipes({ recipeIds }))
         }
     }, [user, searchResults, dispatch])
-
-    console.log("SearchingRecipes - searchResults:", searchResults)
-    console.log("SearchingRecipes - loading:", loading)
-    console.log("SearchingRecipes - error:", error)
 
     return (
         <section className="py-16 px-4 bg-gray-50">

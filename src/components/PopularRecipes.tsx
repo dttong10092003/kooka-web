@@ -20,16 +20,14 @@ export default function PopularRecipes() {
         dispatch(fetchPopularRecipes(6))
     }, [dispatch])
 
-    // Check favorites for all recipes when user is logged in
-    // Only run when user changes or displayed recipes change
+
     useEffect(() => {
         if (user && displayedRecipeIds) {
             const recipeIds = displayedRecipeIds.split(',')
             dispatch(checkMultipleRecipes({ recipeIds }))
         }
-    }, [user?._id, displayedRecipeIds, dispatch]) // eslint-disable-line react-hooks/exhaustive-deps
+    }, [user?._id, displayedRecipeIds, dispatch]) 
 
-    console.log("PopularRecipes - popularRecipes:", popularRecipes)
 
     return (
         <section className="py-16 px-4 bg-white">

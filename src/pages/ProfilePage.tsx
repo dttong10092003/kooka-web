@@ -44,7 +44,7 @@ const ProfilePage: React.FC = () => {
       dispatch(updateProfile({ userId: user._id, data: formData }))
     }
     setIsEditing(false)
-    setAvatarPreview(null) // Clear preview after save
+    setAvatarPreview(null)
   }
 
   // Handle avatar file selection
@@ -171,7 +171,6 @@ const ProfilePage: React.FC = () => {
           <button
             onClick={() => {
               if (isEditing) {
-                // Canceling - reset everything
                 setAvatarPreview(null)
                 setFormData(profile)
               }

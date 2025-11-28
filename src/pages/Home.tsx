@@ -83,7 +83,7 @@ const Home = () => {
         const remainingTime = Math.max(0, 1500 - elapsedTime);
         setTimeout(() => {
           setShowLoading(false);
-          hasLoadedOnce = true; // Đánh dấu đã load lần đầu (biến global)
+          hasLoadedOnce = true; 
         }, remainingTime);
       }
     };
@@ -107,7 +107,6 @@ const Home = () => {
     }
   }, [user?._id, topRatedRecipes.length, newestRecipes.length, popularRecipesData.length, dispatch]);
 
-  // Convert Redux recipes to local Recipe format
   // useMemo để tránh re-convert mỗi lần render
   const featuredRecipes: Recipe[] = useMemo(() => {
     return topRatedRecipes.map((recipe) => ({
@@ -156,7 +155,6 @@ const Home = () => {
     }));
   }, [popularRecipesData]);
 
-  // Không cần fetch nữa vì đã được prefetch trong App.tsx  // Auto-rotate featured recipes every 10 seconds
   useEffect(() => {
     if (featuredRecipes.length === 0) return;
     
@@ -244,14 +242,14 @@ const Home = () => {
       if (result.message?.includes('added') || result.message?.includes('thêm')) {
         toast.success(
           language === 'vi' 
-            ? '❤️ Đã thêm vào yêu thích!' 
-            : '❤️ Added to favorites!'
+            ? ' Đã thêm vào yêu thích!' 
+            : ' Added to favorites!'
         );
       } else {
         toast.success(
           language === 'vi' 
-            ? '💔 Đã bỏ yêu thích!' 
-            : '💔 Removed from favorites!'
+            ? ' Đã bỏ yêu thích!' 
+            : ' Removed from favorites!'
         );
       }
     } catch (error) {

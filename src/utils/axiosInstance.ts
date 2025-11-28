@@ -27,7 +27,6 @@ axiosInstance.interceptors.response.use(
         const requestUrl = error.config?.url || "";
         
         if (status === 401) {
-            // ✅ FIX: CHỈ redirect khi là lỗi authentication (đã đăng nhập nhưng token hết hạn)
             // KHÔNG redirect khi là login/register failed (chưa có token hợp lệ)
             
             const isAuthEndpoint = 
@@ -38,14 +37,10 @@ axiosInstance.interceptors.response.use(
             
             // Nếu KHÔNG PHẢI auth endpoint → token hết hạn → logout và redirect
             if (!isAuthEndpoint) {
-                console.log("🔴 Token expired or invalid, logging out...");
                 localStorage.removeItem("token");
                 localStorage.removeItem("persist:root");
                 window.location.href = "/login";
-            } else {
-                // Nếu là auth endpoint → để component xử lý error
-                console.log("🔴 Auth failed:", requestUrl);
-            }
+            } 
         }
         
         return Promise.reject(error);

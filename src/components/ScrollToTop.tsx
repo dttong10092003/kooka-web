@@ -10,7 +10,7 @@ const ScrollToTop: React.FC = () => {
     useEffect(() => {
         window.scrollTo({
             top: 0,
-            behavior: 'instant' // Instant scroll when navigating to new page
+            behavior: 'instant' 
         });
     }, [location.pathname]);
 

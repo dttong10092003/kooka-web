@@ -31,7 +31,7 @@ const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({ onBack }) => {
     try {
       await dispatch(forgotPassword({ email })).unwrap()
       setSuccessMessage(t("auth.resetLinkSent"))
-      setEmail("") // Clear email sau khi gửi thành công
+      setEmail("") 
     } catch (err) {
       // Error đã được handle trong Redux
       console.error("Forgot password error:", err)

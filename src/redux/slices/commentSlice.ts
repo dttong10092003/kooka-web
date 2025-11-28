@@ -1,9 +1,7 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from "@reduxjs/toolkit"
 import axiosInstance from "../../utils/axiosInstance"
 
-// =====================
 // TYPES
-// =====================
 
 export interface Comment {
   _id: string
@@ -15,34 +13,32 @@ export interface Comment {
   userAvatar: string | null
   content: string
   likes: number
-  ratingRecipe?: number | null // Rating từ 1-5 (chỉ parent comment mới có) - backend dùng field ratingRecipe
+  ratingRecipe?: number | null 
   parentCommentId?: string | null
   replies?: Comment[]
-  replyCount?: number // Số lượng reply
+  replyCount?: number 
   recipe?: {
     _id: string
     name: string
     image: string
-  } // Recipe info (chỉ có trong top comments)
+  } 
   createdAt: string
   updatedAt: string
 }
 
 interface CommentState {
   comments: Comment[]
-  topComments: Comment[] // Top comments cho trang chủ
-  newestComments: Comment[] // Newest comments cho trang chủ
-  userReviews: Comment[] // Tất cả reviews của user
+  topComments: Comment[] 
+  newestComments: Comment[]
+  userReviews: Comment[] 
   loading: boolean
   error: string | null
   totalComments: number
-  userHasReviewed: boolean // User đã review recipe này chưa
-  userRating: number | null // Rating hiện tại của user (nếu đã review)
+  userHasReviewed: boolean 
+  userRating: number | null 
 }
 
-// =====================
 // INITIAL STATE
-// =====================
 
 const initialState: CommentState = {
   comments: [],
@@ -56,9 +52,7 @@ const initialState: CommentState = {
   userRating: null,
 }
 
-// =====================
 // API CALLS
-// =====================
 
 // Lấy top comments cho trang chủ
 export const fetchTopComments = createAsyncThunk<
@@ -96,7 +90,6 @@ export const fetchUserReviews = createAsyncThunk<
 >("comments/fetchUserReviews", async (_, { rejectWithValue }) => {
   try {
     const res = await axiosInstance.get("/reviews/user")
-    console.log('📊 fetchUserReviews response:', res.data)
     
     // API trả về { reviews: [...], pagination: {...} }
     const reviews = res.data.reviews || []
@@ -117,7 +110,6 @@ export const fetchUserReviews = createAsyncThunk<
           const comment = comments.find((c: any) => c._id === review.commentId)
           
           if (comment && recipe) {
-            console.log('✅ Found comment and recipe:', { comment, recipe })
             
             // Trả về comment với recipe info và rating
             return {
@@ -142,7 +134,6 @@ export const fetchUserReviews = createAsyncThunk<
     
     // Filter out null values
     const validReviews = reviewsWithDetails.filter(review => review !== null) as Comment[]
-    console.log('✅ Valid reviews with details:', validReviews)
     
     return validReviews
   } catch (err: any) {
@@ -250,9 +241,7 @@ export const createReply = createAsyncThunk<
   }
 })
 
-// =====================
 // SLICE
-// =====================
 
 const commentSlice = createSlice({
   name: "comments",

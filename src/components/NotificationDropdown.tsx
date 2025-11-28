@@ -35,14 +35,13 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ onCl
 
     // Load notifications when tab changes
     useEffect(() => {
-        console.log(`🔔 Fetching ${activeTab} notifications...`);
         dispatch(fetchNotifications({ category: activeTab, page: 1 }))
             .unwrap()
             .then((response) => {
-                console.log(`✅ Notifications loaded:`, response);
+                console.log(` Notifications loaded:`, response);
             })
             .catch((error) => {
-                console.log('❌ Notification API error:', error);
+                console.log(' Notification API error:', error);
             });
     }, [dispatch, activeTab]);
 
@@ -58,7 +57,6 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ onCl
     };
 
     const handleMarkAllRead = () => {
-        console.log(`📝 Marking all ${activeTab} as read...`);
         dispatch(markAllAsRead(activeTab));
     };
 
@@ -85,7 +83,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ onCl
             // Tab Cộng đồng
             case 'REVIEW_LIKED':
             case 'COMMENT_LIKED':
-                return '❤️'; // Like
+                return ''; // Like
             case 'REVIEW_REPLIED':
             case 'COMMENT_REPLIED':
                 return ''; // Reply
@@ -237,7 +235,6 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ onCl
                                     {/* Content */}
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-start gap-2">
-                                            {/* User Avatar (for community notifications) */}
                                             {notif.relatedUser && (
                                                 <img
                                                     src={notif.relatedUser.userAvatar}

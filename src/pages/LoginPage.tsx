@@ -67,10 +67,9 @@ const LoginPage: React.FC<LoginPageProps> = ({ onBack }) => {
         })
       );
 
-      // ✅ FIX: Kiểm tra rõ ràng login thành công hay thất bại
+      //  FIX: Kiểm tra rõ ràng login thành công hay thất bại
       if (login.fulfilled.match(result)) {
         // Login thành công
-        console.log("✅ Login successful");
         setShowSuccess(true);
         
         // Delay 1s rồi chuyển trang
@@ -86,9 +85,8 @@ const LoginPage: React.FC<LoginPageProps> = ({ onBack }) => {
         // ⚠️ KHÔNG TẮT buttonLoading ở đây để giữ UI loading cho đến khi navigate
       } else if (login.rejected.match(result)) {
         // Login thất bại - STOP loading ngay lập tức
-        console.log("❌ Login failed:", result.payload);
         
-        // ✅ FIX: TẮT loading ngay khi login failed
+        //  FIX: TẮT loading ngay khi login failed
         setButtonLoading(false);
         
         // Clear persisted data
@@ -100,7 +98,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onBack }) => {
       // Lỗi không mong đợi
       console.error("❌ Login error:", err);
       
-      // ✅ FIX: TẮT loading khi có lỗi
+      //  FIX: TẮT loading khi có lỗi
       setButtonLoading(false);
       await persistor.purge();
     }

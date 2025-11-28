@@ -1,9 +1,7 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from "@reduxjs/toolkit"
 import axiosInstance from "../../utils/axiosInstance"
 
-// =====================
 // TYPES
-// =====================
 
 interface AuthUser {
   _id: string
@@ -34,9 +32,7 @@ interface AuthState {
   pendingVerificationEmail?: string
 }
 
-// =====================
 // INITIAL STATE
-// =====================
 
 const initialState: AuthState = {
   token: localStorage.getItem("token") || null,
@@ -47,9 +43,7 @@ const initialState: AuthState = {
   pendingVerificationEmail: undefined,
 }
 
-// =====================
 // API CALLS
-// =====================
 
 // Login
 export const login = createAsyncThunk<
@@ -154,9 +148,7 @@ export const resetPassword = createAsyncThunk<
   }
 })
 
-// =====================
 // SLICE
-// =====================
 
 const authSlice = createSlice({
   name: "auth",
@@ -206,9 +198,8 @@ const authSlice = createSlice({
         localStorage.setItem("token", action.payload.token)
       })
       .addCase(login.rejected, (state, action) => {
-        console.log("🔴 LOGIN REJECTED - Clearing auth state");
         
-        // ✅ FIX: Clear state NGAY LẬP TỨC khi login failed
+        //  FIX: Clear state NGAY LẬP TỨC khi login failed
         state.loading = false
         state.token = null
         state.user = null
@@ -228,11 +219,7 @@ const authSlice = createSlice({
           state.pendingVerificationEmail = undefined
         }
         
-        console.log("🔴 State after rejection:", {
-          token: state.token,
-          user: state.user,
-          error: state.error
-        });
+       
       })
 
       // REGISTER

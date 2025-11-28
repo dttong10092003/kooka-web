@@ -346,7 +346,6 @@ const EditRecipeModal: React.FC<EditRecipeModalProps> = ({ isOpen, onClose, reci
                     : 'https://youtube.com/watch?v=example7',
             };
             
-            console.log("Updating recipe with data:", recipeData);
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             await dispatch(updateRecipe({ id: recipe._id, recipe: recipeData as any })).unwrap();
             toast.success("Cập nhật công thức thành công!", { duration: 2500 });
@@ -361,7 +360,6 @@ const EditRecipeModal: React.FC<EditRecipeModalProps> = ({ isOpen, onClose, reci
             const errorMessage = error?.message || error || 'Cập nhật công thức thất bại. Vui lòng thử lại.';
             toast.error(errorMessage, { duration: 3000 });
             setUpdateConfirmOpen(false);
-            // DON'T close modal on error so user can fix and retry
         } finally {
             setIsSubmitting(false);
         }
@@ -446,7 +444,7 @@ const EditRecipeModal: React.FC<EditRecipeModalProps> = ({ isOpen, onClose, reci
                                                     : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
                                             }`}
                                         >
-                                            📁 Upload
+                                             Upload
                                         </button>
                                         <button
                                             type="button"
@@ -457,7 +455,7 @@ const EditRecipeModal: React.FC<EditRecipeModalProps> = ({ isOpen, onClose, reci
                                                     : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
                                             }`}
                                         >
-                                            🔗 URL
+                                             URL
                                         </button>
                                     </div>
 
@@ -792,7 +790,7 @@ const EditRecipeModal: React.FC<EditRecipeModalProps> = ({ isOpen, onClose, reci
                                                     : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
                                             }`}
                                         >
-                                            📁 Upload từ máy
+                                             Upload từ máy
                                         </button>
                                         <button
                                             type="button"
@@ -803,7 +801,7 @@ const EditRecipeModal: React.FC<EditRecipeModalProps> = ({ isOpen, onClose, reci
                                                     : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
                                             }`}
                                         >
-                                            🔗 URL
+                                             URL
                                         </button>
                                     </div>
 

@@ -1,9 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit"
 import axiosInstance from "../../utils/axiosInstance"
 
-// =====================
 // TYPES
-// =====================
 
 interface Favorite {
   _id: string
@@ -22,8 +20,8 @@ interface MostFavoritedRecipe {
 
 interface FavoriteState {
   favorites: Favorite[]
-  favoriteRecipeIds: string[]  // Changed from Set to Array for Redux serialization
-  mostFavorited: MostFavoritedRecipe[] // Most favorited recipes cho trang chủ
+  favoriteRecipeIds: string[]  
+  mostFavorited: MostFavoritedRecipe[] 
   loading: boolean
   error: string | null
   pagination: {
@@ -34,13 +32,11 @@ interface FavoriteState {
   }
 }
 
-// =====================
 // INITIAL STATE
-// =====================
 
 const initialState: FavoriteState = {
   favorites: [],
-  favoriteRecipeIds: [],  // Changed from Set to Array
+  favoriteRecipeIds: [],  
   mostFavorited: [],
   loading: false,
   error: null,
@@ -52,9 +48,7 @@ const initialState: FavoriteState = {
   },
 }
 
-// =====================
 // API CALLS
-// =====================
 
 // Toggle favorite (add/remove)
 export const toggleFavorite = createAsyncThunk<

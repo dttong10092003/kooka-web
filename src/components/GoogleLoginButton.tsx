@@ -14,30 +14,25 @@ interface GoogleLoginButtonProps {
 // Lấy API URL từ environment variables
 const API_URL = import.meta.env.VITE_API_GATEWAY_URL || "http://localhost:3000/api";
 
-// 🔄 Universal Google Auth Button - Handles both Login & Register automatically
-// 📝 Backend determines if user exists (login) or needs to be created (register)
+
 const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({ 
-  text = "continue_with", // Default to universal "Continue with Google"
+  text = "continue_with", 
   onSuccess 
 }) => {
   const { t } = useLanguage()
   const dispatch = useDispatch<AppDispatch>()
   const navigate = useNavigate()
   const [isLoading, setIsLoading] = useState(false)
-  const [hasProcessed, setHasProcessed] = useState(false) // Prevent double processing
+  const [hasProcessed, setHasProcessed] = useState(false) 
 
   const handleGoogleLogin = () => {
     if (isLoading || hasProcessed) {
-      console.log("⏸️ Google login already in progress or completed");
       return;
     }
     
     setIsLoading(true)
     
-    // 🚀 Universal Google Auth Flow:
-    // 1️⃣ If user exists → Auto Login  
-    // 2️⃣ If user doesn't exist → Auto Register + Login
-    // 3️⃣ Backend handles both cases seamlessly
+
     const popup = window.open(
       `${API_URL}/auth/google`, 
       "googleLogin",
@@ -48,33 +43,24 @@ const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
     const handleMessage = (event: MessageEvent) => {
       // Prevent double processing
       if (hasProcessed) {
-        console.log("⏸️ Message already processed, skipping");
         return;
       }
       
-      console.log("🔔 Message received:", event.data)
       
-      // Allow messages from both backend and frontend origins
-      // In production, backend URL will be different from localhost
-      const backendOrigin = API_URL.replace('/api', ''); // Remove /api suffix
+      const backendOrigin = API_URL.replace('/api', ''); 
       const currentOrigin = window.location.origin;
       const allowedOrigins = [backendOrigin, currentOrigin, 'http://localhost:3000', 'http://localhost:5173']
       
       if (!allowedOrigins.includes(event.origin)) {
-        console.log("❌ Origin not allowed:", event.origin)
         return
       }
 
       if (event.data.type === "GOOGLE_AUTH_SUCCESS") {
-        setHasProcessed(true) // Mark as processed
-        
+        setHasProcessed(true) 
         const { token, user } = event.data.payload
         
-        console.log("🎯 Google Auth Success - Token:", token)
-        console.log("🎯 Google Auth Success - User:", user)
-        console.log("🔄 Universal Google Auth: Auto Login/Register completed")
+    
         
-        // Dispatch Redux action - Works for both new & existing users
         dispatch(setAuthData({ token, user }))
         
         // Đóng popup

@@ -305,7 +305,6 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onBack }) => {
                 <GoogleLoginButton 
                   text="continue_with" 
                   onSuccess={() => {
-                    // Chuyển về trang chủ sau khi xác thực Google thành công
                     navigate("/")
                   }} 
                 />

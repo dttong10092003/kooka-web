@@ -44,13 +44,12 @@ function App() {
   const { topComments, newestComments } = useSelector((state: RootState) => state.comments);
   const { mostFavorited } = useSelector((state: RootState) => state.favorites);
 
-  // ✅ FIX: Dùng ref để track xem đã attempt load user chưa
+  //  FIX: Dùng ref để track xem đã attempt load user chưa
   const hasAttemptedLoadUser = useRef(false);
 
   // Load all necessary data once when app starts up
   useEffect(() => {
     if (recipes.length === 0) {
-      console.log("🚀 Loading all recipes on app startup...");
       dispatch(fetchRecipes());
     }
     
@@ -71,16 +70,11 @@ function App() {
     }
   }, [dispatch, recipes.length, topRatedRecipes.length, trendingRecipes.length, topComments.length, newestComments.length, mostFavorited.length]);
 
-  // ✅ FIX: Auto-load user với logic cải tiến
+  //  FIX: Auto-load user với logic cải tiến
   useEffect(() => {
     const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
     
-    // Chỉ load user nếu:
-    // 1. Có token
-    // 2. Chưa có user
-    // 3. Không đang ở trang auth
-    // 4. Chưa attempt load user lần nào (tránh loop)
-    // 5. Không đang loading
+
     if (token && !user && !isAuthPage && !hasAttemptedLoadUser.current && !authLoading) {
       console.log("📡 Loading user data with token...");
       hasAttemptedLoadUser.current = true;
@@ -90,12 +84,12 @@ function App() {
         // Clear token nếu invalid
         localStorage.removeItem("token");
         localStorage.removeItem("persist:root");
-        // ✅ FIX: KHÔNG reload trang nữa - để user ở lại trang hiện tại
+        // FIX: KHÔNG reload trang nữa - để user ở lại trang hiện tại
         // User sẽ thấy họ đã bị logout nhưng không bị redirect
       });
     }
     
-    // ✅ FIX: Reset flag khi token bị clear (logout)
+    // FIX: Reset flag khi token bị clear (logout)
     if (!token) {
       hasAttemptedLoadUser.current = false;
     }
