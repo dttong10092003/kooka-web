@@ -1,7 +1,30 @@
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { Search, Clock, Tag as TagIcon, Globe } from 'lucide-react';
+import { 
+  Search, 
+  Clock, 
+  Tag as TagIcon, 
+  Globe,
+  Coffee,
+  Soup,
+  IceCream,
+  Utensils,
+  Moon,
+  Sun,
+  Salad,
+  Pizza,
+  Cookie,
+  ChefHat,
+  ArrowRight,
+  Sparkles,
+  Heart,
+  Zap,
+  Target,
+  PartyPopper,
+  Baby,
+  Leaf
+} from 'lucide-react';
 import type { AppDispatch, RootState } from '../redux/store';
 import { fetchCategories, fetchTags, fetchCuisines } from '../redux/slices/recipeSlice';
 
@@ -59,18 +82,18 @@ const Categories = () => {
 
   const getCategoryIcon = (categoryName: string) => {
     const name = categoryName.toLowerCase();
-    if (name.includes('chính')) return '🍽️';
-    if (name.includes('tráng miệng') || name.includes('ngọt')) return '🍰';
-    if (name.includes('khai vị')) return '🥗';
-    if (name.includes('súp') || name.includes('canh')) return '🍲';
-    if (name.includes('nước') || name.includes('đồ uống')) return '🥤';
-    if (name.includes('bánh')) return '🥐';
-    if (name.includes('ăn vặt')) return '🍿';
-    if (name.includes('sáng')) return '🌅';
-    if (name.includes('tối') || name.includes('tăm')) return '🌙';
-    if (name.includes('trưa')) return '☀️';
-    if (name.includes('chay')) return '🥬';
-    return '🍴';
+    if (name.includes('chính')) return Utensils;
+    if (name.includes('tráng miệng') || name.includes('ngọt')) return IceCream;
+    if (name.includes('khai vị')) return Salad;
+    if (name.includes('súp') || name.includes('canh')) return Soup;
+    if (name.includes('nước') || name.includes('đồ uống')) return Coffee;
+    if (name.includes('bánh')) return Cookie;
+    if (name.includes('ăn vặt')) return Pizza;
+    if (name.includes('sáng')) return Coffee;
+    if (name.includes('tối') || name.includes('tăm')) return Moon;
+    if (name.includes('trưa')) return Sun;
+    if (name.includes('chay')) return Leaf;
+    return ChefHat;
   };
 
   const getCategoryGradient = (index: number) => {
@@ -89,60 +112,53 @@ const Categories = () => {
 
   const getTagIcon = (tagName: string) => {
     const name = tagName.toLowerCase();
-    if (name.includes('nhanh') || name.includes('dễ')) return '⚡';
-    if (name.includes('khỏe') || name.includes('healthy')) return '💪';
-    if (name.includes('giảm cân')) return '🎯';
-    if (name.includes('tiệc') || name.includes('party')) return '🎉';
-    if (name.includes('trẻ em')) return '👶';
-    if (name.includes('chay')) return '🌱';
-    return '🏷️';
+    if (name.includes('nhanh') || name.includes('dễ')) return Zap;
+    if (name.includes('khỏe') || name.includes('healthy')) return Heart;
+    if (name.includes('giảm cân')) return Target;
+    if (name.includes('tiệc') || name.includes('party')) return PartyPopper;
+    if (name.includes('trẻ em')) return Baby;
+    if (name.includes('chay')) return Leaf;
+    return Sparkles;
   };
 
-  const getCuisineIcon = (cuisineName: string) => {
-    const name = cuisineName.toLowerCase();
-    if (name.includes('việt')) return '🇻🇳';
-    if (name.includes('nhật')) return '🇯🇵';
-    if (name.includes('hàn')) return '🇰🇷';
-    if (name.includes('trung')) return '🇨🇳';
-    if (name.includes('thái')) return '🇹🇭';
-    if (name.includes('ý')) return '🇮🇹';
-    if (name.includes('pháp')) return '🇫🇷';
-    if (name.includes('mỹ')) return '🇺🇸';
-    return '🌏';
+  const getCuisineIcon = () => {
+    return Globe;
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-red-50 to-pink-50">
+    <div className="min-h-screen bg-gray-50">
       {/* Hero Header */}
-      <div className="relative bg-gradient-to-r from-orange-500 via-red-500 to-pink-600 text-white py-24 overflow-hidden">
-        {/* Decorative Background Pattern */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-10 left-10 text-8xl animate-pulse">🍳</div>
-          <div className="absolute top-32 right-20 text-7xl animate-bounce">🥗</div>
-          <div className="absolute bottom-10 left-1/4 text-9xl animate-pulse">🍰</div>
-          <div className="absolute bottom-20 right-1/3 text-8xl animate-bounce">🍜</div>
+      <div className="relative overflow-hidden">
+        {/* Background Image */}
+        <div className="absolute inset-0">
+          <img 
+            src="https://images.unsplash.com/photo-1495521821757-a1efb6729352?q=80&w=2000&auto=format&fit=crop"
+            alt="Food background"
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/50 to-black/60"></div>
         </div>
-
-        <div className="max-w-6xl mx-auto px-8 relative z-10">
+        
+        <div className="relative max-w-6xl mx-auto px-8 py-16">
           <div className="text-center mb-8">
-            <h1 className="text-6xl font-black mb-4 tracking-tight drop-shadow-lg">
-              Khám Phá Danh Mục
+            <h1 className="text-5xl font-bold text-white mb-4 drop-shadow-lg">
+              Danh Mục Công Thức
             </h1>
-            <p className="text-2xl text-white/95 mb-8 font-medium drop-shadow">
-              Chọn danh mục để tìm món ăn yêu thích của bạn
+            <p className="text-xl text-white/95 drop-shadow">
+              Khám phá công thức nấu ăn theo danh mục yêu thích
             </p>
           </div>
           
           {/* Search Bar */}
           <div className="relative max-w-xl mx-auto">
-            <div className="relative group">
-              <Search className="absolute left-6 top-1/2 transform -translate-y-1/2 text-orange-400 group-focus-within:text-orange-500 transition-colors z-10" size={22} />
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-black-100 z-10" size={22} strokeWidth={2.5} />
               <input
                 type="text"
-                placeholder="Tìm kiếm..."
+                placeholder="Tìm kiếm danh mục, tag, quốc gia..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-16 pr-6 py-4 rounded-full text-gray-900 text-base font-medium bg-white/95 backdrop-blur-sm border-2 border-white/50 focus:border-white focus:bg-white focus:outline-none focus:ring-4 focus:ring-white/40 shadow-xl placeholder:text-gray-400 transition-all duration-300"
+                className="w-full pl-14 pr-4 py-3.5 rounded-lg text-gray-900 bg-white/95 backdrop-blur-sm border-2 border-white/50 focus:border-white focus:bg-white focus:outline-none focus:ring-2 focus:ring-white/40 placeholder:text-gray-500 transition-all shadow-xl"
               />
             </div>
           </div>
@@ -150,50 +166,56 @@ const Categories = () => {
       </div>
 
       {/* Filter Tabs */}
-      <div className="sticky top-0 z-20 bg-white/80 backdrop-blur-lg border-b border-gray-200 shadow-sm">
+      <div className="sticky top-0 z-20 bg-white border-b border-gray-200 shadow-sm">
         <div className="max-w-6xl mx-auto px-8">
-          <div className="flex items-center gap-4 py-6 overflow-x-auto">
+          <div className="flex items-center gap-3 py-4 overflow-x-auto">
             <button
               onClick={() => setActiveTab('categories')}
-              className={`flex items-center gap-2 px-8 py-4 rounded-2xl font-bold text-base transition-all duration-300 whitespace-nowrap ${
+              className={`flex items-center gap-2 px-6 py-2.5 rounded-lg font-semibold text-sm transition-all whitespace-nowrap ${
                 activeTab === 'categories'
-                  ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg scale-105'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:scale-105'
+                  ? 'bg-orange-500 text-white shadow-md'
+                  : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
               }`}
             >
-              <Clock size={20} />
-              <span>Theo Bữa Ăn</span>
-              <span className="ml-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-white/30">
+              <Clock size={18} />
+              <span>Bữa Ăn</span>
+              <span className={`ml-1 px-2 py-0.5 rounded-full text-xs font-bold ${
+                activeTab === 'categories' ? 'bg-white/20' : 'bg-gray-100'
+              }`}>
                 {searchTerm ? filteredCategories.length : categories.length}
               </span>
             </button>
             
             <button
               onClick={() => setActiveTab('tags')}
-              className={`flex items-center gap-2 px-8 py-4 rounded-2xl font-bold text-base transition-all duration-300 whitespace-nowrap ${
+              className={`flex items-center gap-2 px-6 py-2.5 rounded-lg font-semibold text-sm transition-all whitespace-nowrap ${
                 activeTab === 'tags'
-                  ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-lg scale-105'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:scale-105'
+                  ? 'bg-orange-500 text-white shadow-md'
+                  : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
               }`}
             >
-              <TagIcon size={20} />
-              <span>Theo Tags</span>
-              <span className="ml-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-white/30">
+              <TagIcon size={18} />
+              <span>Tags</span>
+              <span className={`ml-1 px-2 py-0.5 rounded-full text-xs font-bold ${
+                activeTab === 'tags' ? 'bg-white/20' : 'bg-gray-100'
+              }`}>
                 {searchTerm ? filteredTags.length : tags.length}
               </span>
             </button>
             
             <button
               onClick={() => setActiveTab('cuisines')}
-              className={`flex items-center gap-2 px-8 py-4 rounded-2xl font-bold text-base transition-all duration-300 whitespace-nowrap ${
+              className={`flex items-center gap-2 px-6 py-2.5 rounded-lg font-semibold text-sm transition-all whitespace-nowrap ${
                 activeTab === 'cuisines'
-                  ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg scale-105'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:scale-105'
+                  ? 'bg-orange-500 text-white shadow-md'
+                  : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
               }`}
             >
-              <Globe size={20} />
-              <span>Theo Quốc Gia</span>
-              <span className="ml-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-white/30">
+              <Globe size={18} />
+              <span>Quốc Gia</span>
+              <span className={`ml-1 px-2 py-0.5 rounded-full text-xs font-bold ${
+                activeTab === 'cuisines' ? 'bg-white/20' : 'bg-gray-100'
+              }`}>
                 {searchTerm ? filteredCuisines.length : cuisines.length}
               </span>
             </button>
@@ -202,71 +224,64 @@ const Categories = () => {
       </div>
 
       {/* Categories Grid */}
-      <div className="max-w-6xl mx-auto px-8 py-16">
+      <div className="max-w-6xl mx-auto px-8 py-8">
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {[...Array(9)].map((_, i) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[...Array(8)].map((_, i) => (
               <div key={i} className="animate-pulse">
-                <div className="bg-gray-300 rounded-3xl h-80"></div>
+                <div className="bg-gray-200 rounded-xl h-40"></div>
               </div>
             ))}
           </div>
         ) : filteredCategories.length === 0 && filteredTags.length === 0 && filteredCuisines.length === 0 ? (
-          <div className="text-center py-20 bg-white rounded-3xl shadow-xl">
-            <div className="text-8xl mb-6">🔍</div>
-            <h3 className="text-3xl font-bold text-gray-900 mb-3">
+          <div className="text-center py-20 bg-white rounded-xl border border-gray-200">
+            <Search className="mx-auto mb-4 text-gray-400" size={48} />
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">
               Không tìm thấy kết quả
             </h3>
-            <p className="text-gray-600 text-lg">
-              Thử tìm kiếm với từ khóa khác nhé!
+            <p className="text-gray-600">
+              Thử tìm kiếm với từ khóa khác
             </p>
           </div>
         ) : (
           <>
             {/* Meal Time Categories Section */}
             {activeTab === 'categories' && (
-              <div className="animate-fadeIn">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                  {filteredCategories.map((category, index) => (
-                    <div
-                      key={category._id}
-                      onClick={() => handleCategoryClick(category._id, category.name)}
-                      className="group cursor-pointer"
-                    >
-                      <div className="relative h-80 rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-3 hover:scale-105">
-                        <div className={`absolute inset-0 bg-gradient-to-br ${getCategoryGradient(index)}`}></div>
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16"></div>
-                        <div className="absolute bottom-0 left-0 w-40 h-40 bg-black/10 rounded-full translate-y-20 -translate-x-20"></div>
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent group-hover:from-black/20 transition-colors"></div>
-                        <div className="relative h-full flex flex-col items-center justify-center p-8 text-white">
-                          <div className="mb-6 relative">
-                            <div className="absolute inset-0 bg-white/20 rounded-full blur-2xl"></div>
-                            <div className="relative text-8xl transform group-hover:scale-125 group-hover:rotate-12 transition-all duration-500">
-                              {getCategoryIcon(category.name)}
+              <div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {filteredCategories.map((category, index) => {
+                    const IconComponent = getCategoryIcon(category.name);
+                    return (
+                      <div
+                        key={category._id}
+                        onClick={() => handleCategoryClick(category._id, category.name)}
+                        className="group cursor-pointer"
+                      >
+                        <div className={`relative h-40 rounded-xl overflow-hidden bg-gradient-to-br ${getCategoryGradient(index)} p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1`}>
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors"></div>
+                          <div className="relative h-full flex flex-col justify-between text-white">
+                            <div className="flex items-start justify-between">
+                              <IconComponent size={32} className="opacity-90" />
+                            </div>
+                            <div>
+                              <h3 className="text-lg font-bold mb-2">
+                                {category.name}
+                              </h3>
+                              <div className="flex items-center text-sm opacity-90">
+                                <span>Xem công thức</span>
+                                <ArrowRight size={16} className="ml-1 group-hover:translate-x-1 transition-transform" />
+                              </div>
                             </div>
                           </div>
-                          <div className="bg-black/20 backdrop-blur-md px-6 py-3 rounded-2xl mb-4">
-                            <h3 className="text-2xl font-bold text-center leading-tight">
-                              {category.name}
-                            </h3>
-                          </div>
-                          <div className="bg-white text-gray-900 px-6 py-2.5 rounded-full group-hover:bg-white group-hover:shadow-xl transition-all duration-300">
-                            <span className="text-sm font-bold flex items-center space-x-2">
-                              <span>Khám phá ngay</span>
-                              <span className="transform group-hover:translate-x-1 transition-transform">→</span>
-                            </span>
-                          </div>
                         </div>
-                        <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 transform -translate-x-full group-hover:translate-x-full"></div>
-                        <div className="absolute inset-0 rounded-3xl border-4 border-white/0 group-hover:border-white/50 transition-all duration-500"></div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
                 {filteredCategories.length === 0 && (
                   <div className="text-center py-20">
-                    <div className="text-6xl mb-4">🔍</div>
-                    <p className="text-gray-600 text-xl">Không tìm thấy danh mục nào</p>
+                    <Clock className="mx-auto mb-4 text-gray-400" size={48} />
+                    <p className="text-gray-600">Không tìm thấy danh mục nào</p>
                   </div>
                 )}
               </div>
@@ -274,48 +289,41 @@ const Categories = () => {
 
             {/* Tags Section */}
             {activeTab === 'tags' && (
-              <div className="animate-fadeIn">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                  {filteredTags.map((tag, index) => (
-                    <div
-                      key={tag._id}
-                      onClick={() => handleTagClick(tag._id, tag.name)}
-                      className="group cursor-pointer"
-                    >
-                      <div className="relative h-80 rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-3 hover:scale-105">
-                        <div className={`absolute inset-0 bg-gradient-to-br ${getCategoryGradient(index)}`}></div>
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16"></div>
-                        <div className="absolute bottom-0 left-0 w-40 h-40 bg-black/10 rounded-full translate-y-20 -translate-x-20"></div>
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent group-hover:from-black/20 transition-colors"></div>
-                        <div className="relative h-full flex flex-col items-center justify-center p-8 text-white">
-                          <div className="mb-6 relative">
-                            <div className="absolute inset-0 bg-white/20 rounded-full blur-2xl"></div>
-                            <div className="relative text-8xl transform group-hover:scale-125 group-hover:rotate-12 transition-all duration-500">
-                              {getTagIcon(tag.name)}
+              <div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {filteredTags.map((tag, index) => {
+                    const IconComponent = getTagIcon(tag.name);
+                    return (
+                      <div
+                        key={tag._id}
+                        onClick={() => handleTagClick(tag._id, tag.name)}
+                        className="group cursor-pointer"
+                      >
+                        <div className={`relative h-40 rounded-xl overflow-hidden bg-gradient-to-br ${getCategoryGradient(index)} p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1`}>
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors"></div>
+                          <div className="relative h-full flex flex-col justify-between text-white">
+                            <div className="flex items-start justify-between">
+                              <IconComponent size={32} className="opacity-90" />
+                            </div>
+                            <div>
+                              <h3 className="text-lg font-bold mb-2">
+                                {tag.name}
+                              </h3>
+                              <div className="flex items-center text-sm opacity-90">
+                                <span>Xem công thức</span>
+                                <ArrowRight size={16} className="ml-1 group-hover:translate-x-1 transition-transform" />
+                              </div>
                             </div>
                           </div>
-                          <div className="bg-black/20 backdrop-blur-md px-6 py-3 rounded-2xl mb-4">
-                            <h3 className="text-2xl font-bold text-center leading-tight">
-                              {tag.name}
-                            </h3>
-                          </div>
-                          <div className="bg-white text-gray-900 px-6 py-2.5 rounded-full group-hover:bg-white group-hover:shadow-xl transition-all duration-300">
-                            <span className="text-sm font-bold flex items-center space-x-2">
-                              <span>Khám phá ngay</span>
-                              <span className="transform group-hover:translate-x-1 transition-transform">→</span>
-                            </span>
-                          </div>
                         </div>
-                        <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 transform -translate-x-full group-hover:translate-x-full"></div>
-                        <div className="absolute inset-0 rounded-3xl border-4 border-white/0 group-hover:border-white/50 transition-all duration-500"></div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
                 {filteredTags.length === 0 && (
                   <div className="text-center py-20">
-                    <div className="text-6xl mb-4">🔍</div>
-                    <p className="text-gray-600 text-xl">Không tìm thấy tag nào</p>
+                    <TagIcon className="mx-auto mb-4 text-gray-400" size={48} />
+                    <p className="text-gray-600">Không tìm thấy tag nào</p>
                   </div>
                 )}
               </div>
@@ -323,48 +331,41 @@ const Categories = () => {
 
             {/* Cuisines Section */}
             {activeTab === 'cuisines' && (
-              <div className="animate-fadeIn">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                  {filteredCuisines.map((cuisine, index) => (
-                    <div
-                      key={cuisine._id}
-                      onClick={() => handleCuisineClick(cuisine._id, cuisine.name)}
-                      className="group cursor-pointer"
-                    >
-                      <div className="relative h-80 rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-3 hover:scale-105">
-                        <div className={`absolute inset-0 bg-gradient-to-br ${getCategoryGradient(index)}`}></div>
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16"></div>
-                        <div className="absolute bottom-0 left-0 w-40 h-40 bg-black/10 rounded-full translate-y-20 -translate-x-20"></div>
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent group-hover:from-black/20 transition-colors"></div>
-                        <div className="relative h-full flex flex-col items-center justify-center p-8 text-white">
-                          <div className="mb-6 relative">
-                            <div className="absolute inset-0 bg-white/20 rounded-full blur-2xl"></div>
-                            <div className="relative text-8xl transform group-hover:scale-125 group-hover:rotate-12 transition-all duration-500">
-                              {getCuisineIcon(cuisine.name)}
+              <div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {filteredCuisines.map((cuisine, index) => {
+                    const IconComponent = getCuisineIcon();
+                    return (
+                      <div
+                        key={cuisine._id}
+                        onClick={() => handleCuisineClick(cuisine._id, cuisine.name)}
+                        className="group cursor-pointer"
+                      >
+                        <div className={`relative h-40 rounded-xl overflow-hidden bg-gradient-to-br ${getCategoryGradient(index)} p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1`}>
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors"></div>
+                          <div className="relative h-full flex flex-col justify-between text-white">
+                            <div className="flex items-start justify-between">
+                              <IconComponent size={32} className="opacity-90" />
+                            </div>
+                            <div>
+                              <h3 className="text-lg font-bold mb-2">
+                                {cuisine.name}
+                              </h3>
+                              <div className="flex items-center text-sm opacity-90">
+                                <span>Xem công thức</span>
+                                <ArrowRight size={16} className="ml-1 group-hover:translate-x-1 transition-transform" />
+                              </div>
                             </div>
                           </div>
-                          <div className="bg-black/20 backdrop-blur-md px-6 py-3 rounded-2xl mb-4">
-                            <h3 className="text-2xl font-bold text-center leading-tight">
-                              {cuisine.name}
-                            </h3>
-                          </div>
-                          <div className="bg-white text-gray-900 px-6 py-2.5 rounded-full group-hover:bg-white group-hover:shadow-xl transition-all duration-300">
-                            <span className="text-sm font-bold flex items-center space-x-2">
-                              <span>Khám phá ngay</span>
-                              <span className="transform group-hover:translate-x-1 transition-transform">→</span>
-                            </span>
-                          </div>
                         </div>
-                        <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 transform -translate-x-full group-hover:translate-x-full"></div>
-                        <div className="absolute inset-0 rounded-3xl border-4 border-white/0 group-hover:border-white/50 transition-all duration-500"></div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
                 {filteredCuisines.length === 0 && (
                   <div className="text-center py-20">
-                    <div className="text-6xl mb-4">🔍</div>
-                    <p className="text-gray-600 text-xl">Không tìm thấy quốc gia nào</p>
+                    <Globe className="mx-auto mb-4 text-gray-400" size={48} />
+                    <p className="text-gray-600">Không tìm thấy quốc gia nào</p>
                   </div>
                 )}
               </div>
