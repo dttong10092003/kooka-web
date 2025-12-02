@@ -20,7 +20,7 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onBack }) => {
   const { t } = useLanguage()
   const navigate = useNavigate()
   const dispatch = useDispatch<AppDispatch>()
-  const { loading, error, user, token } = useSelector((state: RootState) => state.auth)
+  const { loading, error} = useSelector((state: RootState) => state.auth)
 
   const [formData, setFormData] = useState({
     email: "",
@@ -99,10 +99,10 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onBack }) => {
       // Kiểm tra nếu cần verify email
       if (result.payload.needVerification) {
         // Hiển thị modal thông báo kiểm tra email
-        setVerifyEmail(result.payload.user.email || "")
+        setVerifyEmail(result.payload.user.email || formData.email)
         setShowVerifyModal(true)
-      } else {
-        // Đăng ký thành công không cần verify (Google OAuth)
+      } else if (result.payload.token) {
+        // Đăng ký thành công và có token ngay (Google OAuth)
         setMessage({ type: "success", text: "auth.registerSuccess" })
         setTimeout(() => {
           navigate("/")
@@ -110,16 +110,6 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onBack }) => {
       }
     }
   }
-
-  // Khi đăng ký thành công qua Google (có token ngay)
-  useEffect(() => {
-    if (user && token) {
-      setMessage({ type: "success", text: "auth.registerSuccess" })
-      setTimeout(() => {
-        navigate("/")
-      }, 1500)
-    }
-  }, [user, token, navigate])
 
   // Khi có lỗi
   useEffect(() => {

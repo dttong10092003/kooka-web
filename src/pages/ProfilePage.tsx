@@ -1,7 +1,7 @@
 import type React from "react"
 import { useState, useEffect } from "react"
 import { useDispatch, useSelector } from "react-redux"
-import { Calendar, MapPin, Edit, Save, X, Camera } from "lucide-react"
+import { Calendar, MapPin, Edit, Save, X, Camera, CheckCircle } from "lucide-react"
 import type { RootState, AppDispatch } from "../redux/store"
 import { fetchProfile, updateProfile } from "../redux/slices/userSlice"
 import { useRef } from "react"
@@ -233,47 +233,40 @@ const ProfilePage: React.FC = () => {
             />
           </div>
 
-          <div>
+          <div className="md:col-span-2">
             <label className="block text-sm font-semibold text-gray-700 mb-2">Email</label>
+            <div className="relative">
+              <input
+                type="email"
+                value={user?.email || ""}
+                disabled
+                className="w-full px-4 py-3 pr-12 border-2 border-gray-200 rounded-xl bg-gray-50 text-gray-600 cursor-not-allowed"
+              />
+              <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                <CheckCircle className="h-5 w-5 text-green-500" aria-label="Email đã xác thực" />
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Ngày tham gia</label>
             <input
-              type="email"
-              value={user?.email || ""}
+              type="text"
+              value={formData.createdAt ? new Date(formData.createdAt).toLocaleDateString('vi-VN') : ""}
               disabled
               className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl bg-gray-50 text-gray-600 cursor-not-allowed"
             />
           </div>
 
-          <div className="group">
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Số điện thoại</label>
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Cập nhật gần nhất</label>
             <input
               type="text"
-              value={formData.phone || ""}
-              onChange={(e) => handleInputChange("phone", e.target.value)}
-              disabled={!isEditing}
-              placeholder="Nhập số điện thoại"
-              className={`w-full px-4 py-3 border-2 rounded-xl transition-all duration-200 ${
-                !isEditing 
-                  ? "bg-gray-50 text-gray-600 border-gray-200" 
-                  : "border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 hover:border-orange-400"
-              }`}
+              value={formData.updatedAt ? new Date(formData.updatedAt).toLocaleDateString('vi-VN') : ""}
+              disabled
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl bg-gray-50 text-gray-600 cursor-not-allowed"
             />
           </div>
-        </div>
-
-        <div className="mt-6">
-          <label className="block text-sm font-semibold text-gray-700 mb-2">Giới thiệu bản thân</label>
-          <textarea
-            value={formData.bio || ""}
-            onChange={(e) => handleInputChange("bio", e.target.value)}
-            disabled={!isEditing}
-            rows={4}
-            placeholder="Viết vài dòng về bạn..."
-            className={`w-full px-4 py-3 border-2 rounded-xl transition-all duration-200 resize-none ${
-              !isEditing 
-                ? "bg-gray-50 text-gray-600 border-gray-200" 
-                : "border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 hover:border-orange-400"
-            }`}
-          />
         </div>
       </div>
     </div>

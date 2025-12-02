@@ -229,12 +229,14 @@ const authSlice = createSlice({
       })
       .addCase(registerUser.fulfilled, (state, action) => {
         state.loading = false
+        state.error = null
         // Chỉ set token và user nếu không cần verify (đăng ký qua Google)
         if (!action.payload.needVerification && action.payload.token) {
           state.user = action.payload.user
           state.token = action.payload.token
           localStorage.setItem("token", action.payload.token)
         }
+        // Nếu cần verify, KHÔNG set token và user vào state
       })
       .addCase(registerUser.rejected, (state, action) => {
         state.loading = false

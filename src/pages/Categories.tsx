@@ -166,7 +166,7 @@ const Categories = () => {
       </div>
 
       {/* Filter Tabs */}
-      <div className="sticky top-0 z-20 bg-white border-b border-gray-200 shadow-sm">
+      <div className="sticky top-0 z-20 bg-white   shadow-sm">
         <div className="max-w-6xl mx-auto px-8">
           <div className="flex items-center gap-3 py-4 overflow-x-auto">
             <button
@@ -234,7 +234,7 @@ const Categories = () => {
             ))}
           </div>
         ) : filteredCategories.length === 0 && filteredTags.length === 0 && filteredCuisines.length === 0 ? (
-          <div className="text-center py-20 bg-white rounded-xl border border-gray-200">
+          <div className="text-center py-20 bg-white rounded-xl">
             <Search className="mx-auto mb-4 text-gray-400" size={48} />
             <h3 className="text-xl font-semibold text-gray-900 mb-2">
               Không tìm thấy kết quả
