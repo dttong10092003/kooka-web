@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { ThumbsUp, Send, Edit2, Trash2, X, MessageCircle, Reply, MoreVertical, AlertCircle, EyeOff, Star, CheckCircle } from 'lucide-react';
+import { ThumbsUp, Send, Edit2, Trash2, X, MessageCircle, Reply, MoreVertical, AlertCircle, EyeOff, Star, CheckCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { AppDispatch, RootState } from '../redux/store';
 import {
     getCommentsByRecipeId,
@@ -19,6 +19,8 @@ interface CommentSectionProps {
     recipeId: string;
 }
 
+const COMMENTS_PER_PAGE = 10;
+
 export default function CommentSection({ recipeId }: CommentSectionProps) {
     const dispatch = useDispatch<AppDispatch>();
     const [newComment, setNewComment] = useState('');
@@ -27,6 +29,7 @@ export default function CommentSection({ recipeId }: CommentSectionProps) {
     const [showConfirmExit, setShowConfirmExit] = useState(false);
     const [pendingExitAction, setPendingExitAction] = useState<null | (() => void)>(null);
     const formRef = useRef<HTMLFormElement | null>(null);
+    const [currentPage, setCurrentPage] = useState(1);
     // Kiểm tra có dữ liệu chưa lưu không
     const hasUnsavedReview = newComment.trim().length > 0 || rating > 0;
 
@@ -157,7 +160,8 @@ export default function CommentSection({ recipeId }: CommentSectionProps) {
         try {
             await dispatch(createComment({ recipeId, content: newComment, rating })).unwrap();
             setNewComment('');
-            setRating(0); 
+            setRating(0);
+            setCurrentPage(1); // Reset về trang đầu khi có comment mới
 
             // Reload recipe để cập nhật rating mới
             dispatch(getRecipeById(recipeId));
@@ -315,11 +319,22 @@ export default function CommentSection({ recipeId }: CommentSectionProps) {
         toast.success('Báo cáo comment: ' + commentId);
         setOpenMenuId(null);
     };
-
     // Handle hide
     const handleHide = (commentId: string) => {
         toast.success('Ẩn comment: ' + commentId);
         setOpenMenuId(null);
+    };
+
+    // Pagination calculations
+    const totalPages = Math.ceil(comments.length / COMMENTS_PER_PAGE);
+    const startIndex = (currentPage - 1) * COMMENTS_PER_PAGE;
+    const endIndex = startIndex + COMMENTS_PER_PAGE;
+    const paginatedComments = comments.slice(startIndex, endIndex);
+
+    const handlePageChange = (page: number) => {
+        setCurrentPage(page);
+        // Scroll to comments section
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     return (
@@ -437,7 +452,7 @@ export default function CommentSection({ recipeId }: CommentSectionProps) {
                                         disabled={!newComment.trim() || !rating || loading}
                                         className="bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 text-white px-5 py-2 rounded-lg flex items-center gap-2 font-medium transition-colors"
                                     >
-                                        <Send className="h-4 w      -4" />
+                                        <Send className="h-4 w-4" />
                                         Đăng đánh giá
                                     </button>
                                 </div>
@@ -489,7 +504,7 @@ export default function CommentSection({ recipeId }: CommentSectionProps) {
                         <p className="text-gray-400 text-sm">Hãy là người đầu tiên chia sẻ suy nghĩ của bạn!</p>
                     </div>
                 ) : (
-                    comments.map((comment) => (
+                    paginatedComments.map((comment) => (
                         <div key={comment._id} className="border-b border-gray-100 pb-6 last:border-b-0 last:pb-0">
                             <div className="flex gap-3">
                                 {/* User Avatar */}
@@ -862,6 +877,74 @@ export default function CommentSection({ recipeId }: CommentSectionProps) {
                     ))
                 )}
             </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+                <div className="mt-8 flex items-center justify-center gap-2">
+                    {/* Previous Button */}
+                    <button
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        disabled={currentPage === 1}
+                        className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        aria-label="Trang trước"
+                    >
+                        <ChevronLeft className="h-5 w-5 text-gray-600" />
+                    </button>
+
+                    {/* Page Numbers */}
+                    <div className="flex items-center gap-1">
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                            // Hiển thị: trang đầu, trang cuối, trang hiện tại và 2 trang xung quanh
+                            if (
+                                page === 1 ||
+                                page === totalPages ||
+                                (page >= currentPage - 1 && page <= currentPage + 1)
+                            ) {
+                                return (
+                                    <button
+                                        key={page}
+                                        onClick={() => handlePageChange(page)}
+                                        className={`min-w-[40px] h-10 px-3 rounded-lg font-medium transition-all ${
+                                            currentPage === page
+                                                ? 'bg-orange-500 text-white shadow-md'
+                                                : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
+                                        }`}
+                                    >
+                                        {page}
+                                    </button>
+                                );
+                            } else if (
+                                page === currentPage - 2 ||
+                                page === currentPage + 2
+                            ) {
+                                return (
+                                    <span key={page} className="px-2 text-gray-400">
+                                        ...
+                                    </span>
+                                );
+                            }
+                            return null;
+                        })}
+                    </div>
+
+                    {/* Next Button */}
+                    <button
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        disabled={currentPage === totalPages}
+                        className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        aria-label="Trang sau"
+                    >
+                        <ChevronRight className="h-5 w-5 text-gray-600" />
+                    </button>
+                </div>
+            )}
+
+            {/* Page Info */}
+            {comments.length > 0 && (
+                <div className="mt-4 text-center text-sm text-gray-500">
+                    Hiển thị {startIndex + 1}-{Math.min(endIndex, comments.length)} trong tổng số {comments.length} đánh giá
+                </div>
+            )}
         </div>
     );
 }

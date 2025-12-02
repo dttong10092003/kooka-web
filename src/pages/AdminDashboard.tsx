@@ -278,7 +278,7 @@ const AdminDashboard: React.FC = () => {
         { id: "recipes", label: "Công thức", icon: ChefHat },
         { id: "users", label: "Người dùng", icon: Users },
         { id: "data", label: "Quản lý dữ liệu", icon: Database },
-        { id: "analytics", label: "Phân tích", icon: TrendingUp },
+        // { id: "analytics", label: "Phân tích", icon: TrendingUp },
         { id: "settings", label: "Cài đặt", icon: Settings },
     ]
 
