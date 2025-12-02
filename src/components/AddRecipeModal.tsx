@@ -340,7 +340,6 @@ const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ isOpen, onClose }) => {
                 ...recipe,
                 video: videoUrl,
             };
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const result = await dispatch(addRecipe(recipeData as any)).unwrap();
             toast.success("Thêm công thức thành công!", { duration: 2500 });
             
@@ -381,7 +380,6 @@ const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ isOpen, onClose }) => {
                 {/* Nội dung có thể cuộn */}
                 <div className="overflow-y-auto p-6 space-y-6">
                     <form onSubmit={handleSubmit} className="space-y-6">
-                        {/* ==== Thông tin cơ bản ==== */}
                         <div>
                             <h3 className="text-md font-semibold text-gray-700 mb-2">
                                 Thông tin cơ bản
@@ -425,29 +423,6 @@ const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ isOpen, onClose }) => {
                         </div>
 
                         {/* ==== Hình ảnh & Video ==== */}
-                        {/* <div>
-                            <h3 className="text-md font-semibold text-gray-700 mb-2">
-                                Hình ảnh & Video
-                            </h3>
-                            <div className="grid md:grid-cols-2 gap-4">
-                                <input
-                                    name="image"
-                                    placeholder="URL hình ảnh"
-                                    value={recipe.image}
-                                    onChange={handleInputChange}
-                                    className="border rounded-lg p-2 w-full focus:ring-2 focus:ring-orange-400 outline-none"
-                                />
-                                <input
-                                    name="video"
-                                    placeholder="URL video (tuỳ chọn)"
-                                    value={recipe.video}
-                                    onChange={handleInputChange}
-                                    className="border rounded-lg p-2 w-full focus:ring-2 focus:ring-orange-400 outline-none"
-                                />
-                            </div>
-                        </div> */}
-
-                        {/* ==== Hình ảnh & Video ==== */}
                         <div>
                             <h3 className="text-md font-semibold text-gray-700 mb-2">
                                 Hình ảnh & Video
@@ -469,7 +444,7 @@ const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ isOpen, onClose }) => {
                                                     : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
                                                 }`}
                                         >
-                                            📁 Upload
+                                             Upload
                                         </button>
                                         <button
                                             type="button"
@@ -479,7 +454,7 @@ const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ isOpen, onClose }) => {
                                                     : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
                                                 }`}
                                         >
-                                            🔗 URL
+                                             URL
                                         </button>
                                     </div>
 
@@ -495,7 +470,7 @@ const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ isOpen, onClose }) => {
                                                     reader.onloadend = () => {
                                                         setRecipe((prev) => ({
                                                             ...prev,
-                                                            image: reader.result as string, // base64 string
+                                                            image: reader.result as string, 
                                                         }));
                                                     };
                                                     reader.readAsDataURL(file);
@@ -783,13 +758,7 @@ const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ isOpen, onClose }) => {
                                 >?
                                     <div className="flex-1">
                                         <p className="font-medium text-gray-800">{ins.title}</p>
-                                        {/* {ins.image && (
-                                            <img
-                                                src={ins.image}
-                                                alt={ins.title}
-                                                className="w-40 h-28 object-cover rounded-lg my-2 border"
-                                            />
-                                        )} */}
+                                    
                                         {ins.images && ins.images.length > 0 && (
                                             <div className="flex gap-2 my-2 flex-wrap">
                                                 {ins.images.map((img, j) => (
@@ -833,17 +802,6 @@ const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ isOpen, onClose }) => {
                                     className="border rounded-lg p-2 w-full focus:ring-2 focus:ring-orange-400 outline-none"
                                 />
 
-                                {/* <input
-                                    placeholder="URL hình ảnh minh họa"
-                                    value={currentInstruction.image}
-                                    onChange={(e) =>
-                                        setCurrentInstruction({
-                                            ...currentInstruction,
-                                            image: e.target.value,
-                                        })
-                                    }
-                                    className="border rounded-lg p-2 w-full focus:ring-2 focus:ring-orange-400 outline-none"
-                                /> */}
 
                                 <div>
                                     <label className="block text-sm text-gray-600 mb-1">
@@ -860,7 +818,7 @@ const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ isOpen, onClose }) => {
                                                     : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
                                                 }`}
                                         >
-                                            📁 Upload
+                                             Upload
                                         </button>
                                         <button
                                             type="button"
@@ -870,7 +828,7 @@ const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ isOpen, onClose }) => {
                                                     : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
                                                 }`}
                                         >
-                                            🔗 URL
+                                                URL
                                         </button>
                                     </div>
 

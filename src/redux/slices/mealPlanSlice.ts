@@ -10,7 +10,7 @@ export interface Meal {
 }
 
 export interface DayPlan {
-    date: string; // ISO string (ex: "2025-10-20")
+    date: string; 
     morning?: Meal;
     noon?: Meal;
     evening?: Meal;
@@ -44,7 +44,7 @@ const initialState: MealPlanState = {
 
 // ==== Async Thunks ====
 
-// 🥗 Lấy tất cả meal plans của user
+// Lấy tất cả meal plans của user
 export const fetchMealPlansByUser = createAsyncThunk(
     "mealPlans/fetchByUser",
     async (userId: string, { rejectWithValue }) => {
@@ -58,16 +58,8 @@ export const fetchMealPlansByUser = createAsyncThunk(
     }
 );
 
-// 🥗 Lấy meal plan theo id
-// export const getMealPlanById = createAsyncThunk(
-//     "mealPlans/getById",
-//     async (id: string) => {
-//         const res = await axiosInstance.get(`/mealplans/${id}`);
-//         return res.data as MealPlan;
-//     }
-// );
 
-// 🥗 Tạo meal plan mới
+//  Tạo meal plan mới
 export const createMealPlan = createAsyncThunk(
     "mealPlans/create",
     async (data: { userId: string; plans: DayPlan[]; startDate?: string }, { rejectWithValue }) => {
@@ -83,7 +75,7 @@ export const createMealPlan = createAsyncThunk(
     }
 );
 
-// 🥗 Cập nhật meal plan (chỉ cho phép chỉnh status hoặc thay đổi plan)
+// Cập nhật meal plan (chỉ cho phép chỉnh status hoặc thay đổi plan)
 export const updateMealPlan = createAsyncThunk(
     "mealPlans/update",
     async ({ id, mealPlan }: { id: string; mealPlan: Partial<MealPlan> }, { rejectWithValue }) => {
@@ -99,7 +91,7 @@ export const updateMealPlan = createAsyncThunk(
     }
 );
 
-// 🥗 Xóa meal plan
+//  Xóa meal plan
 export const deleteMealPlan = createAsyncThunk(
     "mealPlans/delete",
     async (id: string, { rejectWithValue }) => {
@@ -123,7 +115,7 @@ const mealPlanSlice = createSlice({
         },
     },
     extraReducers: (builder) => {
-        // 🟢 Fetch All
+        //  Fetch All
         builder.addCase(
             fetchMealPlansByUser.fulfilled,
             (state, action: PayloadAction<MealPlan[]>) => {
@@ -132,20 +124,9 @@ const mealPlanSlice = createSlice({
             }
         );
 
-        // 🟢 Get By Id
-        // builder.addCase(
-        //     getMealPlanById.fulfilled,
-        //     (state, action: PayloadAction<MealPlan>) => {
-        //         state.currentMealPlan = action.payload;
-        //         const exists = state.mealPlans.find(
-        //             (m) => m._id === action.payload._id
-        //         );
-        //         if (!exists) state.mealPlans.push(action.payload);
-        //         state.loading = false;
-        //     }
-        // );
+   
 
-        // 🟢 Create
+        // Create
         builder.addCase(
             createMealPlan.fulfilled,
             (state, action: PayloadAction<MealPlan>) => {
@@ -154,7 +135,7 @@ const mealPlanSlice = createSlice({
             }
         );
 
-        // 🟢 Update
+        //  Update
         builder.addCase(
             updateMealPlan.fulfilled,
             (state, action: PayloadAction<MealPlan>) => {
@@ -166,7 +147,7 @@ const mealPlanSlice = createSlice({
             }
         );
 
-        // 🟢 Delete
+        //  Delete
         builder.addCase(
             deleteMealPlan.fulfilled,
             (state, action: PayloadAction<string>) => {
@@ -177,7 +158,7 @@ const mealPlanSlice = createSlice({
             }
         );
 
-        // 🔄 Pending / Rejected
+        // Pending / Rejected
         builder
             .addMatcher(
                 (action) =>

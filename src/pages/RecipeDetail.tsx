@@ -1,4 +1,4 @@
-import { ArrowLeft, ChefHat, Clock, Star, Users, Heart, ChevronDown } from 'lucide-react';
+import { ArrowLeft, ChefHat, Clock, Star, Users, Heart, ChevronDown, Flame, Dot } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
@@ -78,14 +78,14 @@ export default function RecipeDetail() {
                 if (result.message?.includes('added') || result.message?.includes('thêm')) {
                     toast.success(
                         language === 'vi' 
-                            ? '❤️ Đã thêm vào yêu thích!' 
-                            : '❤️ Added to favorites!'
+                            ? ' Đã thêm vào yêu thích!' 
+                            : ' Added to favorites!'
                     );
                 } else {
                     toast.success(
                         language === 'vi' 
-                            ? '💔 Đã bỏ yêu thích!' 
-                            : '💔 Removed from favorites!'
+                            ? ' Đã bỏ yêu thích!' 
+                            : ' Removed from favorites!'
                     );
                 }
             } catch (error) {
@@ -198,6 +198,14 @@ export default function RecipeDetail() {
                                     {currentRecipe.size} {language === 'vi' ? 'người ăn' : 'servings'}
                                 </span>
                             </div>
+                            {currentRecipe.calories && (
+                                <div className="flex items-center gap-2">
+                                    <Flame className="h-4 w-4 sm:h-5 sm:w-5 text-orange-400" />
+                                    <span className="text-sm sm:text-base">
+                                        {currentRecipe.calories} {language === 'vi' ? 'kcal' : 'calories'}
+                                    </span>
+                                </div>
+                            )}
                             <div className="flex items-center gap-2">
                                 <Star className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-400 fill-yellow-400" />
                                 <span className="font-medium text-sm sm:text-base">{(currentRecipe.rate || 0).toFixed(1)}</span>
@@ -238,20 +246,15 @@ export default function RecipeDetail() {
                                 <div className="space-y-2">
                                     {currentRecipe.ingredients && currentRecipe.ingredients.length > 0 ? (
                                         currentRecipe.ingredients.map((ingredient, index) => (
-                                            <label 
+                                            <div 
                                                 key={index} 
-                                                htmlFor={`ingredient-${index}`}
-                                                className="flex items-center gap-3 py-2.5 px-3 bg-gray-50 rounded-lg hover:bg-orange-50 border border-transparent hover:border-orange-200 transition-all duration-300 cursor-pointer group"
+                                                className="flex items-start gap-3 py-2.5 px-3 bg-gray-50 rounded-lg hover:bg-orange-50 border border-transparent hover:border-orange-200 transition-all duration-300 group"
                                             >
-                                                <input
-                                                    type="checkbox"
-                                                    id={`ingredient-${index}`}
-                                                    className="h-5 w-5 text-orange-500 border-2 border-gray-300 rounded focus:ring-orange-500 focus:ring-2 checked:bg-orange-500 checked:border-orange-500 transition-all duration-200 cursor-pointer"
-                                                />
-                                                <span className="text-xs sm:text-sm text-gray-700 group-hover:text-gray-900 font-medium flex-1 transition-colors duration-200">
+                                                <Dot className="h-6 w-6 text-orange-500 flex-shrink-0 -ml-1" />
+                                                <span className="text-xs sm:text-sm text-gray-700 group-hover:text-gray-900 font-medium flex-1 transition-colors duration-200 leading-relaxed">
                                                     {ingredient.name}
                                                 </span>
-                                            </label>
+                                            </div>
                                         ))
                                     ) : (
                                         <p className="text-gray-500 text-center py-4">

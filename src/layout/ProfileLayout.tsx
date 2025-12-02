@@ -70,7 +70,6 @@ const ProfileLayout: React.FC = () => {
                   referrerPolicy="no-referrer"
                   crossOrigin="anonymous"
                   onError={(e) => {
-                    console.log("❌ Avatar failed to load:", displayAvatar);
                     e.currentTarget.style.display = 'none';
                     const fallbackDiv = e.currentTarget.nextElementSibling as HTMLElement;
                     if (fallbackDiv) {
@@ -128,7 +127,7 @@ const ProfileLayout: React.FC = () => {
       {/* Main Content */}
       <div className="flex-1 overflow-auto">
         <div className="p-8">
-          <Outlet /> {/* render nội dung con */}
+          <Outlet />
         </div>
       </div>
     </div>

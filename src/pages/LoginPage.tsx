@@ -8,6 +8,10 @@ import { useLanguage } from "../contexts/LanguageContext"
 import { useDispatch, useSelector } from "react-redux"
 import type { AppDispatch, RootState } from "../redux/store"
 import { login } from "../redux/slices/authSlice"
+import axiosInstance from "../utils/axiosInstance"
+import toast from "react-hot-toast"
+import { persistor } from "../redux/store"
+
 interface LoginPageProps {
   onBack?: () => void
 }
@@ -21,9 +25,10 @@ const LoginPage: React.FC<LoginPageProps> = ({ onBack }) => {
 
   const dispatch = useDispatch<AppDispatch>()
   const navigate = useNavigate()
-  const { error } = useSelector((state: RootState) => state.auth)
+  const { error, isVerified, pendingVerificationEmail } = useSelector((state: RootState) => state.auth)
   const [buttonLoading, setButtonLoading] = useState(false)
-  const [showSuccess, setShowSuccess] = useState(false) // State riêng cho success message
+  const [showSuccess, setShowSuccess] = useState(false)
+  const [isResending, setIsResending] = useState(false)
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -33,38 +38,71 @@ const LoginPage: React.FC<LoginPageProps> = ({ onBack }) => {
     }))
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setButtonLoading(true);
-    setShowSuccess(false); // Reset success message
-
-    const result = await dispatch(
-      login({
-        usernameOrEmail: formData.email,
-        password: formData.password,
-      })
-    );
-
-    if (login.fulfilled.match(result)) {
-      setShowSuccess(true); // Hiển thị success message
-      // delay 1s rồi chuyển trang
-      setTimeout(() => {
-        // Kiểm tra nếu là admin thì vào /admin, không thì vào /
-        const isAdmin = result.payload.user?.isAdmin;
-        if (isAdmin) {
-          navigate("/admin", { replace: true });
-        } else {
-          navigate("/", { replace: true });
-        }
-        setButtonLoading(false);
-      }, 1000);
-    } else {
-      setButtonLoading(false);
+  const handleResendEmail = async () => {
+    if (!pendingVerificationEmail) return;
+    
+    setIsResending(true);
+    try {
+      await axiosInstance.post("/auth/resend-verification", { 
+        email: pendingVerificationEmail 
+      });
+      toast.success("Email xác thực đã được gửi lại!");
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Có lỗi xảy ra");
+    } finally {
+      setIsResending(false);
     }
   };
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setButtonLoading(true);
+    setShowSuccess(false);
 
+    try {
+      const result = await dispatch(
+        login({
+          usernameOrEmail: formData.email,
+          password: formData.password,
+        })
+      );
 
+      //  FIX: Kiểm tra rõ ràng login thành công hay thất bại
+      if (login.fulfilled.match(result)) {
+        // Login thành công
+        setShowSuccess(true);
+        
+        // Delay 1s rồi chuyển trang
+        setTimeout(() => {
+          const isAdmin = result.payload.user?.isAdmin;
+          if (isAdmin) {
+            navigate("/admin", { replace: true });
+          } else {
+            navigate("/", { replace: true });
+          }
+        }, 1000);
+        
+        // ⚠️ KHÔNG TẮT buttonLoading ở đây để giữ UI loading cho đến khi navigate
+      } else if (login.rejected.match(result)) {
+        // Login thất bại - STOP loading ngay lập tức
+        
+        //  FIX: TẮT loading ngay khi login failed
+        setButtonLoading(false);
+        
+        // Clear persisted data
+        await persistor.purge();
+        
+        // Error message sẽ hiển thị tự động từ Redux state
+      }
+    } catch (err) {
+      // Lỗi không mong đợi
+      console.error("❌ Login error:", err);
+      
+      //  FIX: TẮT loading khi có lỗi
+      setButtonLoading(false);
+      await persistor.purge();
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-red-50 py-4 lg:py-8 flex items-center">
@@ -91,14 +129,26 @@ const LoginPage: React.FC<LoginPageProps> = ({ onBack }) => {
             <p className="text-gray-600 text-xs lg:text-sm">{t("auth.signinToAccount")}</p>
           </div>
 
-          {/* Message */}
-          {error && (
-            <div className="mb-3 lg:mb-4 p-2.5 lg:p-3 rounded-lg flex items-center space-x-2 text-xs lg:text-sm bg-red-50 border border-red-200 text-red-800">
-              <AlertCircle className="h-3.5 w-3.5 lg:h-4 lg:w-4" />
-              <span>{t(error)}</span>
+          {/* Error Message */}
+          {error && !showSuccess && (
+            <div className="mb-3 lg:mb-4 p-2.5 lg:p-3 rounded-lg text-xs lg:text-sm bg-red-50 border border-red-200 text-red-800">
+              <div className="flex items-center space-x-2 mb-2">
+                <AlertCircle className="h-3.5 w-3.5 lg:h-4 lg:w-4 flex-shrink-0" />
+                <span>{t(error)}</span>
+              </div>
+              {isVerified === false && pendingVerificationEmail && (
+                <button
+                  onClick={handleResendEmail}
+                  disabled={isResending}
+                  className="mt-2 w-full py-2 px-3 rounded-md text-xs font-medium bg-orange-500 hover:bg-orange-600 text-white transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isResending ? "Đang gửi..." : "🔄 Gửi lại email xác thực"}
+                </button>
+              )}
             </div>
           )}
 
+          {/* Success Message */}
           {showSuccess && (
             <div className="mb-3 lg:mb-4 p-2.5 lg:p-3 rounded-lg flex items-center space-x-2 text-xs lg:text-sm bg-green-50 border border-green-200 text-green-800">
               <CheckCircle className="h-3.5 w-3.5 lg:h-4 lg:w-4" />
@@ -106,13 +156,12 @@ const LoginPage: React.FC<LoginPageProps> = ({ onBack }) => {
             </div>
           )}
 
-
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Email */}
             <FormInput
               label={t("auth.email")}
-              type="text" // dua vao text thử
+              type="text"
               name="email"
               value={formData.email}
               onChange={handleInputChange}
@@ -137,10 +186,11 @@ const LoginPage: React.FC<LoginPageProps> = ({ onBack }) => {
             <button
               type="submit"
               disabled={buttonLoading}
-              className={`w-full py-2.5 px-4 rounded-lg font-medium text-white text-sm transition-all duration-200 cursor-pointer ${buttonLoading
+              className={`w-full py-2.5 px-4 rounded-lg font-medium text-white text-sm transition-all duration-200 ${
+                buttonLoading
                   ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 shadow-lg hover:shadow-xl"
-                }`}
+                  : "bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 shadow-lg hover:shadow-xl cursor-pointer"
+              }`}
             >
               {buttonLoading ? (
                 <div className="flex items-center justify-center space-x-2">
@@ -151,8 +201,6 @@ const LoginPage: React.FC<LoginPageProps> = ({ onBack }) => {
                 t("auth.signin")
               )}
             </button>
-
-
           </form>
 
           {/* Footer Links */}
@@ -189,7 +237,6 @@ const LoginPage: React.FC<LoginPageProps> = ({ onBack }) => {
               <GoogleLoginButton 
                 text="continue_with" 
                 onSuccess={() => {
-                  // Chuyển về trang chủ sau khi xác thực Google thành công
                   navigate("/")
                 }} 
               />

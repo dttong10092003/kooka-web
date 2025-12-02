@@ -144,18 +144,16 @@ const AdminDashboard: React.FC = () => {
                 params: { year, month }
             })
 
-            console.log("API Response:", res.data)
 
             // API trả về object với field weeks
             const weeklyStats = res.data?.weeks || []
 
             const formattedWeekly = weeklyStats.map((week: any) => ({
-                week: week.week, // "Week 1", "Week 2", ...
+                week: week.week, 
                 users: week.users || 0,
-                period: week.period // "Day 1-7", ...
+                period: week.period 
             }))
 
-            console.log(`Weekly stats for ${year}-${month}:`, formattedWeekly)
             setWeeklyData(formattedWeekly)
         } catch (error) {
             console.error("Error fetching weekly user activity:", error)
@@ -181,8 +179,7 @@ const AdminDashboard: React.FC = () => {
                     name: recipe.name.length > 15 ? recipe.name.substring(0, 15) + "..." : recipe.name,
                     views: recipeViews,
                     reviews: recipe.numberOfRate || 0,
-                    // favorites: Get from favorites API if available
-                    favorites: Math.floor(recipeViews * 0.3) // Temporary calculation
+                    favorites: Math.floor(recipeViews * 0.3) 
                 }
             })
 
@@ -281,7 +278,7 @@ const AdminDashboard: React.FC = () => {
         { id: "recipes", label: "Công thức", icon: ChefHat },
         { id: "users", label: "Người dùng", icon: Users },
         { id: "data", label: "Quản lý dữ liệu", icon: Database },
-        { id: "analytics", label: "Phân tích", icon: TrendingUp },
+        // { id: "analytics", label: "Phân tích", icon: TrendingUp },
         { id: "settings", label: "Cài đặt", icon: Settings },
     ]
 
@@ -341,12 +338,10 @@ const AdminDashboard: React.FC = () => {
     const handleEditModalClose = () => {
         setIsEditModalOpen(false)
         setSelectedRecipe(null)
-        // Không cần refresh - modal tự refresh khi cần
     }
 
     const handleAddModalClose = () => {
         setIsRecipeModalOpen(false)
-        // Không cần refresh - modal tự refresh khi cần
     }
 
     // Pagination logic
@@ -365,7 +360,7 @@ const AdminDashboard: React.FC = () => {
 
     const handleItemsPerPageChange = (value: number) => {
         setItemsPerPage(value)
-        setCurrentPage(1) // Reset to first page when changing items per page
+        setCurrentPage(1) 
     }
 
     // Reset to first page when search query changes

@@ -81,10 +81,7 @@ export const fetchNotifications = createAsyncThunk(
         if (category) params.category = category;
         if (isRead !== undefined) params.isRead = isRead;
 
-        console.log(`🌐 API Call: GET /notifications`, params);
         const res = await axiosInstance.get("/notifications", { params });
-        console.log('📦 API Response:', res.data);
-        console.log('📦 Notifications array:', res.data.data || res.data);
         return {
             category,
             // Backend trả về { data: [...] } nên lấy res.data.data
@@ -99,9 +96,7 @@ export const fetchUnreadCount = createAsyncThunk(
     "notifications/fetchUnreadCount",
     async (category?: 'RECIPE' | 'COMMUNITY') => {
         const params = category ? { category } : {};
-        console.log(`🌐 API Call: GET /notifications/unread-count`, params);
         const res = await axiosInstance.get("/notifications/unread-count", { params });
-        console.log('📦 Unread Count Response:', res.data);
         // Backend có thể trả về { data: { unreadCount: X } } hoặc { unreadCount: X }
         const unreadCount = res.data.data?.unreadCount ?? res.data.unreadCount ?? 0;
         return {

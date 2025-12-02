@@ -77,13 +77,13 @@ interface KeywordSearchPayload {
 
 // ==== State ====
 interface RecipeState {
-    recipes: Recipe[]; // Tất cả recipes từ fetchRecipes (KHÔNG có instructions)
-    currentRecipe: Recipe | null; // Recipe đang xem chi tiết (CÓ đầy đủ instructions)
-    searchResults: Recipe[]; // Kết quả tìm kiếm từ searchRecipes/searchRecipesByKeyword
-    topRatedRecipes: Recipe[]; // Top-rated recipes cho banner
-    newestRecipes: Recipe[]; // Newest recipes cho section Món Ăn Mới
-    popularRecipes: Recipe[]; // Popular recipes cho section Món Ăn Phổ Biến
-    trendingRecipes: Recipe[]; // Trending recipes cho section Sôi Nổi Nhất
+    recipes: Recipe[]; 
+    currentRecipe: Recipe | null; 
+    searchResults: Recipe[]; 
+    topRatedRecipes: Recipe[]; 
+    newestRecipes: Recipe[]; 
+    popularRecipes: Recipe[]; 
+    trendingRecipes: Recipe[];
     ingredients: Ingredient[];
     ingredientTypes: IngredientType[];
     tags: Tag[];
@@ -473,11 +473,11 @@ const recipeSlice = createSlice({
                 state.loading = false;
             })
             .addCase(searchRecipes.fulfilled, (state, action: PayloadAction<Recipe[]>) => {
-                state.searchResults = action.payload; // Lưu vào searchResults thay vì recipes
+                state.searchResults = action.payload; 
                 state.loading = false;
             })
             .addCase(searchRecipesByKeyword.fulfilled, (state, action: PayloadAction<Recipe[]>) => {
-                state.searchResults = action.payload; // Lưu vào searchResults thay vì recipes
+                state.searchResults = action.payload; 
                 state.loading = false;
             })
             .addCase(getRecipeById.fulfilled, (state, action: PayloadAction<Recipe>) => {

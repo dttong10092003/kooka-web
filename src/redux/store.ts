@@ -9,7 +9,7 @@ import {
   PURGE,
   REGISTER,
 } from "redux-persist";
-import storage from "redux-persist/lib/storage"; // defaults to localStorage for web
+import storage from "redux-persist/lib/storage"; 
 import { combineReducers } from "@reduxjs/toolkit";
 import authReducer from "./slices/authSlice";
 import recipeReducer from "./slices/recipeSlice";
@@ -25,7 +25,7 @@ const persistConfig = {
   key: "root",
   version: 1,
   storage,
-  whitelist: ["auth", "user"], // Chỉ persist auth và user, không persist recipes, comments, likes, favorites
+  whitelist: ["auth", "user"], 
 };
 
 // Combine reducers

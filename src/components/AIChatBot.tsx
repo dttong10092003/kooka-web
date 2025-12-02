@@ -70,7 +70,7 @@ const AIChatBot: React.FC = () => {
     const [error, setError] = useState<string>('');
     const [chatSize, setChatSize] = useState({ width: 358, height: 552 });
     const [isResizing, setIsResizing] = useState(false);
-    const [selectedImages, setSelectedImages] = useState<string[]>([]); // Preview images (max 1 for backend)
+    const [selectedImages, setSelectedImages] = useState<string[]>([]);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const chatRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -101,10 +101,8 @@ const AIChatBot: React.FC = () => {
 
     // Format inline markdown (bold, italic)
     const formatInlineMarkdown = (text: string): string => {
-        // Bold: **text** -> <strong>text</strong>
         text = text.replace(/\*\*(.+?)\*\*/g, '<strong class="font-semibold text-gray-900">$1</strong>');
 
-        // Italic: *text* -> <em>text</em>
         text = text.replace(/\*(.+?)\*/g, '<em class="italic">$1</em>');
 
         return text;
@@ -124,7 +122,7 @@ const AIChatBot: React.FC = () => {
             setShowTooltip(true);
             const interval = setInterval(() => {
                 setShowTooltip(true);
-                setTimeout(() => setShowTooltip(false), 5000); // Hiển thị trong 5 giây
+                setTimeout(() => setShowTooltip(false), 5000); 
             }, 10000); // Lặp lại mỗi 10 giây
 
             return () => clearInterval(interval);
@@ -171,7 +169,6 @@ const AIChatBot: React.FC = () => {
         try {
             setError('');
 
-            // Backend expects imageBase64 (single string), not images array
             const requestBody: {
                 message?: string;
                 sessionId: string;
@@ -183,16 +180,12 @@ const AIChatBot: React.FC = () => {
                 userId: user?._id || null
             };
 
-            // If images provided, send first image as imageBase64
             if (images && images.length > 0) {
-                requestBody.imageBase64 = images[0]; // Backend only processes 1 image at a time
+                requestBody.imageBase64 = images[0]; 
             }
 
             const response = await axiosInstance.post('/chatbot/chat', requestBody);
 
-            console.log('✅ Chatbot response:', response.data);
-
-            // Backend returns "message" not "response"
             if (response.data.success) {
                 const message = response.data.message || response.data.response || 'Không có phản hồi';
 
@@ -267,7 +260,7 @@ const AIChatBot: React.FC = () => {
         const reader = new FileReader();
         reader.onloadend = () => {
             const base64 = reader.result as string;
-            setSelectedImages([base64]); // Replace with new image
+            setSelectedImages([base64]); 
         };
         reader.onerror = () => {
             console.error('Error reading file:', file.name);
@@ -308,11 +301,11 @@ const AIChatBot: React.FC = () => {
                 const reader = new FileReader();
                 reader.onloadend = () => {
                     const base64 = reader.result as string;
-                    setSelectedImages([base64]); // Replace with new image
+                    setSelectedImages([base64]); 
                 };
                 reader.readAsDataURL(blob);
 
-                break; // Only process first image
+                break;
             }
         }
     };
@@ -338,7 +331,7 @@ const AIChatBot: React.FC = () => {
 
         setMessages(prev => [...prev, userMessage]);
         setInputValue('');
-        setSelectedImages([]); // Clear selected images
+        setSelectedImages([]);
         setIsTyping(true);
 
         try {
@@ -538,7 +531,6 @@ const AIChatBot: React.FC = () => {
                                                 <div className="mt-3">
                                                     <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
                                                         {message.recipes.slice(0, 6).map((recipe) => {
-                                                            console.log('Recipe card:', recipe); // Debug
                                                             return (
                                                                 <div
                                                                     key={recipe.id}
@@ -607,7 +599,7 @@ const AIChatBot: React.FC = () => {
                                                     ? 'Vui lòng đăng nhập để sử dụng tính năng này!'
                                                     : 'Please login to use this feature!');
                                                 return;
-                                            }                                                            // Navigate to meal planner with meal plan data
+                                            }                                                         
                                                             navigate('/meal-planner', {
                                                                 state: {
                                                                     aiGeneratedPlan: message.mealPlan

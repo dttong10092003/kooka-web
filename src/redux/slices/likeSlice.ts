@@ -1,9 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit"
 import axiosInstance from "../../utils/axiosInstance"
 
-// =====================
 // TYPES
-// =====================
 
 export interface Like {
   _id: string
@@ -13,14 +11,12 @@ export interface Like {
 }
 
 interface LikeState {
-  likedComments: string[] // Array của commentId mà user đã like
+  likedComments: string[] 
   loading: boolean
   error: string | null
 }
 
-// =====================
 // INITIAL STATE
-// =====================
 
 const initialState: LikeState = {
   likedComments: [],
@@ -28,9 +24,7 @@ const initialState: LikeState = {
   error: null,
 }
 
-// =====================
 // API CALLS
-// =====================
 
 // Lấy tất cả likes của user cho các comments
 export const getUserLikes = createAsyncThunk<
@@ -61,11 +55,10 @@ export const toggleLike = createAsyncThunk<
 >("likes/toggleLike", async (commentId, { rejectWithValue }) => {
   try {
     const res = await axiosInstance.post(`/likes/toggle`, { commentId })
-    console.log('🔵 Backend response:', res.data);
     return {
       commentId,
       liked: res.data.liked,
-      likes: res.data.likes || 0,  // ✅ Backend trả về "likes" không phải "likeCount"
+      likes: res.data.likes || 0,  
     }
   } catch (err: any) {
     return rejectWithValue(err.response?.data?.message || "Failed to toggle like")
@@ -82,7 +75,7 @@ export const likeComment = createAsyncThunk<
     const res = await axiosInstance.post(`/likes/toggle`, { commentId })
     return {
       commentId,
-      likes: res.data.likes || 0,  // ✅ Fixed: "likes" not "likeCount"
+      likes: res.data.likes || 0,  
     }
   } catch (err: any) {
     return rejectWithValue(err.response?.data?.message || "Failed to like comment")
@@ -99,16 +92,14 @@ export const unlikeComment = createAsyncThunk<
     const res = await axiosInstance.post(`/likes/toggle`, { commentId })
     return {
       commentId,
-      likes: res.data.likes || 0,  // ✅ Fixed: "likes" not "likeCount"
+      likes: res.data.likes || 0,  
     }
   } catch (err: any) {
     return rejectWithValue(err.response?.data?.message || "Failed to unlike comment")
   }
 })
 
-// =====================
 // SLICE
-// =====================
 
 const likeSlice = createSlice({
   name: "likes",

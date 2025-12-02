@@ -1,9 +1,7 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from "@reduxjs/toolkit"
 import axiosInstance from "../../utils/axiosInstance"
 
-// =====================
 // TYPES
-// =====================
 
 interface AuthUser {
   _id: string
@@ -18,33 +16,40 @@ interface AuthResponse {
   user: AuthUser
 }
 
+interface RegisterResponse {
+  message: string
+  user: AuthUser
+  needVerification?: boolean
+  token?: string
+}
+
 interface AuthState {
   token: string | null
   user: AuthUser | null
   loading: boolean
   error: string | null
+  isVerified?: boolean
+  pendingVerificationEmail?: string
 }
 
-// =====================
 // INITIAL STATE
-// =====================
 
 const initialState: AuthState = {
   token: localStorage.getItem("token") || null,
   user: null,
   loading: false,
   error: null,
+  isVerified: undefined,
+  pendingVerificationEmail: undefined,
 }
 
-// =====================
 // API CALLS
-// =====================
 
 // Login
 export const login = createAsyncThunk<
   AuthResponse,
   { usernameOrEmail: string; password: string },
-  { rejectValue: string }
+  { rejectValue: string | { code: string; isVerified?: boolean; email?: string } }
 >("auth/login", async ({ usernameOrEmail, password }, { rejectWithValue }) => {
   try {
     const res = await axiosInstance.post("/auth/login", {
@@ -53,14 +58,21 @@ export const login = createAsyncThunk<
     })
     return res.data as AuthResponse
   } catch (err: any) {
-    const code = err.response?.data?.code || "auth.loginFailed"
-    return rejectWithValue(code)
+    // Nếu backend trả về isVerified = false, có nghĩa là email chưa verify
+    if (err.response?.data?.isVerified === false) {
+      const code = err.response?.data?.code || err.response?.data?.message || "auth.emailNotVerified"
+      const email = err.response?.data?.email || usernameOrEmail
+      return rejectWithValue({ code, isVerified: false, email })
+    }
+    // Các lỗi khác (sai mật khẩu, user không tồn tại, etc.)
+    const errorMessage = err.response?.data?.code || err.response?.data?.message || "auth.loginFailed"
+    return rejectWithValue(errorMessage)
   }
 })
 
 // Register
 export const registerUser = createAsyncThunk<
-  AuthResponse,
+  RegisterResponse,
   {
     firstName: string
     lastName: string
@@ -72,7 +84,7 @@ export const registerUser = createAsyncThunk<
 >("auth/register", async (formData, { rejectWithValue }) => {
   try {
     const res = await axiosInstance.post("/auth/register", formData)
-    return res.data as AuthResponse
+    return res.data as RegisterResponse
   } catch (err: any) {
     return rejectWithValue(err.response?.data?.code || "auth.registerFailed")
   }
@@ -136,9 +148,7 @@ export const resetPassword = createAsyncThunk<
   }
 })
 
-// =====================
 // SLICE
-// =====================
 
 const authSlice = createSlice({
   name: "auth",
@@ -149,8 +159,9 @@ const authSlice = createSlice({
       state.user = null
       state.loading = false
       state.error = null
+      state.isVerified = undefined
+      state.pendingVerificationEmail = undefined
       localStorage.removeItem("token")
-      // Xóa toàn bộ persisted state khi logout
       localStorage.removeItem("persist:root")
     },
     setToken: (state, action: PayloadAction<string>) => {
@@ -164,6 +175,8 @@ const authSlice = createSlice({
     },
     clearError: (state) => {
       state.error = null
+      state.isVerified = undefined
+      state.pendingVerificationEmail = undefined
     },
   },
   extraReducers: (builder) => {
@@ -172,16 +185,41 @@ const authSlice = createSlice({
       .addCase(login.pending, (state) => {
         state.loading = true
         state.error = null
+        state.isVerified = undefined
+        state.pendingVerificationEmail = undefined
       })
       .addCase(login.fulfilled, (state, action) => {
         state.loading = false
         state.token = action.payload.token
         state.user = action.payload.user
+        state.error = null
+        state.isVerified = undefined
+        state.pendingVerificationEmail = undefined
         localStorage.setItem("token", action.payload.token)
       })
       .addCase(login.rejected, (state, action) => {
+        
+        //  FIX: Clear state NGAY LẬP TỨC khi login failed
         state.loading = false
-        state.error = action.payload || "auth.loginFailed"
+        state.token = null
+        state.user = null
+        
+        // Clear localStorage NGAY
+        localStorage.removeItem("token")
+        localStorage.removeItem("persist:root")
+        
+        // Set error info
+        if (action.payload && typeof action.payload === "object") {
+          state.error = action.payload.code || "auth.loginFailed"
+          state.isVerified = action.payload.isVerified
+          state.pendingVerificationEmail = action.payload.email
+        } else {
+          state.error = action.payload || "auth.loginFailed"
+          state.isVerified = undefined
+          state.pendingVerificationEmail = undefined
+        }
+        
+       
       })
 
       // REGISTER
@@ -191,9 +229,14 @@ const authSlice = createSlice({
       })
       .addCase(registerUser.fulfilled, (state, action) => {
         state.loading = false
-        state.user = action.payload.user
-        state.token = action.payload.token
-        localStorage.setItem("token", action.payload.token)
+        state.error = null
+        // Chỉ set token và user nếu không cần verify (đăng ký qua Google)
+        if (!action.payload.needVerification && action.payload.token) {
+          state.user = action.payload.user
+          state.token = action.payload.token
+          localStorage.setItem("token", action.payload.token)
+        }
+        // Nếu cần verify, KHÔNG set token và user vào state
       })
       .addCase(registerUser.rejected, (state, action) => {
         state.loading = false
@@ -214,7 +257,9 @@ const authSlice = createSlice({
         state.error = action.payload || "Failed to load user"
         // Clear token nếu không load được user
         state.token = null
+        state.user = null
         localStorage.removeItem("token")
+        localStorage.removeItem("persist:root")
       })
 
       // VERIFY TOKEN
@@ -230,6 +275,7 @@ const authSlice = createSlice({
         state.token = null
         state.user = null
         localStorage.removeItem("token")
+        localStorage.removeItem("persist:root")
       })
 
       // FORGOT PASSWORD

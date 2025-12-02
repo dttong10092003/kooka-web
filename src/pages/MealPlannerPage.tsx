@@ -88,7 +88,6 @@ const MealPlannerPage: React.FC = () => {
     const state = location.state as { aiGeneratedPlan?: AIGeneratedPlan };
     
     if (state?.aiGeneratedPlan) {
-      console.log('🤖 Received AI-generated meal plan:', state.aiGeneratedPlan);
       
       // Check if user is logged in
       if (!user?._id) {
@@ -130,7 +129,7 @@ const MealPlannerPage: React.FC = () => {
           behavior: 'smooth', 
           block: 'start' 
         });
-      }, 300); // Small delay to ensure modal is rendered
+      }, 300);
       
       // Clear navigation state to prevent re-triggering
       navigate('/meal-planner', { replace: true, state: {} });
@@ -138,7 +137,6 @@ const MealPlannerPage: React.FC = () => {
   }, [location.state, user, mealPlans, language, navigate]);
 
   // Sort meal plans by startDate ascending (oldest first)
-  // Completed plans naturally come first (older dates), pending plans come after (newer dates)
   const sortedMealPlans = [...mealPlans].sort((a, b) => {
     return new Date(a.startDate).getTime() - new Date(b.startDate).getTime();
   });
@@ -431,8 +429,8 @@ const MealPlannerPage: React.FC = () => {
       });
       
       setEditingPlans(plansWithDate);
-      setOriginalPlans([]); // Creating mode không cần originalPlans
-      setAiGeneratedPlans(null); // Clear AI plans đã dùng
+      setOriginalPlans([]); 
+      setAiGeneratedPlans(null); 
     } else {
       // Tạo plan thủ công (không có AI)
       setEditingPlans([]);
@@ -607,12 +605,12 @@ const MealPlannerPage: React.FC = () => {
         })).unwrap();
         
         // Sau khi tạo thành công, LUÔN hiển thị plan vừa tạo
-        setJustCreatedPlanId(newPlan._id); // Set flag để useEffect không ghi đè
+        setJustCreatedPlanId(newPlan._id); 
         setSelectedStartDate(null);
         setViewMode('viewing');
         setCurrentMealPlanId(newPlan._id);
-        setEditingPlans(newPlan.plans); // Set từ response API
-        setOriginalPlans(JSON.parse(JSON.stringify(newPlan.plans))); // Set original plans
+        setEditingPlans(newPlan.plans); 
+        setOriginalPlans(JSON.parse(JSON.stringify(newPlan.plans))); 
         
         // Đợi Redux update xong rồi mới tìm index chính xác
         setTimeout(() => {

@@ -4,7 +4,7 @@ import { useLocation, useNavigate } from "react-router-dom"
 const GoogleCallback: React.FC = () => {
   const location = useLocation()
   const navigate = useNavigate()
-  const hasProcessed = useRef(false) // Prevent double processing
+  const hasProcessed = useRef(false)
 
   useEffect(() => {
     // Chỉ xử lý một lần duy nhất
@@ -17,12 +17,6 @@ const GoogleCallback: React.FC = () => {
     const userParam = urlParams.get('user')
     const error = urlParams.get('error')
 
-    console.log("🔍 GoogleCallback - Processing:", { 
-      token: token ? "exists" : "none", 
-      user: userParam ? "exists" : "none",
-      error, 
-      isPopup: !!window.opener 
-    })
 
     // Xử lý lỗi từ backend
     if (error) {
@@ -45,7 +39,6 @@ const GoogleCallback: React.FC = () => {
         // Parse user data từ URL
         const user = JSON.parse(decodeURIComponent(userParam))
         
-        console.log("✅ Google login success:", { userId: user._id, email: user.email })
 
         if (window.opener) {
           // Nếu là popup, gửi data về parent window
@@ -60,8 +53,6 @@ const GoogleCallback: React.FC = () => {
           // Nếu là direct navigation, lưu vào localStorage và redirect
           localStorage.setItem('token', token)
           localStorage.setItem('user', JSON.stringify(user))
-          
-          console.log("💾 Saved to localStorage, redirecting to home...")
           
           // Redirect về trang chủ
           window.location.href = '/'

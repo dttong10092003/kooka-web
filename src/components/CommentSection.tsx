@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { ThumbsUp, Send, Edit2, Trash2, X, MessageCircle, Reply, MoreVertical, AlertCircle, EyeOff, Star, CheckCircle } from 'lucide-react';
+import { ThumbsUp, Send, Edit2, Trash2, X, MessageCircle, Reply, MoreVertical, AlertCircle, EyeOff, Star, CheckCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { AppDispatch, RootState } from '../redux/store';
 import {
     getCommentsByRecipeId,
@@ -19,11 +19,78 @@ interface CommentSectionProps {
     recipeId: string;
 }
 
+const COMMENTS_PER_PAGE = 10;
+
 export default function CommentSection({ recipeId }: CommentSectionProps) {
     const dispatch = useDispatch<AppDispatch>();
     const [newComment, setNewComment] = useState('');
     const [rating, setRating] = useState(0); // Rating từ 0-5 (0 = chưa chọn)
     const [hoverRating, setHoverRating] = useState(0); // Hiển thị khi hover
+    const [showConfirmExit, setShowConfirmExit] = useState(false);
+    const [pendingExitAction, setPendingExitAction] = useState<null | (() => void)>(null);
+    const formRef = useRef<HTMLFormElement | null>(null);
+    const [currentPage, setCurrentPage] = useState(1);
+    // Kiểm tra có dữ liệu chưa lưu không
+    const hasUnsavedReview = newComment.trim().length > 0 || rating > 0;
+
+    // Xử lý khi người dùng cố gắng rời khỏi form đánh giá
+    useEffect(() => {
+        const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+            if (hasUnsavedReview) {
+                e.preventDefault();
+                e.returnValue = '';
+                return '';
+            }
+        };
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => {
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+        };
+    }, [hasUnsavedReview]);
+
+    // THÊM CODE MỚI Ở ĐÂY - Xử lý nút Quay lại của trình duyệt
+    useEffect(() => {
+        if (!hasUnsavedReview) return;
+
+        // Push một state giả vào history để chặn back
+                const handleBackButton = () => {
+                    if (hasUnsavedReview) {
+                        // Push lại state để giữ người dùng ở trang hiện tại
+                        window.history.pushState(null, '', window.location.pathname);
+        
+                        // Hiển thị confirm dialog
+                        setShowConfirmExit(true);
+                        setPendingExitAction(() => () => {
+                            // Nếu xác nhận rời đi, cho phép back
+                            window.history.back();
+                        });
+                    }
+                };
+
+        // Push một state null để có thể bắt popstate
+        window.history.pushState(null, '', window.location.pathname);
+
+        window.addEventListener('popstate', handleBackButton);
+
+        return () => {
+            window.removeEventListener('popstate', handleBackButton);
+        };
+    }, [hasUnsavedReview]);
+
+    const handleConfirmExit = () => {
+        setShowConfirmExit(false);
+        setPendingExitAction(null);
+        // Xóa nội dung đánh giá
+        setNewComment('');
+        setRating(0);
+        // Nếu có hành động chờ, thực hiện nó
+        if (pendingExitAction) pendingExitAction();
+    };
+
+    const handleCancelExit = () => {
+        setShowConfirmExit(false);
+        setPendingExitAction(null);
+    };
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editContent, setEditContent] = useState('');
     const [replyingTo, setReplyingTo] = useState<string | null>(null);
@@ -45,13 +112,12 @@ export default function CommentSection({ recipeId }: CommentSectionProps) {
     const userAvatar = userProfile?.avatar || currentUser?.avatar;
 
     // Debug: Log liked comments
-    useEffect(() => {
-        console.log('🔍 Liked Comments Array:', likedComments);
-        console.log('🔍 Total comments:', comments.length);
-        comments.forEach(c => {
-            console.log(`  Comment ${c._id}: likes=${c.likes}, isLiked=${likedComments.includes(c._id)}`);
-        });
-    }, [likedComments, comments]);
+    // useEffect(() => {
+
+    //     comments.forEach(c => {
+    //         console.log(`  Comment ${c._id}: likes=${c.likes}, isLiked=${likedComments.includes(c._id)}`);
+    //     });
+    // }, [likedComments, comments]);
 
     // Load comments and user likes when component mounts
     useEffect(() => {
@@ -94,8 +160,9 @@ export default function CommentSection({ recipeId }: CommentSectionProps) {
         try {
             await dispatch(createComment({ recipeId, content: newComment, rating })).unwrap();
             setNewComment('');
-            setRating(0); // Reset rating
-            
+            setRating(0);
+            setCurrentPage(1); // Reset về trang đầu khi có comment mới
+
             // Reload recipe để cập nhật rating mới
             dispatch(getRecipeById(recipeId));
         } catch (error: any) {
@@ -156,31 +223,22 @@ export default function CommentSection({ recipeId }: CommentSectionProps) {
         const isCurrentlyLiked = likedComments.includes(commentId);
         const newLikes = isCurrentlyLiked ? currentLikes - 1 : currentLikes + 1;
 
-        console.log('🔵 Toggle like for comment:', commentId);
-        console.log('🔵 Current comment:', currentComment);
-        console.log('🔵 Current likes:', currentLikes);
-        console.log('🔵 Is currently liked:', isCurrentlyLiked);
-        console.log('🔵 New likes will be:', newLikes);
-        console.log('🔵 Comment object before update:', JSON.stringify(currentComment));
 
         // Optimistic update: Update UI ngay lập tức
         dispatch(updateCommentLikes({ commentId, likes: newLikes }));
-        console.log('🔵 Dispatched updateCommentLikes with likes:', newLikes);
 
         try {
             const result = await dispatch(toggleLike(commentId)).unwrap();
-            console.log('✅ Toggle SUCCESS:', result);
-            console.log('✅ Backend returned likes:', result.likes);
-            
+           
+
             // Sync với giá trị chính xác từ server
             dispatch(updateCommentLikes({ commentId, likes: result.likes }));
-            console.log('✅ Synced with server likes:', result.likes);
         } catch (error: any) {
             console.error('❌ Failed to toggle like:', error);
-            
+
             // Rollback optimistic update nếu lỗi
             dispatch(updateCommentLikes({ commentId, likes: currentLikes }));
-            
+
             const errorMsg = error.message || error.response?.data?.message || 'Failed to like/unlike comment';
             toast.error(`Error: ${errorMsg}`);
         }
@@ -240,10 +298,10 @@ export default function CommentSection({ recipeId }: CommentSectionProps) {
         if (!replyContent.trim() || !currentUser) return;
 
         try {
-            await dispatch(createReply({ 
-                parentCommentId, 
+            await dispatch(createReply({
+                parentCommentId,
                 content: replyContent,
-                recipeId 
+                recipeId
             })).unwrap();
             cancelReply();
         } catch (error) {
@@ -261,11 +319,22 @@ export default function CommentSection({ recipeId }: CommentSectionProps) {
         toast.success('Báo cáo comment: ' + commentId);
         setOpenMenuId(null);
     };
-
     // Handle hide
     const handleHide = (commentId: string) => {
         toast.success('Ẩn comment: ' + commentId);
         setOpenMenuId(null);
+    };
+
+    // Pagination calculations
+    const totalPages = Math.ceil(comments.length / COMMENTS_PER_PAGE);
+    const startIndex = (currentPage - 1) * COMMENTS_PER_PAGE;
+    const endIndex = startIndex + COMMENTS_PER_PAGE;
+    const paginatedComments = comments.slice(startIndex, endIndex);
+
+    const handlePageChange = (page: number) => {
+        setCurrentPage(page);
+        // Scroll to comments section
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     return (
@@ -274,7 +343,7 @@ export default function CommentSection({ recipeId }: CommentSectionProps) {
             <div className="flex items-center gap-2 mb-6">
                 <MessageCircle className="h-6 w-6 text-orange-500" />
                 <h2 className="text-xl sm:text-2xl font-bold text-gray-800">
-                    Comments <span className="text-gray-500 text-lg">({totalComments})</span>
+                    Đánh giá <span className="text-gray-500 text-lg">({totalComments})</span>
                 </h2>
             </div>
 
@@ -289,23 +358,22 @@ export default function CommentSection({ recipeId }: CommentSectionProps) {
                             </div>
                             <div className="flex-grow">
                                 <h3 className="text-lg font-semibold text-green-800 mb-2">
-                                    You have already reviewed this recipe
+                                    Bạn đã đánh giá công thức này
                                 </h3>
                                 <p className="text-green-700 mb-3">
-                                    Thank you for your feedback! Your rating helps others discover great recipes.
+                                    Cảm ơn bạn đã phản hồi! Đánh giá của bạn giúp người khác khám phá các công thức tuyệt vời.
                                 </p>
                                 {userRating && (
                                     <div className="flex items-center gap-2 bg-white/60 px-4 py-2 rounded-lg inline-flex">
-                                        <span className="text-sm font-medium text-gray-700">Your rating:</span>
+                                        <span className="text-sm font-medium text-gray-700">Đánh giá của bạn:</span>
                                         <div className="flex gap-1">
                                             {[1, 2, 3, 4, 5].map((star) => (
                                                 <Star
                                                     key={star}
-                                                    className={`h-5 w-5 ${
-                                                        star <= userRating
+                                                    className={`h-5 w-5 ${star <= userRating
                                                             ? 'fill-yellow-400 text-yellow-400'
                                                             : 'text-gray-300'
-                                                    }`}
+                                                        }`}
                                                 />
                                             ))}
                                         </div>
@@ -319,79 +387,106 @@ export default function CommentSection({ recipeId }: CommentSectionProps) {
                     </div>
                 ) : (
                     // User chưa review - hiển thị form
-                    <form onSubmit={handleSubmitComment} className="mb-8">
-                    <div className="flex gap-3">
-                        <div className="flex-shrink-0">
-                            {userAvatar ? (
-                                <img
-                                    src={userAvatar}
-                                    alt={currentUser.username || 'User'}
-                                    className="w-10 h-10 rounded-full object-cover"
-                                />
-                            ) : (
-                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-semibold">
-                                    <span>{currentUser.username?.[0]?.toUpperCase() || 'U'}</span>
-                                </div>
-                            )}
-                        </div>
-                        <div className="flex-grow">
-                            {/* Rating Stars */}
-                            <div className="mb-3">
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Your Rating <span className="text-red-500">*</span>
-                                </label>
-                                <div className="flex gap-1">
-                                    {[1, 2, 3, 4, 5].map((star) => (
-                                        <button
-                                            key={star}
-                                            type="button"
-                                            onClick={() => setRating(star)}
-                                            onMouseEnter={() => setHoverRating(star)}
-                                            onMouseLeave={() => setHoverRating(0)}
-                                            className="focus:outline-none transition-transform hover:scale-110"
-                                        >
-                                            <Star
-                                                className={`h-8 w-8 transition-colors ${
-                                                    star <= (hoverRating || rating)
-                                                        ? 'fill-yellow-400 text-yellow-400'
-                                                        : 'text-gray-300'
-                                                }`}
-                                            />
-                                        </button>
-                                    ))}
-                                    {rating > 0 && (
-                                        <span className="ml-2 text-sm text-gray-600 self-center">
-                                            {rating} {rating === 1 ? 'star' : 'stars'}
-                                        </span>
-                                    )}
-                                </div>
+                    <form
+                        ref={formRef}
+                        onSubmit={handleSubmitComment}
+                        className="mb-8"
+                    >
+                        <div className="flex gap-3">
+                            <div className="flex-shrink-0">
+                                {userAvatar ? (
+                                    <img
+                                        src={userAvatar}
+                                        alt={currentUser.username || 'User'}
+                                        className="w-10 h-10 rounded-full object-cover"
+                                    />
+                                ) : (
+                                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-semibold">
+                                        <span>{currentUser.username?.[0]?.toUpperCase() || 'U'}</span>
+                                    </div>
+                                )}
                             </div>
+                            <div className="flex-grow">
+                                {/* Rating Stars */}
+                                <div className="mb-3">
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Đánh giá của bạn <span className="text-red-500">*</span>
+                                    </label>
+                                    <div className="flex gap-1">
+                                        {[1, 2, 3, 4, 5].map((star) => (
+                                            <button
+                                                key={star}
+                                                type="button"
+                                                onClick={() => setRating(star)}
+                                                onMouseEnter={() => setHoverRating(star)}
+                                                onMouseLeave={() => setHoverRating(0)}
+                                                className="focus:outline-none transition-transform hover:scale-110"
+                                            >
+                                                <Star
+                                                    className={`h-8 w-8 transition-colors ${star <= (hoverRating || rating)
+                                                            ? 'fill-yellow-400 text-yellow-400'
+                                                            : 'text-gray-300'
+                                                        }`}
+                                                />
+                                            </button>
+                                        ))}
+                                        {rating > 0 && (
+                                            <span className="ml-2 text-sm text-gray-600 self-center">
+                                                {rating} {rating === 1 ? 'star' : 'stars'}
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
 
-                            <textarea
-                                value={newComment}
-                                onChange={(e) => setNewComment(e.target.value)}
-                                placeholder="Share your thoughts about this recipe..."
-                                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none transition-all"
-                                rows={3}
-                            />
-                            <div className="flex justify-end mt-2">
-                                <button
-                                    type="submit"
-                                    disabled={!newComment.trim() || !rating || loading}
-                                    className="bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 text-white px-5 py-2 rounded-lg flex items-center gap-2 font-medium transition-colors"
-                                >
-                                    <Send className="h-4 w-4" />
-                                    Post Comment
-                                </button>
+                                <textarea
+                                    value={newComment}
+                                    onChange={(e) => setNewComment(e.target.value)}
+                                    placeholder="Chia sẻ suy nghĩ của bạn về công thức này..."
+                                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none transition-all"
+                                    rows={3}
+                                />
+                                <div className="flex justify-end mt-2 gap-2">
+                                
+                                    <button
+                                        type="submit"
+                                        disabled={!newComment.trim() || !rating || loading}
+                                        className="bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 text-white px-5 py-2 rounded-lg flex items-center gap-2 font-medium transition-colors"
+                                    >
+                                        <Send className="h-4 w-4" />
+                                        Đăng đánh giá
+                                    </button>
+                                </div>
+                                {/* Hộp thoại xác nhận khi rời khỏi form đánh giá */}
+                                {showConfirmExit && (
+                                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+                                        <div className="bg-white rounded-lg shadow-lg p-6 max-w-sm w-full">
+                                            <h3 className="text-lg font-semibold mb-3 text-gray-800">Bạn có muốn tiếp tục đánh giá không?</h3>
+                                            <p className="mb-5 text-gray-600">Nội dung đánh giá của bạn sẽ bị xóa nếu bạn rời khỏi. Bạn muốn tiếp tục đánh giá hay hủy bỏ?</p>
+                                            <div className="flex justify-end gap-3">
+                                                <button
+                                                    className="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium"
+                                                    onClick={handleCancelExit}
+                                                >
+                                                    Tiếp tục đánh giá
+                                                </button>
+                                                <button
+                                                    className="px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white font-medium"
+                                                    onClick={handleConfirmExit}
+                                                >
+                                                    Hủy bỏ đánh giá
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
-                    </div>
-                </form>
+                    </form>
                 )
             ) : (
                 <div className="mb-8 p-4 bg-orange-50 border border-orange-200 rounded-lg text-center">
                     <p className="text-orange-700">
-                        Please <a href="/login" className="font-semibold underline">login</a> to leave a comment
+                        Vui lòng <a href="/login" className="font-semibold underline">đăng nhập</a> để để lại đánh giá
                     </p>
                 </div>
             )}
@@ -405,11 +500,11 @@ export default function CommentSection({ recipeId }: CommentSectionProps) {
                 ) : comments.length === 0 ? (
                     <div className="text-center py-12">
                         <MessageCircle className="h-16 w-16 text-gray-300 mx-auto mb-3" />
-                        <p className="text-gray-500 text-lg">No comments yet</p>
-                        <p className="text-gray-400 text-sm">Be the first to share your thoughts!</p>
+                        <p className="text-gray-500 text-lg">Chưa có đánh giá nào</p>
+                        <p className="text-gray-400 text-sm">Hãy là người đầu tiên chia sẻ suy nghĩ của bạn!</p>
                     </div>
                 ) : (
-                    comments.map((comment) => (
+                    paginatedComments.map((comment) => (
                         <div key={comment._id} className="border-b border-gray-100 pb-6 last:border-b-0 last:pb-0">
                             <div className="flex gap-3">
                                 {/* User Avatar */}
@@ -446,11 +541,10 @@ export default function CommentSection({ recipeId }: CommentSectionProps) {
                                                         {[1, 2, 3, 4, 5].map((star) => (
                                                             <Star
                                                                 key={star}
-                                                                className={`h-4 w-4 ${
-                                                                    star <= comment.ratingRecipe!
+                                                                className={`h-4 w-4 ${star <= comment.ratingRecipe!
                                                                         ? 'fill-yellow-400 text-yellow-400'
                                                                         : 'text-gray-300'
-                                                                }`}
+                                                                    }`}
                                                             />
                                                         ))}
                                                         <span className="text-xs text-gray-600 ml-1">
@@ -499,14 +593,14 @@ export default function CommentSection({ recipeId }: CommentSectionProps) {
                                                         onClick={() => handleEditComment(comment._id)}
                                                         className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-1.5 rounded-lg text-sm font-medium transition-colors"
                                                     >
-                                                        Save
+                                                        Lưu
                                                     </button>
                                                     <button
                                                         onClick={cancelEdit}
                                                         className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-1"
                                                     >
                                                         <X className="h-4 w-4" />
-                                                        Cancel
+                                                        Hủy
                                                     </button>
                                                 </div>
                                             </div>
@@ -521,7 +615,6 @@ export default function CommentSection({ recipeId }: CommentSectionProps) {
                                         <div className="flex items-center gap-2">
                                             <button
                                                 onClick={() => {
-                                                    console.log('🎯 BEFORE CLICK - comment.likes:', comment.likes);
                                                     handleToggleLike(comment._id);
                                                 }}
                                                 disabled={!currentUser}
@@ -539,7 +632,6 @@ export default function CommentSection({ recipeId }: CommentSectionProps) {
                                             {(() => {
                                                 const likes = comment.likes || 0;
                                                 const shouldShow = likes > 0;
-                                                console.log(`🎯 RENDER comment ${comment._id}: likes=${comment.likes} (${typeof comment.likes}), normalized=${likes}, shouldShow=${shouldShow}`);
                                                 return shouldShow ? (
                                                     <span className={`text-sm font-medium ${likedComments.includes(comment._id) ? 'text-blue-600' : 'text-gray-600'}`}>
                                                         {likes}
@@ -555,7 +647,7 @@ export default function CommentSection({ recipeId }: CommentSectionProps) {
                                             className="flex items-center gap-1.5 text-sm font-medium text-gray-600 hover:text-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                             <Reply className="h-4 w-4" />
-                                            <span>Reply</span>
+                                            <span>Trả lời</span>
                                         </button>
 
                                         {/* More Menu */}
@@ -593,12 +685,12 @@ export default function CommentSection({ recipeId }: CommentSectionProps) {
                                     {replyingTo === comment._id && !replyToUser && (
                                         <div className="mt-4 ml-2 pl-4 border-l-2 border-orange-200">
                                             <div className="text-xs text-gray-500 mb-1">
-                                                Replying to <span className="font-semibold text-orange-600">@{comment.firstName} {comment.lastName}</span>
+                                                Trả lời <span className="font-semibold text-orange-600">@{comment.firstName} {comment.lastName}</span>
                                             </div>
                                             <textarea
                                                 value={replyContent}
                                                 onChange={(e) => setReplyContent(e.target.value)}
-                                                placeholder={`Reply to ${comment.firstName}...`}
+                                                placeholder={`Trả lời ${comment.firstName}...`}
                                                 className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none text-sm"
                                                 rows={2}
                                                 autoFocus
@@ -608,14 +700,14 @@ export default function CommentSection({ recipeId }: CommentSectionProps) {
                                                     onClick={cancelReply}
                                                     className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-1.5 rounded-lg text-sm font-medium transition-colors"
                                                 >
-                                                    Cancel
+                                                    Hủy
                                                 </button>
                                                 <button
                                                     onClick={() => handleSubmitReply(comment._id)}
                                                     disabled={!replyContent.trim()}
                                                     className="bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 text-white px-4 py-1.5 rounded-lg text-sm font-medium transition-colors"
                                                 >
-                                                    Reply
+                                                    Trả lời
                                                 </button>
                                             </div>
                                         </div>
@@ -714,17 +806,15 @@ export default function CommentSection({ recipeId }: CommentSectionProps) {
                                                                 <button
                                                                     onClick={() => handleToggleLike(reply._id)}
                                                                     disabled={!currentUser}
-                                                                    className={`p-1 rounded-full transition-all ${
-                                                                        likedComments.includes(reply._id)
+                                                                    className={`p-1 rounded-full transition-all ${likedComments.includes(reply._id)
                                                                             ? 'text-blue-600 hover:bg-blue-50'
                                                                             : 'text-gray-600 hover:bg-gray-100'
-                                                                    } ${!currentUser ? 'cursor-not-allowed opacity-50' : ''}`}
+                                                                        } ${!currentUser ? 'cursor-not-allowed opacity-50' : ''}`}
                                                                     title={likedComments.includes(reply._id) ? 'Unlike' : 'Like'}
                                                                 >
                                                                     <ThumbsUp
-                                                                        className={`h-3 w-3 transition-all ${
-                                                                            likedComments.includes(reply._id) ? 'fill-blue-600' : ''
-                                                                        }`}
+                                                                        className={`h-3 w-3 transition-all ${likedComments.includes(reply._id) ? 'fill-blue-600' : ''
+                                                                            }`}
                                                                     />
                                                                 </button>
                                                                 {reply.likes > 0 && (
@@ -741,7 +831,7 @@ export default function CommentSection({ recipeId }: CommentSectionProps) {
                                                                 className="flex items-center gap-1 text-xs font-medium text-gray-600 hover:text-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                                             >
                                                                 <Reply className="h-3 w-3" />
-                                                                <span>Reply</span>
+                                                                <span>Trả lời</span>
                                                             </button>
                                                         </div>
 
@@ -749,12 +839,12 @@ export default function CommentSection({ recipeId }: CommentSectionProps) {
                                                         {replyingTo === comment._id && replyToUser === `${reply.firstName} ${reply.lastName}` && (
                                                             <div className="mt-3 ml-2">
                                                                 <div className="text-xs text-gray-500 mb-1">
-                                                                    Replying to <span className="font-semibold text-orange-600">@{reply.firstName} {reply.lastName}</span>
+                                                                    Trả lời <span className="font-semibold text-orange-600">@{reply.firstName} {reply.lastName}</span>
                                                                 </div>
                                                                 <textarea
                                                                     value={replyContent}
                                                                     onChange={(e) => setReplyContent(e.target.value)}
-                                                                    placeholder={`Reply to ${reply.firstName}...`}
+                                                                    placeholder={`Trả lời ${reply.firstName}...`}
                                                                     className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none text-sm"
                                                                     rows={2}
                                                                     autoFocus
@@ -764,14 +854,14 @@ export default function CommentSection({ recipeId }: CommentSectionProps) {
                                                                         onClick={cancelReply}
                                                                         className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 rounded-lg text-xs font-medium transition-colors"
                                                                     >
-                                                                        Cancel
+                                                                        Hủy
                                                                     </button>
                                                                     <button
                                                                         onClick={() => handleSubmitReply(comment._id)}
                                                                         disabled={!replyContent.trim()}
                                                                         className="bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 text-white px-3 py-1 rounded-lg text-xs font-medium transition-colors"
                                                                     >
-                                                                        Reply
+                                                                        Trả lời
                                                                     </button>
                                                                 </div>
                                                             </div>
@@ -787,6 +877,74 @@ export default function CommentSection({ recipeId }: CommentSectionProps) {
                     ))
                 )}
             </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+                <div className="mt-8 flex items-center justify-center gap-2">
+                    {/* Previous Button */}
+                    <button
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        disabled={currentPage === 1}
+                        className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        aria-label="Trang trước"
+                    >
+                        <ChevronLeft className="h-5 w-5 text-gray-600" />
+                    </button>
+
+                    {/* Page Numbers */}
+                    <div className="flex items-center gap-1">
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                            // Hiển thị: trang đầu, trang cuối, trang hiện tại và 2 trang xung quanh
+                            if (
+                                page === 1 ||
+                                page === totalPages ||
+                                (page >= currentPage - 1 && page <= currentPage + 1)
+                            ) {
+                                return (
+                                    <button
+                                        key={page}
+                                        onClick={() => handlePageChange(page)}
+                                        className={`min-w-[40px] h-10 px-3 rounded-lg font-medium transition-all ${
+                                            currentPage === page
+                                                ? 'bg-orange-500 text-white shadow-md'
+                                                : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
+                                        }`}
+                                    >
+                                        {page}
+                                    </button>
+                                );
+                            } else if (
+                                page === currentPage - 2 ||
+                                page === currentPage + 2
+                            ) {
+                                return (
+                                    <span key={page} className="px-2 text-gray-400">
+                                        ...
+                                    </span>
+                                );
+                            }
+                            return null;
+                        })}
+                    </div>
+
+                    {/* Next Button */}
+                    <button
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        disabled={currentPage === totalPages}
+                        className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        aria-label="Trang sau"
+                    >
+                        <ChevronRight className="h-5 w-5 text-gray-600" />
+                    </button>
+                </div>
+            )}
+
+            {/* Page Info */}
+            {comments.length > 0 && (
+                <div className="mt-4 text-center text-sm text-gray-500">
+                    Hiển thị {startIndex + 1}-{Math.min(endIndex, comments.length)} trong tổng số {comments.length} đánh giá
+                </div>
+            )}
         </div>
     );
 }

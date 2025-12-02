@@ -123,14 +123,14 @@ const AllRecipes = () => {
       if (result.message?.includes('added') || result.message?.includes('thêm')) {
         toast.success(
           language === 'vi' 
-            ? '❤️ Đã thêm vào yêu thích!' 
-            : '❤️ Added to favorites!'
+            ? ' Đã thêm vào yêu thích!' 
+            : 'Added to favorites!'
         );
       } else {
         toast.success(
           language === 'vi' 
-            ? '💔 Đã bỏ yêu thích!' 
-            : '💔 Removed from favorites!'
+            ? ' Đã bỏ yêu thích!' 
+            : ' Removed from favorites!'
         );
       }
     } catch (error) {

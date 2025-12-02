@@ -83,7 +83,7 @@ export default function Header() {
       .join("")
       .toUpperCase();
 
-  // 👉 Nếu đang ở trang Register, luôn hiển thị trạng thái chưa login
+  //  Nếu đang ở trang Register, luôn hiển thị trạng thái chưa login
   const forceGuest = location.pathname === "/register";
 
   // Handler để kiểm tra đăng nhập trước khi vào Meal Planner
@@ -99,7 +99,6 @@ export default function Header() {
     <header className="sticky top-0 z-50 bg-white px-4 py-3 shadow-sm">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         {/* Logo */}
-        {/* Logo - chỉ hiện trên md trở lên */}
         <div className="flex items-center gap-2 md:flex hidden">
           <Link to="/">
             <div className="w-8 h-8 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg flex items-center justify-center cursor-pointer">

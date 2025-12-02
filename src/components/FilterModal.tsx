@@ -66,7 +66,6 @@ export default function FilterModal({ isOpen, onClose, onApply, initialFilters, 
         setSelectedTags([])
         setSelectedCuisine("")
 
-        // Notify parent component about cleared filters
         onApply({
             selectedCategory: "",
             selectedTags: [],

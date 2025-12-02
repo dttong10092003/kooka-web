@@ -1,4 +1,3 @@
-// src/locales/translations.ts
 export const translations = {
     vi: {
         header: {

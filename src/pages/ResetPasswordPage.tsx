@@ -19,7 +19,7 @@ const ResetPasswordPage: React.FC<ResetPasswordPageProps> = ({ onBack }) => {
   const [searchParams] = useSearchParams()
   const queryToken = searchParams.get("token")
   
-  // Hỗ trợ cả 2 cách: /reset-password/:token hoặc /reset-password?token=xxx
+  // Hỗ trợ cả 2 cách
   const token = paramToken || queryToken
   
   const { loading, error } = useSelector((state: RootState) => state.auth)
@@ -32,17 +32,13 @@ const ResetPasswordPage: React.FC<ResetPasswordPageProps> = ({ onBack }) => {
   const [validationError, setValidationError] = useState<string | null>(null)
 
   useEffect(() => {
-    console.log("ResetPasswordPage mounted")
-    console.log("Token from params:", paramToken)
-    console.log("Token from query:", queryToken)
-    console.log("Final token:", token)
+
     
     // Clear error khi component mount
     dispatch(clearError())
     
     // Kiểm tra có token không
     if (!token) {
-      console.log("No token found, redirecting to forgot-password")
       navigate("/forgot-password")
     }
   }, [dispatch, token, navigate, paramToken, queryToken])
