@@ -14,8 +14,11 @@ interface FilterModalProps {
 
 export interface FilterData {
     selectedCategory: string
+    selectedCategoryName: string
     selectedTags: string[]
+    selectedTagNames: string[]
     selectedCuisine: string
+    selectedCuisineName: string
 }
 
 export default function FilterModal({ isOpen, onClose, onApply, initialFilters, colorScheme = "orange" }: FilterModalProps) {
@@ -26,8 +29,11 @@ export default function FilterModal({ isOpen, onClose, onApply, initialFilters, 
     
     // State for filters with initial values from props or defaults
     const [selectedCategory, setSelectedCategory] = useState(initialFilters?.selectedCategory || "")
+    const [selectedCategoryName, setSelectedCategoryName] = useState(initialFilters?.selectedCategoryName || "")
     const [selectedTags, setSelectedTags] = useState<string[]>(initialFilters?.selectedTags || [])
+    const [selectedTagNames, setSelectedTagNames] = useState<string[]>(initialFilters?.selectedTagNames || [])
     const [selectedCuisine, setSelectedCuisine] = useState(initialFilters?.selectedCuisine || "")
+    const [selectedCuisineName, setSelectedCuisineName] = useState(initialFilters?.selectedCuisineName || "")
 
     // Fetch data when component mounts if not already loaded
     useEffect(() => {
@@ -63,13 +69,19 @@ export default function FilterModal({ isOpen, onClose, onApply, initialFilters, 
     // Function to clear all filters
     const handleClearFilters = () => {
         setSelectedCategory("")
+        setSelectedCategoryName("")
         setSelectedTags([])
+        setSelectedTagNames([])
         setSelectedCuisine("")
+        setSelectedCuisineName("")
 
         onApply({
             selectedCategory: "",
+            selectedCategoryName: "",
             selectedTags: [],
-            selectedCuisine: ""
+            selectedTagNames: [],
+            selectedCuisine: "",
+            selectedCuisineName: ""
         })
     }
 
@@ -93,17 +105,23 @@ export default function FilterModal({ isOpen, onClose, onApply, initialFilters, 
         }
     }, [isOpen, onClose])
 
-    const handleTagToggle = (tag: string) => {
+    const handleTagToggle = (tagId: string, tagName: string) => {
         setSelectedTags((prev) =>
-            prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+            prev.includes(tagId) ? prev.filter((t) => t !== tagId) : [...prev, tagId]
+        )
+        setSelectedTagNames((prev) =>
+            prev.includes(tagName) ? prev.filter((t) => t !== tagName) : [...prev, tagName]
         )
     }
 
     const handleApply = () => {
         onApply({
             selectedCategory,
+            selectedCategoryName,
             selectedTags,
-            selectedCuisine
+            selectedTagNames,
+            selectedCuisine,
+            selectedCuisineName
         })
         onClose()
     }
@@ -135,7 +153,7 @@ export default function FilterModal({ isOpen, onClose, onApply, initialFilters, 
                                             ? currentColors.tagActive
                                             : `bg-white text-gray-700 border-gray-300 ${currentColors.tagHover}`
                                         }`}
-                                    onClick={() => handleTagToggle(tag._id)}
+                                    onClick={() => handleTagToggle(tag._id, tag.name)}
                                 >
                                     {tag.name}
                                 </button>
@@ -152,7 +170,11 @@ export default function FilterModal({ isOpen, onClose, onApply, initialFilters, 
                     <div className="relative">
                         <select 
                             value={selectedCategory}
-                            onChange={(e) => setSelectedCategory(e.target.value)}
+                            onChange={(e) => {
+                                setSelectedCategory(e.target.value)
+                                const selectedCat = categories.find(cat => cat._id === e.target.value)
+                                setSelectedCategoryName(selectedCat?.name || "")
+                            }}
                             className={`w-full px-4 py-3 bg-white border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-2 ${currentColors.focusRing} text-gray-700 cursor-pointer shadow-sm`}
                         >
                             <option value="">All Categories</option>
@@ -176,7 +198,11 @@ export default function FilterModal({ isOpen, onClose, onApply, initialFilters, 
                     <div className="relative">
                         <select 
                             value={selectedCuisine}
-                            onChange={(e) => setSelectedCuisine(e.target.value)}
+                            onChange={(e) => {
+                                setSelectedCuisine(e.target.value)
+                                const selectedCuis = cuisines.find(cuis => cuis._id === e.target.value)
+                                setSelectedCuisineName(selectedCuis?.name || "")
+                            }}
                             className={`w-full px-4 py-3 bg-white border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-2 ${currentColors.focusRing} text-gray-700 cursor-pointer shadow-sm`}
                         >
                             <option value="">All Cuisines</option>

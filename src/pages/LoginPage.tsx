@@ -19,8 +19,8 @@ interface LoginPageProps {
 const LoginPage: React.FC<LoginPageProps> = ({ onBack }) => {
   const { t } = useLanguage()
   const [formData, setFormData] = useState({
-    email: "",
-    password: "",
+    email: "tin18",
+    password: "123456",
   })
 
   const dispatch = useDispatch<AppDispatch>()
