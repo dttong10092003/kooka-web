@@ -1,11 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Send, Bot, User, ChefHat, Lightbulb, Star, Image as ImageIcon } from 'lucide-react';
+import { X, Send, Bot, User, ChefHat, Lightbulb, Star, Image as ImageIcon, Menu, Trash2, MessageSquarePlus } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import axiosInstance from '../utils/axiosInstance';
-import { useSelector } from 'react-redux';
-import type { RootState } from '../redux/store';
+import { useAppDispatch, useAppSelector } from '../redux/hooks';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { fetchConversations, deleteConversation } from '../redux/slices/chatSlice';
 
 interface Recipe {
     id: string;
@@ -59,9 +59,12 @@ interface Message {
 
 const AIChatBot: React.FC = () => {
     const { language } = useLanguage();
-    const { user } = useSelector((state: RootState) => state.auth);
+    const { user } = useAppSelector((state) => state.auth);
+    const { conversations, loading: chatLoading } = useAppSelector((state) => state.chat);
+    const dispatch = useAppDispatch();
     const navigate = useNavigate();
     const [isOpen, setIsOpen] = useState(false);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(true); // Sidebar chat history
     const [messages, setMessages] = useState<Message[]>([]);
     const [inputValue, setInputValue] = useState('');
     const [isTyping, setIsTyping] = useState(false);
@@ -71,6 +74,8 @@ const AIChatBot: React.FC = () => {
     const [chatSize, setChatSize] = useState({ width: 358, height: 552 });
     const [isResizing, setIsResizing] = useState(false);
     const [selectedImages, setSelectedImages] = useState<string[]>([]);
+    const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; sessionId: string | null }>({ isOpen: false, sessionId: null });
+    const [isDeleting, setIsDeleting] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const chatRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -128,6 +133,13 @@ const AIChatBot: React.FC = () => {
             return () => clearInterval(interval);
         }
     }, [isOpen]);
+
+    // Fetch conversations when opening chatbot (only for logged-in users)
+    useEffect(() => {
+        if (isOpen && user && user._id) {
+            dispatch(fetchConversations(user._id));
+        }
+    }, [isOpen, user, dispatch]);
 
     useEffect(() => {
         if (isOpen && messages.length === 0) {
@@ -320,7 +332,7 @@ const AIChatBot: React.FC = () => {
 
         const userMessage: Message = {
             id: Date.now().toString(),
-            text: inputValue || (language === 'vi' ? '📷 Đã gửi ảnh' : '📷 Sent images'),
+            text: inputValue || (language === 'vi' ? ' Đã gửi ảnh' : ' Sent images'),
             sender: 'user',
             timestamp: new Date(),
             images: selectedImages.length > 0 ? [...selectedImages] : undefined
@@ -347,6 +359,13 @@ const AIChatBot: React.FC = () => {
                 mealPlan: mealPlan
             };
             setMessages(prev => [...prev, botResponse]);
+
+            // Refresh conversations list to show the new/updated conversation (wait for backend to save)
+            if (user && user._id) {
+                setTimeout(() => {
+                    dispatch(fetchConversations(user._id));
+                }, 1500);
+            }
         } catch (err) {
             console.error('Error getting bot response:', err);
             const errorMessage: Message = {
@@ -365,6 +384,67 @@ const AIChatBot: React.FC = () => {
 
     const handleQuickSuggestion = (suggestion: string) => {
         setInputValue(suggestion);
+    };
+
+    // Start a new chat
+    const handleNewChat = () => {
+        const newSessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        setSessionId(newSessionId);
+        setMessages([{
+            id: '1',
+            text: language === 'vi'
+                ? 'Xin chào! Tôi là Kooka AI Assistant. Tôi có thể giúp bạn tìm công thức, gợi ý món ăn, hoặc trả lời câu hỏi về nấu ăn. Bạn cần hỗ trợ gì?'
+                : 'Hello! I\'m Kooka AI Assistant. I can help you find recipes, suggest meals, or answer cooking questions. How can I help you today?',
+            sender: 'bot',
+            timestamp: new Date()
+        }]);
+    };
+
+    // Load an existing conversation
+    const handleLoadConversation = (conv: any) => {
+        setSessionId(conv.sessionId);
+        
+        // Transform backend messages to frontend format
+        const transformedMessages: Message[] = conv.messages.map((msg: any, index: number) => ({
+            id: `${conv.sessionId}_${index}`,
+            text: msg.content,
+            sender: msg.role === 'assistant' ? 'bot' : 'user',
+            timestamp: new Date(msg.timestamp),
+            recipes: msg.metadata?.recipes,
+            images: msg.metadata?.images,
+            mealPlan: msg.metadata?.mealPlan
+        }));
+        
+        setMessages(transformedMessages);
+    };
+
+    // Open delete confirmation modal
+    const handleDeleteConversation = (sessionId: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        setDeleteModal({ isOpen: true, sessionId });
+    };
+
+    // Confirm delete conversation
+    const confirmDeleteConversation = async () => {
+        if (!deleteModal.sessionId || !user || !user._id) return;
+        
+        setIsDeleting(true);
+        
+        try {
+            await dispatch(deleteConversation({ sessionId: deleteModal.sessionId, userId: user._id })).unwrap();
+            
+            // If deleted conversation is current, start new chat
+            if (deleteModal.sessionId === sessionId) {
+                handleNewChat();
+            }
+            
+            toast.success(language === 'vi' ? ' Đã xóa đoạn chat thành công!' : ' Conversation deleted successfully!');
+            setDeleteModal({ isOpen: false, sessionId: null });
+        } catch (error) {
+            toast.error(language === 'vi' ? '❌ Lỗi khi xóa đoạn chat!' : '❌ Failed to delete conversation!');
+        } finally {
+            setIsDeleting(false);
+        }
     };
 
     const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -441,13 +521,101 @@ const AIChatBot: React.FC = () => {
                 {isOpen && (
                     <div
                         ref={chatRef}
-                        className="bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-gray-200 relative"
+                        className="bg-white rounded-2xl shadow-2xl flex overflow-hidden border border-gray-200 relative"
                         style={{
-                            width: `${chatSize.width}px`,
+                            width: `${chatSize.width + (user && isSidebarOpen ? 250 : 0)}px`,
                             height: `${chatSize.height}px`,
                             transition: isResizing ? 'none' : 'all 0.2s ease'
                         }}
                     >
+                        {/* Sidebar Chat History - Only for logged-in users */}
+                        {user && isSidebarOpen && (
+                            <div className="w-[250px] bg-gray-50 border-r border-gray-200 flex flex-col">
+                                {/* Sidebar Header */}
+                                <div className="p-3 border-b border-gray-200 flex items-center justify-between">
+                                    <h3 className="text-sm font-semibold text-gray-700">
+                                        {language === 'vi' ? 'Lịch sử chat' : 'Chat History'}
+                                    </h3>
+                                    <button
+                                        onClick={() => setIsSidebarOpen(false)}
+                                        className="text-gray-400 hover:text-gray-600 transition-colors"
+                                        title={language === 'vi' ? 'Đóng sidebar' : 'Close sidebar'}
+                                    >
+                                        <X className="h-4 w-4" />
+                                    </button>
+                                </div>
+
+                                {/* New Chat Button */}
+                                <div className="p-3 border-b border-gray-200">
+                                    <button
+                                        onClick={handleNewChat}
+                                        className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2"
+                                    >
+                                        <MessageSquarePlus className="h-4 w-4" />
+                                        {language === 'vi' ? 'Chat mới' : 'New Chat'}
+                                    </button>
+                                </div>
+
+                                {/* Conversations List */}
+                                <div className="flex-1 overflow-y-auto">
+                                    {chatLoading ? (
+                                        <div className="p-4 text-center text-gray-500 text-sm">
+                                            {language === 'vi' ? 'Đang tải...' : 'Loading...'}
+                                        </div>
+                                    ) : conversations.length === 0 ? (
+                                        <div className="p-4 text-center text-gray-500 text-sm">
+                                            {language === 'vi' ? 'Chưa có đoạn chat nào' : 'No conversations yet'}
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-1 p-2">
+                                            {conversations.map((conv) => {
+                                                const isActive = conv.sessionId === sessionId;
+                                                const lastMessage = conv.messages && conv.messages.length > 1 ? conv.messages[1] : null;
+                                                const preview = lastMessage && lastMessage.content
+                                                    ? lastMessage.content.substring(0, 40) + (lastMessage.content.length > 40 ? '...' : '')
+                                                    : (language === 'vi' ? 'Đoạn chat mới' : 'New conversation');
+
+                                                return (
+                                                    <div
+                                                        key={conv._id}
+                                                        onClick={() => handleLoadConversation(conv)}
+                                                        className={`p-3 rounded-lg cursor-pointer transition-all duration-200 group relative ${
+                                                            isActive
+                                                                ? 'bg-blue-100 border border-blue-300'
+                                                                : 'hover:bg-gray-100 border border-transparent'
+                                                        }`}
+                                                    >
+                                                        <div className="flex items-start justify-between gap-2">
+                                                            <div className="flex-1 min-w-0">
+                                                                <p className="text-xs font-medium text-gray-700 line-clamp-1">
+                                                                    {preview}
+                                                                </p>
+                                                                <p className="text-xs text-gray-500 mt-1">
+                                                                    {new Date(conv.updatedAt).toLocaleDateString(language === 'vi' ? 'vi-VN' : 'en-US', {
+                                                                        month: 'short',
+                                                                        day: 'numeric',
+                                                                        hour: '2-digit',
+                                                                        minute: '2-digit'
+                                                                    })}
+                                                                </p>
+                                                            </div>
+                                                            <button
+                                                                onClick={(e) => handleDeleteConversation(conv.sessionId, e)}
+                                                                className="text-gray-400 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                                                                title={language === 'vi' ? 'Xóa' : 'Delete'}
+                                                            >
+                                                                <Trash2 className="h-3.5 w-3.5" />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
                         {/* Resize Handle */}
                         <div
                             className="absolute left-0 top-0 bottom-0 w-2 cursor-ew-resize hover:bg-blue-500/20 z-10 group"
@@ -456,26 +624,38 @@ const AIChatBot: React.FC = () => {
                             <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-12 bg-gray-300 group-hover:bg-blue-500 rounded-r transition-colors"></div>
                         </div>
 
-                        {/* Header */}
-                        <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-4 flex items-center justify-between flex-shrink-0">
-                            <div className="flex items-center space-x-3">
-                                <div className="bg-white/20 p-2 rounded-full">
-                                    <Bot className="h-5 w-5" />
+                        {/* Main Chat Area */}
+                        <div className="flex-1 flex flex-col">
+                            {/* Header */}
+                            <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-4 flex items-center justify-between flex-shrink-0">
+                                <div className="flex items-center space-x-3">
+                                    {/* Toggle Sidebar Button - Only for logged-in users */}
+                                    {user && (
+                                        <button
+                                            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                                            className="text-white/80 hover:text-white transition-colors duration-200"
+                                            title={language === 'vi' ? 'Toggle lịch sử' : 'Toggle history'}
+                                        >
+                                            <Menu className="h-5 w-5" />
+                                        </button>
+                                    )}
+                                    <div className="bg-white/20 p-2 rounded-full">
+                                        <Bot className="h-5 w-5" />
+                                    </div>
+                                    <div>
+                                        <h3 className="font-semibold">Kooka AI</h3>
+                                        <p className="text-xs text-white/80">
+                                            {language === 'vi' ? 'Trợ lý nấu ăn thông minh' : 'Smart Cooking Assistant'}
+                                        </p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <h3 className="font-semibold">Kooka AI</h3>
-                                    <p className="text-xs text-white/80">
-                                        {language === 'vi' ? 'Trợ lý nấu ăn thông minh' : 'Smart Cooking Assistant'}
-                                    </p>
-                                </div>
+                                <button
+                                    onClick={() => setIsOpen(false)}
+                                    className="text-white/80 hover:text-white transition-colors duration-200"
+                                >
+                                    <X className="h-5 w-5" />
+                                </button>
                             </div>
-                            <button
-                                onClick={() => setIsOpen(false)}
-                                className="text-white/80 hover:text-white transition-colors duration-200"
-                            >
-                                <X className="h-5 w-5" />
-                            </button>
-                        </div>
 
                         {/* Messages */}
                         <div className="flex-1 overflow-y-auto p-4 space-y-4">
@@ -739,8 +919,58 @@ const AIChatBot: React.FC = () => {
                                 </button>
                             </div>
                         </div>
+                        </div>
                     </div>
                 )}
+
+            {/* Delete Confirmation Modal */}
+            {deleteModal.isOpen && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60]" onClick={() => !isDeleting && setDeleteModal({ isOpen: false, sessionId: null })}>
+                    <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm mx-4 animate-scale-in" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="bg-red-100 p-3 rounded-full">
+                                <Trash2 className="h-6 w-6 text-red-600" />
+                            </div>
+                            <h3 className="text-lg font-semibold text-gray-900">
+                                {language === 'vi' ? 'Xác nhận xóa' : 'Confirm Delete'}
+                            </h3>
+                        </div>
+                        
+                        <p className="text-gray-600 mb-6">
+                            {language === 'vi' 
+                                ? 'Bạn có chắc chắn muốn xóa đoạn chat này? Hành động này không thể hoàn tác.'
+                                : 'Are you sure you want to delete this conversation? This action cannot be undone.'}
+                        </p>
+                        
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setDeleteModal({ isOpen: false, sessionId: null })}
+                                disabled={isDeleting}
+                                className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {language === 'vi' ? 'Hủy' : 'Cancel'}
+                            </button>
+                            <button
+                                onClick={confirmDeleteConversation}
+                                disabled={isDeleting}
+                                className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            >
+                                {isDeleting ? (
+                                    <>
+                                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                        {language === 'vi' ? 'Đang xóa...' : 'Deleting...'}
+                                    </>
+                                ) : (
+                                    <>
+                                        <Trash2 className="h-4 w-4" />
+                                        {language === 'vi' ? 'Xóa' : 'Delete'}
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
             </div>
         </>
     );

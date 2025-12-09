@@ -109,9 +109,9 @@ export default function Footer() {
         <div>
           <h3 className="text-white font-semibold mb-4">{t("footer.contactUs")}</h3>
           <ul className="space-y-3">
-            <li className="flex items-center gap-2"><Mail className="w-5 h-5 text-orange-500" /> <span>hello@kooka.com</span></li>
+            <li className="flex items-center gap-2"><Mail className="w-5 h-5 text-orange-500" /> <span>cskh.kooka@gmail.com</span></li>
             <li className="flex items-center gap-2"><Phone className="w-5 h-5 text-orange-500" /> <span>+1 (555) 123-4567</span></li>
-            <li className="flex items-center gap-2"><MapPin className="w-5 h-5 text-orange-500" /> <span>123 Đường Công Thức, Food City</span></li>
+            <li className="flex items-center gap-2"><MapPin className="w-5 h-5 text-orange-500" /> <span>12 Nguyen Van Bao, TP HCM</span></li>
           </ul>
         </div>
 
@@ -152,9 +152,8 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto mt-10 border-t border-gray-700 pt-6 flex flex-col md:flex-row items-center justify-between text-sm text-gray-400">
         <div className="mb-4 md:mb-0">© 2025 Kooka. {t("footer.allRightsReserved")}</div>
         <div className="flex gap-6">
-          <Link to="/" className="hover:text-white transition">{t("footer.privacyPolicy")}</Link>
-          <Link to="/" className="hover:text-white transition">{t("footer.termsOfService")}</Link>
-          <Link to="/" className="hover:text-white transition">{t("footer.cookiePolicy")}</Link>
+          <Link to="/privacy-policy" className="hover:text-white transition">{t("footer.privacyPolicy")}</Link>
+          <Link to="/terms-of-service" className="hover:text-white transition">{t("footer.termsOfService")}</Link>
         </div>
       </div>
     </footer>

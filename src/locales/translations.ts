@@ -38,7 +38,7 @@ export const translations = {
             back: "Quay lại Trang Chủ",
             welcome: "Chào mừng trở lại",
             signinToAccount: "Đăng nhập vào tài khoản của bạn",
-            email: "Địa chỉ Email / Username",
+            email: "Địa chỉ Email",
             password: "Mật khẩu",
             signin: "Đăng Nhập",
             signingIn: "Đang đăng nhập...",

@@ -10,7 +10,7 @@ import { useLanguage } from "../contexts/LanguageContext"
 // Redux
 import { useDispatch, useSelector } from "react-redux"
 import type { AppDispatch, RootState } from "../redux/store"
-import { registerUser } from "../redux/slices/authSlice"
+import { registerUser, clearError } from "../redux/slices/authSlice"
 
 interface RegisterPageProps {
   onBack?: () => void
@@ -38,6 +38,23 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onBack }) => {
     password: "",
     confirmPassword: "",
   })
+
+  // Tự động xóa lỗi sau 5 giây
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => {
+        dispatch(clearError())
+      }, 3000)
+      return () => clearTimeout(timer)
+    }
+  }, [error, dispatch])
+
+  // Xóa lỗi khi unmount (chuyển trang)
+  useEffect(() => {
+    return () => {
+      dispatch(clearError())
+    }
+  }, [])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target
@@ -241,13 +258,13 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onBack }) => {
               />
               <label className="text-sm text-gray-600 leading-tight">
                 {t("auth.clause")}{" "}
-                <a href="#" className="text-orange-600 hover:text-orange-700 font-medium">
+                <Link to="/terms-of-service" className="text-orange-600 hover:text-orange-700 font-medium">
                   {t("auth.term")}
-                </a>{" "}
+                </Link>{" "}
                 {t("auth.and")}{" "}
-                <a href="#" className="text-orange-600 hover:text-orange-700 font-medium">
+                <Link to="/privacy-policy" className="text-orange-600 hover:text-orange-700 font-medium">
                   {t("auth.privacyPolicy")}
-                </a>
+                </Link>
               </label>
             </div>
 

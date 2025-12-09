@@ -1,84 +1,84 @@
 import React from 'react';
-import { ChefHat, Heart, Users, Award, Clock, Lightbulb, Target, Star, Sparkles, TrendingUp, Shield, Zap } from 'lucide-react';
+import { ChefHat, Heart, Award, Clock, Lightbulb, Target, Sparkles, TrendingUp, Shield, Zap } from 'lucide-react';
 
 const About: React.FC = () => {
 
   const features = [
     {
       icon: ChefHat,
-      title: 'Tìm Công Thức Thông Minh',
-      description: 'Thuật toán thông minh giúp tìm công thức phù hợp với nguyên liệu bạn đã có sẵn tại nhà.',
+      title: 'Tìm Công Thức Bằng AI',
+      description: 'Công nghệ AI thông minh phân tích nguyên liệu và gợi ý công thức phù hợp nhất.',
       color: 'from-orange-500 to-red-500'
     },
     {
-      icon: Clock,
-      title: 'Tiết Kiệm Thời Gian',
-      description: 'Giảm lãng phí thực phẩm và tiết kiệm thời gian bằng cách nấu với những gì bạn có.',
+      icon: Sparkles,
+      title: 'Chatbot Hỗ Trợ 24/7',
+      description: 'Trợ lý ảo AI sẵn sàng tư vấn, giải đáp mọi thắc mắc về nấu ăn bất cứ lúc nào.',
       color: 'from-blue-500 to-cyan-500'
     },
     {
       icon: Heart,
-      title: 'Lựa Chọn Lành Mạnh',
-      description: 'Khám phá các công thức dinh dưỡng phù hợp với sở thích và mục tiêu sức khỏe của bạn.',
+      title: 'Gợi Ý Cá Nhân Hóa',
+      description: 'AI học hỏi sở thích của bạn để đưa ra những gợi ý món ăn phù hợp nhất.',
       color: 'from-pink-500 to-rose-500'
     },
     {
-      icon: Users,
-      title: 'Cộng Đồng Chia Sẻ',
-      description: 'Tham gia cùng hàng ngàn người yêu bếp chia sẻ công thức và mẹo nấu ăn yêu thích.',
+      icon: Clock,
+      title: 'Tiết Kiệm & Hiệu Quả',
+      description: 'Tối ưu hóa nguyên liệu, giảm lãng phí và tiết kiệm thời gian nấu nướng.',
       color: 'from-purple-500 to-indigo-500'
     }
   ];
 
   const stats = [
-    { number: '10K+', label: 'Công Thức', icon: ChefHat, color: 'from-orange-500 to-red-500' },
-    { number: '50K+', label: 'Người Dùng', icon: Users, color: 'from-blue-500 to-cyan-500' },
-    { number: '200K+', label: 'Món Ăn', icon: Heart, color: 'from-pink-500 to-rose-500' },
-    { number: '4.8', label: 'Đánh Giá', icon: Star, color: 'from-yellow-500 to-amber-500' }
+    { number: '100+', label: 'Công Thức', icon: ChefHat, color: 'from-orange-500 to-red-500' },
+    { number: 'AI', label: 'Chatbot Thông Minh', icon: Sparkles, color: 'from-blue-500 to-cyan-500' },
+    { number: '24/7', label: 'Hỗ Trợ', icon: Clock, color: 'from-pink-500 to-rose-500' },
+    { number: '100%', label: 'Miễn Phí', icon: Heart, color: 'from-yellow-500 to-amber-500' }
   ];
 
   const values = [
     {
       icon: Sparkles,
-      title: 'Sáng Tạo',
-      description: 'Khuyến khích sự sáng tạo và đổi mới trong từng món ăn',
+      title: 'Công Nghệ AI',
+      description: 'Ứng dụng trí tuệ nhân tạo để mang lại trải nghiệm nấu ăn thông minh',
       color: 'from-yellow-500 to-orange-500'
     },
     {
       icon: Shield,
-      title: 'Chất Lượng',
-      description: 'Cam kết mang đến công thức chất lượng cao và đáng tin cậy',
+      title: 'Dễ Sử Dụng',
+      description: 'Giao diện thân thiện, dễ dàng tìm kiếm và theo dõi công thức',
       color: 'from-green-500 to-emerald-500'
     },
     {
       icon: TrendingUp,
-      title: 'Phát Triển',
-      description: 'Không ngừng cải tiến và phát triển trải nghiệm người dùng',
+      title: 'Học Tập & Phát Triển',
+      description: 'Dự án khóa luận tốt nghiệp với mục tiêu ứng dụng thực tế',
       color: 'from-blue-500 to-purple-500'
     },
     {
       icon: Zap,
-      title: 'Hiệu Quả',
-      description: 'Tối ưu hóa thời gian và nguồn lực cho mọi bữa ăn',
+      title: 'Tối Ưu Hóa',
+      description: 'Giảm lãng phí thực phẩm, tiết kiệm chi phí và thời gian',
       color: 'from-red-500 to-pink-500'
     }
   ];
 
   const timeline = [
     {
-      year: '2023',
-      title: 'Ra Mắt',
-      description: 'Kooka được thành lập với mục tiêu kết nối người yêu nấu ăn'
-    },
-    {
       year: '2024',
-      title: 'Phát Triển',
-      description: 'Đạt 10,000+ công thức và 50,000+ người dùng'
+      title: 'Khởi Đầu Ý Tưởng',
+      description: 'Bắt đầu nghiên cứu và phát triển đề tài khóa luận tốt nghiệp'
     },
     {
       year: '2025',
-      title: 'Tương Lai',
-      description: 'Mở rộng cộng đồng và tính năng AI thông minh hơn'
+      title: 'Phát Triển Ứng Dụng',
+      description: 'Xây dựng hệ thống tích hợp AI chatbot và tính năng tìm kiếm thông minh'
+    },
+    {
+      year: 'Tương Lai',
+      title: 'Hoàn Thiện & Mở Rộng',
+      description: 'Tiếp tục cải tiến AI, mở rộng cơ sở dữ liệu công thức và tính năng mới'
     }
   ];
 
@@ -133,39 +133,40 @@ const About: React.FC = () => {
                 <h2 className="text-4xl font-bold text-gray-900">Sứ Mệnh</h2>
               </div>
               <p className="text-xl text-gray-600 mb-6 leading-relaxed">
-                Tại Kooka, chúng tôi tin rằng nấu ăn tuyệt vời bắt đầu từ những gì bạn đã có. 
-                Quá thường xuyên, chúng ta thấy mình đứng trước tủ lạnh, tự hỏi nên nấu gì cho bữa tối.
+                Kooka là dự án khóa luận tốt nghiệp với mục tiêu xây dựng ứng dụng web hỗ trợ 
+                người dùng trong việc tìm kiếm và học cách nấu các món ăn thông qua công nghệ AI.
               </p>
               <p className="text-xl text-gray-600 mb-10 leading-relaxed">
-                Nền tảng của chúng tôi kết nối bạn với hàng nghìn công thức phù hợp với nguyên liệu 
-                sẵn có, giúp bạn tạo ra những bữa ăn ngon miệng đồng thời giảm lãng phí thực phẩm và tiết kiệm chi phí.
+                Ứng dụng tích hợp AI chatbot thông minh giúp tư vấn, giải đáp thắc mắc về nấu ăn, 
+                gợi ý công thức phù hợp với nguyên liệu sẵn có, đồng thời giúp người dùng tiết kiệm 
+                thời gian và giảm lãng phí thực phẩm.
               </p>
               <div className="space-y-6">
                 <div className="flex items-start space-x-4 group">
                   <div className="bg-gradient-to-br from-yellow-400 to-orange-500 p-3 rounded-xl group-hover:scale-110 transition-transform duration-300 shadow-lg">
-                    <Lightbulb className="h-6 w-6 text-white" />
+                    <Sparkles className="h-6 w-6 text-white" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-gray-900 mb-1">Truyền Cảm Hứng</h3>
-                    <p className="text-gray-600">Khơi dậy sự sáng tạo trong mỗi bếp ăn</p>
+                    <h3 className="text-lg font-bold text-gray-900 mb-1">AI Chatbot</h3>
+                    <p className="text-gray-600">Trợ lý ảo thông minh hỗ trợ tư vấn nấu ăn 24/7</p>
                   </div>
                 </div>
                 <div className="flex items-start space-x-4 group">
                   <div className="bg-gradient-to-br from-green-400 to-emerald-500 p-3 rounded-xl group-hover:scale-110 transition-transform duration-300 shadow-lg">
-                    <Heart className="h-6 w-6 text-white" />
+                    <ChefHat className="h-6 w-6 text-white" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-gray-900 mb-1">Tiết Kiệm</h3>
-                    <p className="text-gray-600">Giảm lãng phí thực phẩm và tiết kiệm ngân sách</p>
+                    <h3 className="text-lg font-bold text-gray-900 mb-1">Tìm Kiếm Thông Minh</h3>
+                    <p className="text-gray-600">Gợi ý công thức dựa trên nguyên liệu có sẵn</p>
                   </div>
                 </div>
                 <div className="flex items-start space-x-4 group">
                   <div className="bg-gradient-to-br from-blue-400 to-purple-500 p-3 rounded-xl group-hover:scale-110 transition-transform duration-300 shadow-lg">
-                    <Users className="h-6 w-6 text-white" />
+                    <Lightbulb className="h-6 w-6 text-white" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-gray-900 mb-1">Kết Nối</h3>
-                    <p className="text-gray-600">Xây dựng cộng đồng những người đam mê nấu ăn</p>
+                    <h3 className="text-lg font-bold text-gray-900 mb-1">Ứng Dụng Thực Tế</h3>
+                    <p className="text-gray-600">Giải pháp hữu ích cho người nấu ăn hàng ngày</p>
                   </div>
                 </div>
               </div>
@@ -199,10 +200,10 @@ const About: React.FC = () => {
               </span>
             </div>
             <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
-              Tại Sao Chọn Kooka?
+              Tính Năng Chính
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Chúng tôi xây dựng nền tảng khám phá công thức thông minh nhất để làm cho việc nấu ăn trở nên dễ dàng và thú vị hơn
+              Ứng dụng tích hợp công nghệ AI để mang lại trải nghiệm nấu ăn thông minh và tiện lợi
             </p>
           </div>
           
@@ -240,10 +241,10 @@ const About: React.FC = () => {
               </span>
             </div>
             <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
-              Tác Động Của Chúng Tôi
+              Những Con Số Ấn Tượng
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Tham gia cùng hàng nghìn người yêu nấu ăn đã thay đổi trải nghiệm của họ với Kooka
+              Dự án khóa luận tốt nghiệp với công nghệ hiện đại và tính năng đa dạng
             </p>
           </div>
           
@@ -359,11 +360,11 @@ const About: React.FC = () => {
           <div className="bg-white/10 backdrop-blur-lg rounded-3xl p-12 shadow-2xl">
             <Sparkles className="h-16 w-16 text-white mx-auto mb-6 animate-pulse" />
             <h2 className="text-4xl lg:text-5xl font-bold text-white mb-6">
-              Sẵn Sàng Thay Đổi Cách Nấu Ăn?
+              Trải Nghiệm Nấu Ăn Với AI
             </h2>
             <p className="text-xl text-white/90 mb-10 max-w-2xl mx-auto leading-relaxed">
-              Tham gia cộng đồng những người yêu thích nấu ăn và khám phá hàng nghìn công thức 
-              tuyệt vời với nguyên liệu bạn đã có sẵn.
+              Khám phá ứng dụng hướng dẫn nấu ăn tích hợp AI - Giải pháp thông minh cho mọi bữa ăn. 
+              Tìm kiếm công thức, nhận tư vấn từ chatbot và nấu ăn dễ dàng hơn bao giờ hết!
             </p>
             <div className="flex flex-wrap justify-center gap-4">
               <button className="bg-white text-orange-600 px-10 py-5 rounded-2xl hover:bg-gray-100 transition-all duration-300 font-bold text-xl shadow-2xl hover:shadow-3xl transform hover:scale-105">
