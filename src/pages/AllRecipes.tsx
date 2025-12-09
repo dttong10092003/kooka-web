@@ -53,8 +53,11 @@ const AllRecipes = () => {
   
   const [filters, setFilters] = useState({
     selectedCategory: initialCategoryId,
+    selectedCategoryName: "",
     selectedTags: initialTagId ? [initialTagId] : [] as string[],
+    selectedTagNames: [] as string[],
     selectedCuisine: initialCuisineId,
+    selectedCuisineName: "",
   });
 
   const isNewRecipes = type === 'new';

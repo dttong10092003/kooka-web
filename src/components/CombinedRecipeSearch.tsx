@@ -33,8 +33,11 @@ export default function CombinedRecipeSearch({ onSearch }: CombinedRecipeSearchP
 
     const [filters, setFilters] = useState({
         selectedCategory: "",
+        selectedCategoryName: "",
         selectedTags: [] as string[],
+        selectedTagNames: [] as string[],
         selectedCuisine: "",
+        selectedCuisineName: "",
     })
 
     const [isFilterOpen, setIsFilterOpen] = useState(false)
@@ -126,9 +129,9 @@ export default function CombinedRecipeSearch({ onSearch }: CombinedRecipeSearchP
         if (keyword.trim()) {
             onSearch({
                 keyword,
-                cuisine: filters.selectedCuisine,
-                category: filters.selectedCategory,
-                tags: filters.selectedTags,
+                cuisine: filters.selectedCuisineName,
+                category: filters.selectedCategoryName,
+                tags: filters.selectedTagNames,
             })
         }
     }
@@ -137,9 +140,9 @@ export default function CombinedRecipeSearch({ onSearch }: CombinedRecipeSearchP
         if (selectedIngredients.length > 0) {
             onSearch({
                 ingredients: selectedIngredients,
-                cuisine: filters.selectedCuisine,
-                category: filters.selectedCategory,
-                tags: filters.selectedTags,
+                cuisine: filters.selectedCuisineName,
+                category: filters.selectedCategoryName,
+                tags: filters.selectedTagNames,
             })
         }
     }
@@ -369,7 +372,14 @@ export default function CombinedRecipeSearch({ onSearch }: CombinedRecipeSearchP
                 isOpen={isFilterOpen}
                 onClose={() => setIsFilterOpen(false)}
                 onApply={(newFilters) => {
-                    setFilters(newFilters)
+                    setFilters({
+                        selectedCategory: newFilters.selectedCategory,
+                        selectedCategoryName: newFilters.selectedCategoryName,
+                        selectedTags: newFilters.selectedTags,
+                        selectedTagNames: newFilters.selectedTagNames,
+                        selectedCuisine: newFilters.selectedCuisine,
+                        selectedCuisineName: newFilters.selectedCuisineName
+                    })
                     setIsFilterOpen(false)
                 }}
                 initialFilters={filters}
