@@ -1,5 +1,5 @@
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { ArrowLeft, Mail, Lock, CheckCircle, AlertCircle } from "lucide-react"
 import { Link, useNavigate } from "react-router-dom"
 import FormInput from "../components/FormInput"
@@ -7,7 +7,7 @@ import GoogleLoginButton from "../components/GoogleLoginButton"
 import { useLanguage } from "../contexts/LanguageContext"
 import { useDispatch, useSelector } from "react-redux"
 import type { AppDispatch, RootState } from "../redux/store"
-import { login } from "../redux/slices/authSlice"
+import { login, clearError } from "../redux/slices/authSlice"
 import axiosInstance from "../utils/axiosInstance"
 import toast from "react-hot-toast"
 import { persistor } from "../redux/store"
@@ -29,6 +29,23 @@ const LoginPage: React.FC<LoginPageProps> = ({ onBack }) => {
   const [buttonLoading, setButtonLoading] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
   const [isResending, setIsResending] = useState(false)
+
+  // Tự động xóa lỗi sau 5 giây
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => {
+        dispatch(clearError())
+      }, 3000)
+      return () => clearTimeout(timer)
+    }
+  }, [error, dispatch])
+
+  // Xóa lỗi khi unmount (chuyển trang)
+  useEffect(() => {
+    return () => {
+      dispatch(clearError())
+    }
+  }, [])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target

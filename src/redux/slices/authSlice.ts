@@ -65,7 +65,13 @@ export const login = createAsyncThunk<
       return rejectWithValue({ code, isVerified: false, email })
     }
     // Các lỗi khác (sai mật khẩu, user không tồn tại, etc.)
-    const errorMessage = err.response?.data?.code || err.response?.data?.message || "auth.loginFailed"
+    let errorMessage = err.response?.data?.code || err.response?.data?.message || "auth.loginFailed"
+    
+    // Chuyển đổi các message tiếng Anh từ backend sang translation key
+    if (errorMessage === "Invalid credentials") {
+      errorMessage = "auth.invalidCredentials"
+    }
+    
     return rejectWithValue(errorMessage)
   }
 })

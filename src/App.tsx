@@ -32,6 +32,8 @@ import GoogleCallback from "./pages/GoogleCallback";
 import About from "./pages/About";
 import MealPlannerPage from "./pages/MealPlannerPage";
 import Categories from "./pages/Categories";
+import TermsOfService from "./pages/TermsOfService";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
 import AIChatBot from "./components/AIChatBot";
 import ScrollToTop from "./components/ScrollToTop";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -145,6 +147,8 @@ function App() {
         <Route path="/about" element={<About />} />
         <Route path="/categories" element={<Categories />} />
         <Route path="/meal-planner" element={<MealPlannerPage />} />
+        <Route path="/terms-of-service" element={<TermsOfService />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
 
         {/* Group user pages dưới ProfileLayout */}
         <Route path="/" element={
