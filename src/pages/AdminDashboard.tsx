@@ -33,6 +33,7 @@ import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, R
 import AddRecipeModal from "../components/AddRecipeModal";
 import EditRecipeModal from "../components/EditRecipeModal";
 import DataManagement from "./DataManagement";
+import VerifyEmailModal from "../components/VerifyEmailModal";
 import toast from "react-hot-toast";
 import axiosInstance from "../utils/axiosInstance";
 
@@ -54,6 +55,8 @@ const AdminDashboard: React.FC = () => {
         confirmPassword: "",
     })
     const [adminFormLoading, setAdminFormLoading] = useState(false)
+    const [showAdminVerifyModal, setShowAdminVerifyModal] = useState(false)
+    const [adminVerifyEmail, setAdminVerifyEmail] = useState("")
     const [weeklyData, setWeeklyData] = useState<any[]>([])
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
     const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1)
@@ -67,9 +70,16 @@ const AdminDashboard: React.FC = () => {
     const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false)
     const [recipePerformanceData, setRecipePerformanceData] = useState<any[]>([])
     
-    // Pagination states
+    // Pagination states for recipes
     const [currentPage, setCurrentPage] = useState(1)
     const [itemsPerPage, setItemsPerPage] = useState(10)
+    
+    // Pagination states for users
+    const [allUsers, setAllUsers] = useState<any[]>([])
+    const [usersCurrentPage, setUsersCurrentPage] = useState(1)
+    const [usersPerPage] = useState(10)
+    const [totalUsers, setTotalUsers] = useState(0)
+    const [loadingUsers, setLoadingUsers] = useState(false)
 
     const navigate = useNavigate()
     const dispatch = useDispatch<AppDispatch>()
@@ -91,6 +101,14 @@ const AdminDashboard: React.FC = () => {
         fetchRecipePerformance()
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedYear, selectedMonth])
+    
+    // Fetch all users when users tab is active
+    useEffect(() => {
+        if (activeTab === "users") {
+            fetchAllUsers(usersCurrentPage)
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [activeTab, usersCurrentPage])
 
     const fetchDashboardStats = async () => {
         try {
@@ -112,7 +130,7 @@ const AdminDashboard: React.FC = () => {
                 totalRecipes: recipesRes.data.length || 0,
                 activeUsers: usersRes.data.count || 0,
                 recipeViews: monthlyViewsRes.data.totalViews || 0,
-                userReviews: reviewsRes.data.count || 0,
+                userReviews: reviewsRes.data.count || 0,    
             })
         } catch (error) {
             console.error("Error fetching dashboard stats:", error)
@@ -135,6 +153,29 @@ const AdminDashboard: React.FC = () => {
         } catch (error) {
             console.error("Error fetching recent users:", error)
             setRecentUsers([])
+        }
+    }
+    
+    const fetchAllUsers = async (page: number) => {
+        try {
+            setLoadingUsers(true)
+            // Fetch all users without pagination from backend
+            const res = await axiosInstance.get("/user/profile/recent?limit=1000")
+            const allUsersData = res.data || []
+            
+            // Handle pagination on frontend
+            const startIndex = (page - 1) * usersPerPage
+            const endIndex = startIndex + usersPerPage
+            const paginatedUsers = allUsersData.slice(startIndex, endIndex)
+            
+            setAllUsers(paginatedUsers)
+            setTotalUsers(allUsersData.length)
+        } catch (error) {
+            console.error("Error fetching all users:", error)
+            setAllUsers([])
+            setTotalUsers(0)
+        } finally {
+            setLoadingUsers(false)
         }
     }
 
@@ -902,18 +943,13 @@ const AdminDashboard: React.FC = () => {
                                         <h2 className="text-2xl font-bold text-gray-900">Quản lý người dùng</h2>
                                         <p className="text-gray-600 mt-1">Quản lý và theo dõi tài khoản người dùng</p>
                                     </div>
-                                    <div className="flex space-x-3">
-                                        <button className="px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors duration-200">
-                                            Xuất dữ liệu
-                                        </button>
-                                        <button 
-                                            onClick={() => setIsAddAdminModalOpen(true)}
-                                            className="bg-orange-500 bg-gradient-to-r from-orange-500 to-red-500 text-white px-4 py-2 rounded-lg hover:from-orange-600 hover:to-red-600 transition-all duration-200 flex items-center space-x-2"
-                                        >
-                                            <UserPlus className="h-4 w-4" />
-                                            <span>Thêm tài khoản admin phụ</span>
-                                        </button>
-                                    </div>
+                                    <button 
+                                        onClick={() => setIsAddAdminModalOpen(true)}
+                                        className="bg-orange-500 bg-gradient-to-r from-orange-500 to-red-500 text-white px-4 py-2 rounded-lg hover:from-orange-600 hover:to-red-600 transition-all duration-200 flex items-center space-x-2"
+                                    >
+                                        <UserPlus className="h-4 w-4" />
+                                        <span>Thêm tài khoản admin phụ</span>
+                                    </button>
                                 </div>
                             </div>
 
@@ -933,60 +969,130 @@ const AdminDashboard: React.FC = () => {
                                                     Ngày tham gia
                                                 </th>
                                                 <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                    Công thức
-                                                </th>
-                                                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                     Trạng thái
-                                                </th>
-                                                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                    Hành động
                                                 </th>
                                             </tr>
                                         </thead>
                                         <tbody className="bg-white divide-y divide-gray-200">
-                                            {recentUsers.map((user, index) => (
-                                                <tr key={user._id || index} className="hover:bg-gray-50 transition-colors duration-200">
-                                                    <td className="px-6 py-4 whitespace-nowrap">
-                                                        <div className="flex items-center">
-                                                            <div className="w-10 h-10 bg-orange-500 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center mr-3">
-                                                                <span className="text-white font-medium text-sm">
-                                                                    {user.name
-                                                                        ? user.name.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase()
-                                                                        : "U"}
-                                                                </span>
-                                                            </div>
-                                                            <div className="font-medium text-gray-900">
-                                                                {user.name || "Unknown User"}
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{user.email || "N/A"}</td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                                                        {new Date(user.createdAt).toLocaleDateString()}
-                                                    </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">-</td>
-                                                    <td className="px-6 py-4 whitespace-nowrap">
-                                                        <span
-                                                            className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor("Active")}`}
-                                                        >
-                                                            Active
-                                                        </span>
-                                                    </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                                        <div className="flex space-x-2">
-                                                            <button className="text-blue-600 hover:text-blue-900 transition-colors duration-200">
-                                                                <Edit className="h-4 w-4" />
-                                                            </button>
-                                                            <button className="text-red-600 hover:text-red-900 transition-colors duration-200">
-                                                                <Trash2 className="h-4 w-4" />
-                                                            </button>
-                                                        </div>
+                                            {loadingUsers ? (
+                                                <tr>
+                                                    <td colSpan={4} className="px-6 py-8 text-center text-gray-500">
+                                                        Đang tải người dùng...
                                                     </td>
                                                 </tr>
-                                            ))}
+                                            ) : allUsers.length === 0 ? (
+                                                <tr>
+                                                    <td colSpan={4} className="px-6 py-8 text-center text-gray-500">
+                                                        Không có người dùng
+                                                    </td>
+                                                </tr>
+                                            ) : (
+                                                allUsers.map((user, index) => (
+                                                    <tr key={user._id || index} className="hover:bg-gray-50 transition-colors duration-200">
+                                                        <td className="px-6 py-4 whitespace-nowrap">
+                                                            <div className="flex items-center">
+                                                                <div className="w-10 h-10 bg-orange-500 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center mr-3">
+                                                                    <span className="text-white font-medium text-sm">
+                                                                        {user.name
+                                                                            ? user.name.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase()
+                                                                            : "U"}
+                                                                    </span>
+                                                                </div>
+                                                                <div className="font-medium text-gray-900">
+                                                                    {user.name || "Unknown User"}
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{user.email || "N/A"}</td>
+                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                                            {user.joinedDate 
+                                                                ? new Date(user.joinedDate).toLocaleDateString('vi-VN', {
+                                                                    year: 'numeric',
+                                                                    month: '2-digit',
+                                                                    day: '2-digit'
+                                                                })
+                                                                : "N/A"
+                                                            }
+                                                        </td>
+                                                        <td className="px-6 py-4 whitespace-nowrap">
+                                                            <span
+                                                                className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor("Active")}`}
+                                                            >
+                                                                Active
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                ))
+                                            )}
                                         </tbody>
                                     </table>
                                 </div>
+                                
+                                {/* Pagination Controls for Users */}
+                                {!loadingUsers && totalUsers > 0 && (
+                                    <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
+                                        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                                            {/* Total users info */}
+                                            <div className="text-sm text-gray-700">
+                                                Hiển thị {(usersCurrentPage - 1) * usersPerPage + 1} - {Math.min(usersCurrentPage * usersPerPage, totalUsers)} trong số {totalUsers} người dùng
+                                            </div>
+
+                                            {/* Page navigation */}
+                                            <div className="flex items-center space-x-2">
+                                                <button
+                                                    onClick={() => setUsersCurrentPage(usersCurrentPage - 1)}
+                                                    disabled={usersCurrentPage === 1}
+                                                    className="p-2 rounded-lg border border-gray-300 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                                                >
+                                                    <ChevronLeft className="h-5 w-5 text-gray-600" />
+                                                </button>
+
+                                                <div className="flex items-center space-x-1">
+                                                    {Array.from({ length: Math.min(Math.ceil(totalUsers / usersPerPage), 5) }, (_, i) => {
+                                                        const totalPages = Math.ceil(totalUsers / usersPerPage)
+                                                        let pageNum: number;
+                                                        if (totalPages <= 5) {
+                                                            pageNum = i + 1;
+                                                        } else if (usersCurrentPage <= 3) {
+                                                            pageNum = i + 1;
+                                                        } else if (usersCurrentPage >= totalPages - 2) {
+                                                            pageNum = totalPages - 4 + i;
+                                                        } else {
+                                                            pageNum = usersCurrentPage - 2 + i;
+                                                        }
+
+                                                        return (
+                                                            <button
+                                                                key={pageNum}
+                                                                onClick={() => setUsersCurrentPage(pageNum)}
+                                                                className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
+                                                                    usersCurrentPage === pageNum
+                                                                        ? "bg-orange-500 text-white"
+                                                                        : "border border-gray-300 text-gray-700 hover:bg-gray-100"
+                                                                }`}
+                                                            >
+                                                                {pageNum}
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+
+                                                <button
+                                                    onClick={() => setUsersCurrentPage(usersCurrentPage + 1)}
+                                                    disabled={usersCurrentPage === Math.ceil(totalUsers / usersPerPage)}
+                                                    className="p-2 rounded-lg border border-gray-300 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                                                >
+                                                    <ChevronRight className="h-5 w-5 text-gray-600" />
+                                                </button>
+                                            </div>
+
+                                            {/* Page info */}
+                                            <div className="text-sm text-gray-700">
+                                                Trang {usersCurrentPage} / {Math.ceil(totalUsers / usersPerPage)}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     )}
@@ -1205,17 +1311,41 @@ const AdminDashboard: React.FC = () => {
                                             password: adminFormData.password,
                                         })
                                         
-                                        toast.success(response.data.message || "Tạo tài khoản admin phụ thành công!", { duration: 2500 })
-                                        setIsAddAdminModalOpen(false)
-                                        setAdminFormData({
-                                            firstName: "",
-                                            lastName: "",
-                                            email: "",
-                                            password: "",
-                                            confirmPassword: "",
-                                        })
+                                        // Debug: Log response để kiểm tra
+                                        console.log("Admin creation response:", response.data)
+                                        
+                                        // Kiểm tra nếu cần verify email
+                                        if (response.data.needVerification) {
+                                            // Đóng modal tạo admin và hiển thị modal verify email
+                                            setIsAddAdminModalOpen(false)
+                                            setAdminVerifyEmail(adminFormData.email)
+                                            setShowAdminVerifyModal(true)
+                                            setAdminFormData({
+                                                firstName: "",
+                                                lastName: "",
+                                                email: "",
+                                                password: "",
+                                                confirmPassword: "",
+                                            })
+                                            toast.success("Tài khoản admin được tạo! Vui lòng kiểm tra email để xác thực.", { duration: 3000 })
+                                        } else {
+                                            // Tạo thành công không cần verify
+                                            toast.success(response.data.message || "Tạo tài khoản admin phụ thành công!", { duration: 2500 })
+                                            setIsAddAdminModalOpen(false)
+                                            setAdminFormData({
+                                                firstName: "",
+                                                lastName: "",
+                                                email: "",
+                                                password: "",
+                                                confirmPassword: "",
+                                            })
+                                        }
+                                        
                                         // Refresh user list
                                         fetchRecentUsers()
+                                        if (activeTab === "users") {
+                                            fetchAllUsers(usersCurrentPage)
+                                        }
                                     } catch (error: any) {
                                         console.error("Error creating admin:", error)
                                         const errorMsg = error.response?.data?.message || "Tạo tài khoản thất bại!"
@@ -1358,6 +1488,13 @@ const AdminDashboard: React.FC = () => {
                     isOpen={isEditModalOpen}
                     onClose={handleEditModalClose}
                     recipe={selectedRecipe}
+                />
+                
+                {/* Verify Email Modal for Admin */}
+                <VerifyEmailModal 
+                    isOpen={showAdminVerifyModal}
+                    onClose={() => setShowAdminVerifyModal(false)}
+                    email={adminVerifyEmail}
                 />
             </div>
         </div>
