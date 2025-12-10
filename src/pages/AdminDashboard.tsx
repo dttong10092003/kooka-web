@@ -513,7 +513,7 @@ const AdminDashboard: React.FC = () => {
                                 {/* Recipe Performance Chart */}
                                 <div className="bg-white rounded-2xl shadow-lg p-6">
                                     <div className="flex items-center justify-between mb-6">
-                                        <h3 className="text-lg font-semibold text-gray-900">Recipe Performance</h3>
+                                        <h3 className="text-lg font-semibold text-gray-900">Hiệu suất món ăn</h3>
                                         <button className="text-gray-400 hover:text-gray-600">
                                             <Download className="h-5 w-5" />
                                         </button>
@@ -669,7 +669,15 @@ const AdminDashboard: React.FC = () => {
                                 <div className="bg-white rounded-2xl shadow-lg p-6">
                                     <div className="flex items-center justify-between mb-6">
                                         <h3 className="text-lg font-semibold text-gray-900">Công thức gần đây</h3>
-                                        <button className="text-orange-600 hover:text-orange-700 text-sm font-medium">Xem tất cả</button>
+                                        <button 
+                                            onClick={() => {
+                                                setActiveTab("recipes")
+                                                window.scrollTo({ top: 0, behavior: 'smooth' })
+                                            }}
+                                            className="text-orange-600 hover:text-orange-700 text-sm font-medium transition-colors cursor-pointer"
+                                        >
+                                            Xem tất cả
+                                        </button>
                                     </div>
                                     <div className="space-y-4">
                                         {recentRecipes.length > 0 ? (
@@ -694,7 +702,7 @@ const AdminDashboard: React.FC = () => {
                                                     </div>
                                                     <div className="text-right">
                                                         <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                                            Published
+                                                            Đã xuất bản
                                                         </span>
                                                         <p className="text-xs text-gray-500 mt-1">
                                                             {recipe.createdAt 
@@ -717,7 +725,15 @@ const AdminDashboard: React.FC = () => {
                                 <div className="bg-white rounded-2xl shadow-lg p-6">
                                     <div className="flex items-center justify-between mb-6">
                                         <h3 className="text-lg font-semibold text-gray-900">Người dùng gần đây</h3>
-                                        <button className="text-orange-600 hover:text-orange-700 text-sm font-medium">Xem tất cả</button>
+                                        <button 
+                                            onClick={() => {
+                                                setActiveTab("users")
+                                                window.scrollTo({ top: 0, behavior: 'smooth' })
+                                            }}
+                                            className="text-orange-600 hover:text-orange-700 text-sm font-medium transition-colors cursor-pointer"
+                                        >
+                                            Xem tất cả
+                                        </button>
                                     </div>
                                     <div className="space-y-4">
                                         {recentUsers.map((user) => (
