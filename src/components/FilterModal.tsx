@@ -132,7 +132,10 @@ export default function FilterModal({ isOpen, onClose, onApply, initialFilters, 
 
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div ref={modalRef} className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[85vh] overflow-y-auto">
+            <div
+                ref={modalRef}
+                className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[85vh] overflow-hidden flex flex-col"
+            >
                 {/* Header với gradient */}
                 <div className={`${currentColors.buttonGradient} text-white px-5 py-3.5 rounded-t-2xl relative`}>
                     <h2 className="text-xl font-bold pr-8">Bộ lọc tìm kiếm</h2>
@@ -144,7 +147,7 @@ export default function FilterModal({ isOpen, onClose, onApply, initialFilters, 
                     </button>
                 </div>
 
-                <div className="p-5 space-y-4">
+                <div className="p-5 space-y-4 overflow-y-auto flex-1">
 
                     {/* Tags Section */}
                     <div className="text-left">
@@ -234,7 +237,7 @@ export default function FilterModal({ isOpen, onClose, onApply, initialFilters, 
                 </div>
 
                 {/* Button Group */}
-                <div className="flex gap-3 px-5 pb-5 pt-2">
+                <div className="flex gap-3 px-5 pb-5 pt-2 border-t border-gray-100">
                     <button
                         onClick={handleClearFilters}
                         className={`flex-1 ${currentColors.clearButton} py-2.5 rounded-xl font-bold transition-all duration-200 text-sm`}
