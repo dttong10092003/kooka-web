@@ -1270,9 +1270,9 @@ const AdminDashboard: React.FC = () => {
                 {/* Add Admin Modal */}
                 {isAddAdminModalOpen && (
                     <div className="fixed inset-0 bg-gray-800/40 flex items-center justify-center z-50 p-4">
-                        <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl max-h-[90vh] overflow-y-auto">
+                        <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl max-h-[90vh] overflow-hidden flex flex-col">
                             {/* Header */}
-                            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between rounded-t-2xl">
+                            <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between rounded-t-2xl shrink-0">
                                 <div className="flex items-center space-x-3">
                                     <div className="w-10 h-10 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg flex items-center justify-center">
                                         <UserPlus className="h-5 w-5 text-white" />
@@ -1370,7 +1370,7 @@ const AdminDashboard: React.FC = () => {
                                         setAdminFormLoading(false)
                                     }
                                 }}
-                                className="p-6 space-y-4"
+                                className="p-6 space-y-4 overflow-y-auto flex-1"
                             >
                                 {/* First Name */}
                                 <div>
@@ -1411,7 +1411,7 @@ const AdminDashboard: React.FC = () => {
                                         type="email"
                                         value={adminFormData.email}
                                         onChange={(e) => setAdminFormData({ ...adminFormData, email: e.target.value })}
-                                        className="w-full px-3 py-2 border  rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
                                         placeholder="admin@kooka.com"
                                         required
                                     />
@@ -1455,7 +1455,7 @@ const AdminDashboard: React.FC = () => {
                                 </div>
 
                                 {/* Buttons */}
-                                <div className="flex space-x-3 pt-2">
+                                <div className="flex space-x-3 pt-2 border-t border-gray-100 mt-2">
                                     <button
                                         type="button"
                                         onClick={() => {
