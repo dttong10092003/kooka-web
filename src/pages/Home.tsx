@@ -908,7 +908,7 @@ const Home = () => {
           <div className="bg-white rounded-xl p-4 sm:p-6 shadow-lg border border-gray-200">
             <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
               <Flame className="text-green-500" size={20} />
-              <h3 className="text-gray-900 text-lg sm:text-xl font-bold">SỐI NỔI NHẤT</h3>
+              <h3 className="text-gray-900 text-lg sm:text-xl font-bold">SÔI NỔI NHẤT</h3>
             </div>
 
             <div className="space-y-3">
