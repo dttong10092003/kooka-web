@@ -201,7 +201,7 @@ const EditRecipeModal: React.FC<EditRecipeModalProps> = ({ isOpen, onClose, reci
         short: "",
         instructions: [] as Instruction[],
         image: "",
-        video: "",
+        video: "video.mp4",
         calories: 1,
         time: 1,
         size: 1,
@@ -228,7 +228,7 @@ const EditRecipeModal: React.FC<EditRecipeModalProps> = ({ isOpen, onClose, reci
                 short: recipe.short || "",
                 instructions: recipe.instructions || [],
                 image: recipe.image || "",
-                video: recipe.video || "",
+                video: "video.mp4",
                 calories: recipe.calories || 1,
                 time: recipe.time || 1,
                 size: recipe.size || 1,
@@ -338,12 +338,9 @@ const EditRecipeModal: React.FC<EditRecipeModalProps> = ({ isOpen, onClose, reci
 
         setIsSubmitting(true);
         try {
-            // Nếu video rỗng thì gán mặc định
             const recipeData = {
                 ...editedRecipe,
-                video: editedRecipe.video && editedRecipe.video.trim() !== '' 
-                    ? editedRecipe.video 
-                    : 'https://youtube.com/watch?v=example7',
+                video: "video.mp4",
             };
             
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -510,19 +507,6 @@ const EditRecipeModal: React.FC<EditRecipeModalProps> = ({ isOpen, onClose, reci
                                             </button>
                                         </div>
                                     )}
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm text-gray-600 mb-1">
-                                        Video (tuỳ chọn)
-                                    </label>
-                                    <input
-                                        name="video"
-                                        placeholder="URL video (tuỳ chọn)"
-                                        value={editedRecipe.video}
-                                        onChange={handleInputChange}
-                                        className="border rounded-lg p-2 w-full focus:ring-2 focus:ring-blue-400 outline-none"
-                                    />
                                 </div>
                             </div>
                         </div>

@@ -445,90 +445,60 @@ export default function RecipeDetail() {
                     </div>
                 </div>
 
-                {/* Cooking Tips & Video Section */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
-                    
-                    {/* Cooking Tips - Left Side (2/3) */}
-                    <div className="lg:col-span-2">
-                        <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl p-5 sm:p-7 shadow-md border-2 border-orange-200 h-full">
-                            <h2 className="text-lg sm:text-xl font-bold mb-4 sm:mb-5 text-orange-700 flex items-center gap-2">
-                                <div className="bg-orange-500 p-2 rounded-lg">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="sm:w-6 sm:h-6 text-white">
-                                        <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
-                                    </svg>
-                                </div>
-                                {language === 'vi' ? 'Mẹo Nấu Ăn' : 'Cooking Tips'}
-                            </h2>
-                            <div className="space-y-3">
-                                <div className="flex gap-3 items-start">
-                                    <div className="flex-shrink-0 mt-1">
-                                        <div className="w-6 h-6 rounded-full bg-orange-500 flex items-center justify-center">
-                                            <span className="text-white text-xs font-bold">1</span>
-                                        </div>
+                {/* Cooking Tips Section */}
+                <div className="w-full mb-8">
+                    <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl p-5 sm:p-6 shadow-md border-2 border-orange-200">
+                        <h2 className="text-lg sm:text-xl font-bold mb-4 text-orange-700 flex items-center gap-2">
+                            <div className="bg-orange-500 p-2 rounded-lg">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="sm:w-6 sm:h-6 text-white">
+                                    <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                                </svg>
+                            </div>
+                            {language === 'vi' ? 'Mẹo Nấu Ăn' : 'Cooking Tips'}
+                        </h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+                            <div className="flex gap-3 items-start">
+                                <div className="flex-shrink-0 mt-0.5">
+                                    <div className="w-7 h-7 rounded-full bg-orange-500 flex items-center justify-center">
+                                        <span className="text-white text-sm font-bold">1</span>
                                     </div>
-                                    <p className="text-orange-900 text-sm sm:text-base leading-relaxed">
-                                        {language === 'vi' ? 'Đọc hết tất cả hướng dẫn trước khi bắt đầu nấu' : 'Read through all instructions before starting to cook'}
-                                    </p>
                                 </div>
-                                <div className="flex gap-3 items-start">
-                                    <div className="flex-shrink-0 mt-1">
-                                        <div className="w-6 h-6 rounded-full bg-orange-500 flex items-center justify-center">
-                                            <span className="text-white text-xs font-bold">2</span>
-                                        </div>
+                                <p className="text-orange-900 text-sm sm:text-base leading-relaxed">
+                                    {language === 'vi' ? 'Đọc hết tất cả hướng dẫn trước khi bắt đầu nấu' : 'Read through all instructions before starting to cook'}
+                                </p>
+                            </div>
+                            <div className="flex gap-3 items-start">
+                                <div className="flex-shrink-0 mt-0.5">
+                                    <div className="w-7 h-7 rounded-full bg-orange-500 flex items-center justify-center">
+                                        <span className="text-white text-sm font-bold">2</span>
                                     </div>
-                                    <p className="text-orange-900 text-sm sm:text-base leading-relaxed">
-                                        {language === 'vi' ? 'Chuẩn bị và đong đo tất cả nguyên liệu trước khi bắt đầu' : 'Prepare and measure all ingredients before you begin'}
-                                    </p>
                                 </div>
-                                <div className="flex gap-3 items-start">
-                                    <div className="flex-shrink-0 mt-1">
-                                        <div className="w-6 h-6 rounded-full bg-orange-500 flex items-center justify-center">
-                                            <span className="text-white text-xs font-bold">3</span>
-                                        </div>
+                                <p className="text-orange-900 text-sm sm:text-base leading-relaxed">
+                                    {language === 'vi' ? 'Chuẩn bị và đong đo tất cả nguyên liệu trước khi bắt đầu' : 'Prepare and measure all ingredients before you begin'}
+                                </p>
+                            </div>
+                            <div className="flex gap-3 items-start">
+                                <div className="flex-shrink-0 mt-0.5">
+                                    <div className="w-7 h-7 rounded-full bg-orange-500 flex items-center justify-center">
+                                        <span className="text-white text-sm font-bold">3</span>
                                     </div>
-                                    <p className="text-orange-900 text-sm sm:text-base leading-relaxed">
-                                        {language === 'vi' ? 'Điều chỉnh gia vị theo khẩu vị cá nhân' : 'Adjust seasoning to taste preference'}
-                                    </p>
                                 </div>
-                                <div className="flex gap-3 items-start">
-                                    <div className="flex-shrink-0 mt-1">
-                                        <div className="w-6 h-6 rounded-full bg-orange-500 flex items-center justify-center">
-                                            <span className="text-white text-xs font-bold">4</span>
-                                        </div>
+                                <p className="text-orange-900 text-sm sm:text-base leading-relaxed">
+                                    {language === 'vi' ? 'Điều chỉnh gia vị theo khẩu vị cá nhân' : 'Adjust seasoning to taste preference'}
+                                </p>
+                            </div>
+                            <div className="flex gap-3 items-start">
+                                <div className="flex-shrink-0 mt-0.5">
+                                    <div className="w-7 h-7 rounded-full bg-orange-500 flex items-center justify-center">
+                                        <span className="text-white text-sm font-bold">4</span>
                                     </div>
-                                    <p className="text-orange-900 text-sm sm:text-base leading-relaxed">
-                                        {language === 'vi' ? 'Để có kết quả tốt nhất, hãy sử dụng nguyên liệu tươi' : 'For best results, use fresh ingredients'}
-                                    </p>
                                 </div>
+                                <p className="text-orange-900 text-sm sm:text-base leading-relaxed">
+                                    {language === 'vi' ? 'Để có kết quả tốt nhất, hãy sử dụng nguyên liệu tươi' : 'For best results, use fresh ingredients'}
+                                </p>
                             </div>
                         </div>
                     </div>
-
-                    {/* Video Tutorial - Right Side (1/3) */}
-                    {currentRecipe.video && (
-                        <div className="lg:col-span-1">
-                            <div className="bg-white rounded-xl shadow-md border-2 border-orange-100 overflow-hidden h-full">
-                                <div className="bg-gradient-to-r from-orange-50 to-orange-100 p-3 sm:p-4 border-b border-orange-200">
-                                    <h3 className="text-sm sm:text-base font-bold text-gray-800 flex items-center gap-2">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-orange-500">
-                                            <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                                        </svg>
-                                        {language === 'vi' ? 'Video Hướng Dẫn' : 'Video Tutorial'}
-                                    </h3>
-                                </div>
-                                <div className="relative w-full" style={{ paddingTop: '56.25%' }}>
-                                    <iframe
-                                        src={currentRecipe.video.replace("watch?v=", "embed/")}
-                                        title={`${currentRecipe.name} video tutorial`}
-                                        frameBorder="0"
-                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                        allowFullScreen
-                                        className="absolute top-0 left-0 w-full h-full"
-                                    ></iframe>
-                                </div>
-                            </div>
-                        </div>
-                    )}
                 </div>
 
                 {/* Comment Section */}

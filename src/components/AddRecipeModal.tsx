@@ -199,7 +199,7 @@ const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ isOpen, onClose }) => {
         short: "",
         instructions: [] as Instruction[],
         image: "",
-        video: "",
+        video: "video.mp4",
         calories: 1,
         time: 1,
         size: 1,
@@ -224,7 +224,7 @@ const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ isOpen, onClose }) => {
         short: "",
         instructions: [] as Instruction[],
         image: "",
-        video: "",
+        video: "video.mp4",
         calories: 1,
         time: 1,
         size: 1,
@@ -325,20 +325,9 @@ const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ isOpen, onClose }) => {
         e.preventDefault();
         setIsSubmitting(true);
         try {
-            // Kiểm tra và gán video mặc định nếu rỗng hoặc không hợp lệ
-            let videoUrl = 'https://youtube.com/watch?v=example7';
-            if (recipe.video && recipe.video.trim() !== '') {
-                const trimmedVideo = recipe.video.trim();
-                // Chỉ chấp nhận nếu là URL hợp lệ (bắt đầu bằng http:// hoặc https://)
-                if (trimmedVideo.startsWith('http://') || trimmedVideo.startsWith('https://')) {
-                    videoUrl = trimmedVideo;
-                }
-            }
-
-
             const recipeData = {
                 ...recipe,
-                video: videoUrl,
+                video: "video.mp4",
             };
             const result = await dispatch(addRecipe(recipeData as any)).unwrap();
             toast.success("Thêm công thức thành công!", { duration: 2500 });
@@ -509,19 +498,6 @@ const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ isOpen, onClose }) => {
                                             </button>
                                         </div>
                                     )}
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm text-gray-600 mb-1">
-                                        Video (tuỳ chọn)
-                                    </label>
-                                    <input
-                                        name="video"
-                                        placeholder="URL video (tuỳ chọn)"
-                                        value={recipe.video}
-                                        onChange={handleInputChange}
-                                        className="border rounded-lg p-2 w-full focus:ring-2 focus:ring-orange-400 outline-none"
-                                    />
                                 </div>
                             </div>
                         </div>
