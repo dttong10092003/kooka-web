@@ -496,7 +496,7 @@ const AdminDashboard: React.FC = () => {
                                                     <div className="flex items-center mt-2">
                                                         <TrendingUp className="h-4 w-4 text-green-500 mr-1" />
                                                         <span className="text-sm text-green-600 font-medium">{stat.change}</span>
-                                                        <span className="text-sm text-gray-500 ml-1">vs last month</span>
+                                                        <span className="text-sm text-gray-500 ml-1">tháng trước</span>
                                                     </div>
                                                 </div>
                                                 <div className={`bg-gradient-to-r ${stat.color} p-3 rounded-xl`}>

@@ -244,7 +244,23 @@ export default function RecipeDetail() {
 
                             <div className="p-4 sm:p-5">
                                 <div className="space-y-2">
-                                    {currentRecipe.ingredients && currentRecipe.ingredients.length > 0 ? (
+                                    {currentRecipe.ingredientsWithDetails && currentRecipe.ingredientsWithDetails.length > 0 ? (
+                                        currentRecipe.ingredientsWithDetails.map((ingredient, index) => (
+                                            <div 
+                                                key={index} 
+                                                className="flex items-start gap-3 py-2.5 px-3 bg-gray-50 rounded-lg hover:bg-orange-50 border border-transparent hover:border-orange-200 transition-all duration-300 group"
+                                            >
+                                                <Dot className="h-6 w-6 text-orange-500 flex-shrink-0 -ml-1" />
+                                                <span className="text-xs sm:text-sm text-gray-700 group-hover:text-gray-900 font-medium flex-1 transition-colors duration-200 leading-relaxed">
+                                                    {ingredient.name}
+                                                </span>
+                                                <span className="text-xs sm:text-sm text-orange-600 font-semibold whitespace-nowrap">
+                                                    {ingredient.quantity} {ingredient.unit}
+                                                </span>
+                                            </div>
+                                        ))
+                                    ) : currentRecipe.ingredients && currentRecipe.ingredients.length > 0 ? (
+                                        // Fallback cho recipe cũ không có ingredientsWithDetails
                                         currentRecipe.ingredients.map((ingredient, index) => (
                                             <div 
                                                 key={index} 

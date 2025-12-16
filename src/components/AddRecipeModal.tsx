@@ -28,6 +28,13 @@ interface Instruction {
     subTitle: string[];
 }
 
+interface IngredientWithDetails {
+    ingredientId: string;
+    name: string;
+    quantity: number;
+    unit: string;
+}
+
 interface TagSelectorModalProps {
     isOpen: boolean;
     onClose: () => void;
@@ -195,6 +202,7 @@ const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ isOpen, onClose }) => {
     const [recipe, setRecipe] = useState({
         name: "",
         ingredients: [] as string[],
+        ingredientsWithDetails: [] as IngredientWithDetails[],
         tags: [] as string[],
         short: "",
         instructions: [] as Instruction[],
@@ -220,6 +228,7 @@ const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ isOpen, onClose }) => {
     const initialRecipeState = {
         name: "",
         ingredients: [] as string[],
+        ingredientsWithDetails: [] as IngredientWithDetails[],
         tags: [] as string[],
         short: "",
         instructions: [] as Instruction[],
@@ -301,16 +310,28 @@ const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ isOpen, onClose }) => {
             instructions: prev.instructions.filter((_, i) => i !== index),
         }));
 
-    const handleIngredientSelect = (selectedIngredients: string[]) => {
-        // Convert ingredient names to IDs
-        const ingredientIds = selectedIngredients.map(ingredientName => {
+    const handleIngredientSelect = (selectedIngredients: string[], ingredientDetails: Record<string, { quantity: number; unit: string }>) => {
+        // Convert ingredient names to IDs and create details array
+        const ingredientIds: string[] = [];
+        const ingredientsWithDetails: IngredientWithDetails[] = [];
+        
+        selectedIngredients.forEach(ingredientName => {
             const ingredient = ingredients.find(ing => ing.name === ingredientName);
-            return ingredient ? ingredient._id : null;
-        }).filter(Boolean) as string[];
+            if (ingredient) {
+                ingredientIds.push(ingredient._id);
+                ingredientsWithDetails.push({
+                    ingredientId: ingredient._id,
+                    name: ingredient.name,
+                    quantity: ingredientDetails[ingredientName]?.quantity || 1,
+                    unit: ingredientDetails[ingredientName]?.unit || 'gram'
+                });
+            }
+        });
 
         setRecipe((prev) => ({
             ...prev,
             ingredients: ingredientIds,
+            ingredientsWithDetails: ingredientsWithDetails,
         }));
     };
 
@@ -338,10 +359,7 @@ const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ isOpen, onClose }) => {
             }
             
             // Reset form về trạng thái ban đầu
-            setRecipe(initialRecipeState);
-            setCurrentInstruction(initialInstructionState);
-            setMainImageMode('file');
-            setStepImageMode('file');
+            handleResetForm();
             onClose();
         } catch (error: any) {
             const errorMessage = error?.message || error || 'Thêm công thức thất bại.';
@@ -350,6 +368,18 @@ const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ isOpen, onClose }) => {
         } finally {
             setIsSubmitting(false);
         }
+    };
+
+    const handleResetForm = () => {
+        setRecipe(initialRecipeState);
+        setCurrentInstruction(initialInstructionState);
+        setMainImageMode('file');
+        setStepImageMode('file');
+    };
+
+    const handleClose = () => {
+        handleResetForm();
+        onClose();
     };
 
     if (!isOpen) return null;
@@ -361,7 +391,7 @@ const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ isOpen, onClose }) => {
                 {/* Header cố định */}
                 <div className="flex justify-between items-center px-6 py-4 bg-gradient-to-r from-orange-400 to-red-500 text-white rounded-t-2xl sticky top-0 z-10">
                     <h2 className="text-lg font-semibold">Thêm công thức mới</h2>
-                    <button onClick={onClose} className="hover:scale-110 transition">
+                    <button onClick={handleClose} className="hover:scale-110 transition">
                         <X size={22} />
                     </button>
                 </div>
@@ -637,7 +667,7 @@ const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ isOpen, onClose }) => {
                                     <button
                                         type="button"
                                         onClick={() => {
-                                            setRecipe((prev) => ({ ...prev, ingredients: [] }));
+                                            setRecipe((prev) => ({ ...prev, ingredients: [], ingredientsWithDetails: [] }));
                                         }}
                                         className="text-sm text-gray-500 hover:underline"
                                     >
@@ -646,32 +676,27 @@ const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ isOpen, onClose }) => {
                                 </div>
                             </div>
 
-                            <button
-                                type="button"
-                                onClick={() => setIsIngredientSelectorOpen(true)}
-                                className="w-full border rounded-lg p-3 text-left bg-white hover:bg-gray-50 focus:ring-2 focus:ring-orange-400 outline-none transition-colors relative"
-                            >
-                                <div className="flex justify-between items-center">
+                            <div>
+                                <button
+                                    type="button"
+                                    onClick={() => setIsIngredientSelectorOpen(true)}
+                                    className="w-full border rounded-lg p-3 text-left bg-white hover:bg-gray-50 focus:ring-2 focus:ring-orange-400 outline-none transition-colors relative"
+                                >
                                     <span className={recipe.ingredients.length > 0 ? "text-gray-800" : "text-gray-400"}>
-                                        {recipe.ingredients.length > 0
-                                            ? (() => {
-                                                const ingredientNames = recipe.ingredients.map(ingredientId => {
-                                                    const ingredient = ingredients.find(ing => ing._id === ingredientId);
-                                                    return ingredient ? ingredient.name : '';
-                                                }).filter(Boolean);
-
-                                                return ingredientNames.length > 0 ? ingredientNames.join(', ') : `Đã chọn ${recipe.ingredients.length} nguyên liệu`;
-                                            })()
+                                        {recipe.ingredients.length > 0 && recipe.ingredientsWithDetails.length > 0
+                                            ? recipe.ingredientsWithDetails.map((ing) => 
+                                                `${ing.name} (${ing.quantity} ${ing.unit})`
+                                              ).join(', ')
                                             : "Chọn nguyên liệu..."
                                         }
                                     </span>
-                                </div>
-                                <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-                                    <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                    </svg>
-                                </div>
-                            </button>
+                                    <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                                        <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                        </svg>
+                                    </div>
+                                </button>
+                            </div>
                         </div>
 
                         {/* ==== Tags ==== */}
@@ -941,7 +966,7 @@ const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ isOpen, onClose }) => {
                         <div className="flex justify-end gap-3 pb-2">
                             <button
                                 type="button"
-                                onClick={onClose}
+                                onClick={handleClose}
                                 disabled={isSubmitting}
                                 className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
                             >

@@ -30,6 +30,13 @@ interface Instruction {
     subTitle: string[];
 }
 
+interface IngredientWithDetails {
+    ingredientId: string;
+    name: string;
+    quantity: number;
+    unit: string;
+}
+
 interface TagSelectorModalProps {
     isOpen: boolean;
     onClose: () => void;
@@ -197,6 +204,7 @@ const EditRecipeModal: React.FC<EditRecipeModalProps> = ({ isOpen, onClose, reci
     const [editedRecipe, setEditedRecipe] = useState({
         name: "",
         ingredients: [] as string[],
+        ingredientsWithDetails: [] as IngredientWithDetails[],
         tags: [] as string[],
         short: "",
         instructions: [] as Instruction[],
@@ -221,9 +229,20 @@ const EditRecipeModal: React.FC<EditRecipeModalProps> = ({ isOpen, onClose, reci
     // Initialize form data when recipe changes
     useEffect(() => {
         if (recipe && isOpen) {
+            // Sử dụng ingredientsWithDetails từ backend nếu có, nếu không thì tạo mới với giá trị mặc định
+            const ingredientsWithDetails = recipe.ingredientsWithDetails && recipe.ingredientsWithDetails.length > 0
+                ? recipe.ingredientsWithDetails
+                : recipe.ingredients?.map(ing => ({
+                    ingredientId: ing._id,
+                    name: ing.name,
+                    quantity: 1,
+                    unit: 'gram'
+                })) || [];
+            
             setEditedRecipe({
                 name: recipe.name || "",
                 ingredients: recipe.ingredients?.map(ing => ing._id) || [],
+                ingredientsWithDetails: ingredientsWithDetails,
                 tags: recipe.tags?.map(tag => tag._id) || [],
                 short: recipe.short || "",
                 instructions: recipe.instructions || [],
@@ -307,16 +326,28 @@ const EditRecipeModal: React.FC<EditRecipeModalProps> = ({ isOpen, onClose, reci
         removeInstruction(index);
     };
 
-    const handleIngredientSelect = (selectedIngredients: string[]) => {
-        // Convert ingredient names to IDs
-        const ingredientIds = selectedIngredients.map(ingredientName => {
+    const handleIngredientSelect = (selectedIngredients: string[], ingredientDetails: Record<string, { quantity: number; unit: string }>) => {
+        // Convert ingredient names to IDs and create details array
+        const ingredientIds: string[] = [];
+        const ingredientsWithDetails: IngredientWithDetails[] = [];
+        
+        selectedIngredients.forEach(ingredientName => {
             const ingredient = ingredients.find(ing => ing.name === ingredientName);
-            return ingredient ? ingredient._id : null;
-        }).filter(Boolean) as string[];
+            if (ingredient) {
+                ingredientIds.push(ingredient._id);
+                ingredientsWithDetails.push({
+                    ingredientId: ingredient._id,
+                    name: ingredient.name,
+                    quantity: ingredientDetails[ingredientName]?.quantity || 1,
+                    unit: ingredientDetails[ingredientName]?.unit || 'gram'
+                });
+            }
+        });
 
         setEditedRecipe((prev) => ({
             ...prev,
             ingredients: ingredientIds,
+            ingredientsWithDetails: ingredientsWithDetails,
         }));
     };
 
@@ -617,27 +648,26 @@ const EditRecipeModal: React.FC<EditRecipeModalProps> = ({ isOpen, onClose, reci
                             <h3 className="text-md font-semibold text-gray-700 mb-2">
                                 Nguyên liệu ({editedRecipe.ingredients.length})
                             </h3>
-                            <div className="flex flex-wrap gap-2 mb-3">
-                                {editedRecipe.ingredients.map((ingredientId) => {
-                                    const ingredient = ingredients.find(ing => ing._id === ingredientId);
-                                    return ingredient ? (
-                                        <span
-                                            key={ingredientId}
-                                            className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm"
-                                        >
-                                            {ingredient.name}
-                                        </span>
-                                    ) : null;
-                                })}
-                            </div>
 
-                            <div className="flex gap-2">
+                            <div>
                                 <button
                                     type="button"
                                     onClick={() => setIsIngredientSelectorOpen(true)}
-                                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                                    className="w-full border rounded-lg p-3 text-left bg-white hover:bg-gray-50 focus:ring-2 focus:ring-blue-400 outline-none transition-colors relative mb-2"
                                 >
-                                    Chọn nguyên liệu
+                                    <span className={editedRecipe.ingredients.length > 0 ? "text-gray-800" : "text-gray-400"}>
+                                        {editedRecipe.ingredients.length > 0 && editedRecipe.ingredientsWithDetails.length > 0
+                                            ? editedRecipe.ingredientsWithDetails.map((ing) => 
+                                                `${ing.name} (${ing.quantity} ${ing.unit})`
+                                              ).join(', ')
+                                            : "Chọn nguyên liệu..."
+                                        }
+                                    </span>
+                                    <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                                        <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                        </svg>
+                                    </div>
                                 </button>
                                 <button
                                     type="button"
