@@ -9,6 +9,7 @@ import {
   LogOut,
   Settings,
   Star,
+  Lightbulb,
 } from "lucide-react";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useSelector, useDispatch } from "react-redux";
@@ -372,6 +373,13 @@ export default function Header() {
                     className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-50"
                   >
                     <Star className="h-4 w-4" /> {t("header.authReviews")}
+                  </Link>
+                  <Link
+                    to="/my-suggest-recipe"
+                    onClick={() => setShowUserDropdown(false)}
+                    className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-50"
+                  >
+                    <Lightbulb className="h-4 w-4" /> Đề Xuất Món
                   </Link>
 
                   <div className="border-t border-gray-100 my-1" />
