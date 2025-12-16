@@ -28,11 +28,13 @@ import {
     Database,
     UserPlus,
     X,
+    Clock,
 } from "lucide-react"
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import AddRecipeModal from "../components/AddRecipeModal";
 import EditRecipeModal from "../components/EditRecipeModal";
 import DataManagement from "./DataManagement";
+import PendingRecipes from "./PendingRecipes";
 import VerifyEmailModal from "../components/VerifyEmailModal";
 import toast from "react-hot-toast";
 import axiosInstance from "../utils/axiosInstance";
@@ -319,6 +321,7 @@ const AdminDashboard: React.FC = () => {
         { id: "recipes", label: "Công thức", icon: ChefHat },
         { id: "users", label: "Người dùng", icon: Users },
         { id: "data", label: "Quản lý dữ liệu", icon: Database },
+        { id: "pending", label: "Món ăn chờ duyệt", icon: Clock },
         // { id: "analytics", label: "Phân tích", icon: TrendingUp },
         { id: "settings", label: "Cài đặt", icon: Settings },
     ]
@@ -1141,6 +1144,11 @@ const AdminDashboard: React.FC = () => {
                     {/* Data Management Tab */}
                     {activeTab === "data" && (
                         <DataManagement />
+                    )}
+
+                    {/* Pending Recipes Tab */}
+                    {activeTab === "pending" && (
+                        <PendingRecipes />
                     )}
 
                     {/* Settings Tab */}

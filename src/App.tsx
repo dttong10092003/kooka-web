@@ -25,6 +25,8 @@ import AllRecipes from "./pages/AllRecipes";
 // User
 import ProfilePage from "./pages/ProfilePage";
 import MyReviews from "./pages/MyReviews";
+import SuggestRecipe from "./pages/SuggestRecipe";
+import PendingRecipes from "./pages/PendingRecipes";
 import ProfileLayout from "./layout/ProfileLayout";
 import Settings from "./pages/Settings";
 import MyFavourite from "./pages/MyFavourite";
@@ -144,6 +146,11 @@ function App() {
             <DataManagement />
           </ProtectedRoute>
         } />
+        <Route path="/admin/pending-recipes" element={
+          <ProtectedRoute requireAdmin={true}>
+            <PendingRecipes />
+          </ProtectedRoute>
+        } />
         <Route path="/about" element={<About />} />
         <Route path="/categories" element={<Categories />} />
         <Route path="/meal-planner" element={<MealPlannerPage />} />
@@ -158,6 +165,7 @@ function App() {
         }>
           <Route path="my-profile" element={<ProfilePage />} />
           <Route path="my-reviews" element={<MyReviews />} />
+          <Route path="my-suggest-recipe" element={<SuggestRecipe />} />
           <Route path="my-settings" element={<Settings />} />
           <Route path="my-favorites" element={<MyFavourite />} />
         </Route>

@@ -1,5 +1,5 @@
 import type React from "react"
-import { ArrowLeft, User, Heart, Star, Settings as SettingsIcon } from "lucide-react"
+import { ArrowLeft, User, Heart, Star, Settings as SettingsIcon, Lightbulb } from "lucide-react"
 import { useNavigate, Outlet, useLocation } from "react-router-dom"
 import { useSelector } from "react-redux"
 import type { RootState } from "../redux/store"
@@ -32,6 +32,7 @@ const ProfileLayout: React.FC = () => {
     { id: "profile", label: "Hồ Sơ", icon: User, path: "/my-profile" },
     { id: "favorites", label: "Yêu Thích", icon: Heart, path: "/my-favorites" },
     { id: "reviews", label: "Đánh Giá", icon: Star, path: "/my-reviews" },
+    { id: "suggest", label: "Đề Xuất Món", icon: Lightbulb, path: "/my-suggest-recipe" },
     { id: "settings", label: "Cài Đặt", icon: SettingsIcon, path: "/my-settings" },
   ]
 
