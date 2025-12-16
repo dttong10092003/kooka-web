@@ -98,18 +98,6 @@ const MealPlannerPage: React.FC = () => {
         return;
       }
 
-      // Check pending plans limit (max 3)
-      const pendingPlans = mealPlans.filter(p => p.status === 'pending');
-      if (pendingPlans.length >= 3) {
-        toast.error(language === 'vi' 
-          ? 'Bạn đã có 3 kế hoạch chưa hoàn thành. Vui lòng hoàn thành hoặc xóa bớt trước khi tạo mới.' 
-          : 'You already have 3 pending plans. Please complete or delete some before creating a new one.');
-        
-        // Clear navigation state
-        navigate('/meal-planner', { replace: true, state: {} });
-        return;
-      }
-
       // Set view mode to creating
       setViewMode('creating');
       setCurrentMealPlanId(null);
@@ -368,15 +356,6 @@ const MealPlannerPage: React.FC = () => {
   };
 
   const startCreatingNewPlan = () => {
-    // Check pending plans limit TRƯỚC KHI mở modal
-    const pendingPlans = sortedMealPlans.filter(p => p.status === 'pending');
-    if (pendingPlans.length >= 3) {
-      toast.error(language === 'vi' 
-        ? 'Bạn đã có 3 kế hoạch chưa hoàn thành. Vui lòng hoàn thành hoặc xóa bớt trước khi tạo mới.' 
-        : 'You already have 3 pending plans. Please complete or delete some before creating a new one.');
-      return; // Dừng lại, không mở modal
-    }
-    
     setShowStartDateModal(true);
     setStartDateError(''); // Reset error khi mở modal
   };
@@ -1065,7 +1044,7 @@ const MealPlannerPage: React.FC = () => {
                 <div className="flex items-center space-x-2">
                   {viewMode !== 'browse' && (
                     <>
-                      {currentMealPlanId && currentPlan?.status === 'pending' && (
+                      {currentMealPlanId && (
                         <button
                           onClick={deletePlan}
                           className="px-3 md:px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all duration-200 flex items-center justify-center space-x-1.5 md:space-x-2 text-xs md:text-sm"
