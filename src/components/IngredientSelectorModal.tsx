@@ -12,13 +12,15 @@ interface IngredientSelectorModalProps {
     onClose: () => void;
     onSelect: (ingredients: string[], ingredientDetails: Record<string, { quantity: number; unit: string }>) => void;
     selectedIngredients: string[];
+    existingIngredientDetails?: Record<string, { quantity: number; unit: string }>;
 }
 
 export default function IngredientSelectorModal({
     isOpen,
     onClose,
     onSelect,
-    selectedIngredients = []
+    selectedIngredients = [],
+    existingIngredientDetails = {}
 }: IngredientSelectorModalProps) {
     const dispatch = useDispatch<AppDispatch>();
     const { ingredients, ingredientTypes } = useSelector(
@@ -44,17 +46,17 @@ export default function IngredientSelectorModal({
     useEffect(() => {
         if (isOpen) {
             setLocalSelectedIngredients([...selectedIngredients]);
-            // Reset quantities về mặc định khi mở modal
+            // Sử dụng existingIngredientDetails nếu có, nếu không thì dùng giá trị mặc định
             const defaultQuantities: Record<string, { quantity: number; unit: string }> = {};
             selectedIngredients.forEach(ingredient => {
-                defaultQuantities[ingredient] = {
+                defaultQuantities[ingredient] = existingIngredientDetails[ingredient] || {
                     quantity: 1,
                     unit: getDefaultUnit(ingredient)
                 };
             });
             setIngredientQuantities(defaultQuantities);
         }
-    }, [isOpen, selectedIngredients]);
+    }, [isOpen, selectedIngredients, existingIngredientDetails]);
 
     // Auto chọn category đầu tiên
     useEffect(() => {
