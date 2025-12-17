@@ -1009,6 +1009,10 @@ const EditRecipeModal: React.FC<EditRecipeModalProps> = ({ isOpen, onClose, reci
                         const ingredient = ingredients.find(ing => ing._id === ingredientId);
                         return ingredient ? ingredient.name : '';
                     }).filter(Boolean)}
+                    existingIngredientDetails={editedRecipe.ingredientsWithDetails.reduce((acc, ing) => {
+                        acc[ing.name] = { quantity: ing.quantity, unit: ing.unit };
+                        return acc;
+                    }, {} as Record<string, { quantity: number; unit: string }>)}
                 />
                 <TagSelectorModal
                     isOpen={isTagSelectorOpen}

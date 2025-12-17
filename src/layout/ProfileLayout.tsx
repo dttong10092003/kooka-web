@@ -32,7 +32,7 @@ const ProfileLayout: React.FC = () => {
     { id: "profile", label: "Hồ Sơ", icon: User, path: "/my-profile" },
     { id: "favorites", label: "Yêu Thích", icon: Heart, path: "/my-favorites" },
     { id: "reviews", label: "Đánh Giá", icon: Star, path: "/my-reviews" },
-    { id: "suggest", label: "Đề Xuất Món", icon: Lightbulb, path: "/my-suggest-recipe" },
+    { id: "suggest", label: "Đề Xuất Món", icon: Lightbulb, path: "/my-submissions" },
     { id: "settings", label: "Cài Đặt", icon: SettingsIcon, path: "/my-settings" },
   ]
 

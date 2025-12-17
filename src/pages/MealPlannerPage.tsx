@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import type { RootState, AppDispatch } from '../redux/store';
-import { fetchRecipes } from '../redux/slices/recipeSlice';
+import { fetchRecipes, getRecipeById } from '../redux/slices/recipeSlice';
 import { 
   fetchMealPlansByUser, 
   createMealPlan, 
@@ -68,6 +68,7 @@ const MealPlannerPage: React.FC = () => {
   const [hoveredDate, setHoveredDate] = useState<Date | null>(null);
   const [aiGeneratedPlans, setAiGeneratedPlans] = useState<MealPlanDay[] | null>(null); // Lưu tạm plans từ AI
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [detailedRecipes, setDetailedRecipes] = useState<Map<string, Recipe>>(new Map()); // Cache recipe details
   
   // Ref for auto-scroll to meal plan table
   const mealPlanTableRef = useRef<HTMLDivElement>(null);
@@ -647,20 +648,51 @@ const MealPlannerPage: React.FC = () => {
   };
 
   const generateShoppingList = () => {
-    const ingredientMap = new Map<string, { name: string, count: number }>();
+    const ingredientMap = new Map<string, { name: string, quantity: number, unit: string, ingredientId?: string }>();
     
     editingPlans.forEach(plan => {
       [plan.morning, plan.noon, plan.evening].forEach(meal => {
         if (meal?.recipeId) {
-          const recipe = recipes.find(r => r._id === meal.recipeId);
-          if (recipe && recipe.ingredients) {
+          // Tìm trong cache trước
+          let recipe = detailedRecipes.get(meal.recipeId);
+          
+          // Nếu không có trong cache, dùng từ recipes list
+          if (!recipe) {
+            recipe = recipes.find(r => r._id === meal.recipeId);
+          }
+          
+          if (recipe && recipe.ingredientsWithDetails && recipe.ingredientsWithDetails.length > 0) {
+            // Sử dụng ingredientsWithDetails nếu có
+            recipe.ingredientsWithDetails.forEach((ingredient) => {
+              const name = ingredient.name;
+              const key = `${name}-${ingredient.unit}`; // Sử dụng key kết hợp để phân biệt đơn vị
+              if (ingredientMap.has(key)) {
+                const existing = ingredientMap.get(key)!;
+                ingredientMap.set(key, { 
+                  name, 
+                  quantity: existing.quantity + ingredient.quantity, 
+                  unit: ingredient.unit,
+                  ingredientId: ingredient.ingredientId
+                });
+              } else {
+                ingredientMap.set(key, { 
+                  name, 
+                  quantity: ingredient.quantity, 
+                  unit: ingredient.unit,
+                  ingredientId: ingredient.ingredientId
+                });
+              }
+            });
+          } else if (recipe && recipe.ingredients) {
+            // Fallback về ingredients cũ nếu không có ingredientsWithDetails
             recipe.ingredients.forEach((ingredient) => {
               const name = ingredient.name;
-              if (ingredientMap.has(name)) {
-                const existing = ingredientMap.get(name)!;
-                ingredientMap.set(name, { name, count: existing.count + 1 });
+              const key = `${name}-count`;
+              if (ingredientMap.has(key)) {
+                const existing = ingredientMap.get(key)!;
+                ingredientMap.set(key, { name, quantity: existing.quantity + 1, unit: 'x', ingredientId: ingredient._id });
               } else {
-                ingredientMap.set(name, { name, count: 1 });
+                ingredientMap.set(key, { name, quantity: 1, unit: 'x', ingredientId: ingredient._id });
               }
             });
           }
@@ -670,6 +702,101 @@ const MealPlannerPage: React.FC = () => {
     
     return Array.from(ingredientMap.values());
   };
+
+  // Phân loại ingredients thành nguyên liệu chính và gia vị
+  const categorizeShoppingList = () => {
+    const allItems = generateShoppingList();
+    const mainIngredients: typeof allItems = [];
+    const seasonings: typeof allItems = [];
+
+    // Danh sách gia vị thường gặp (có thể mở rộng)
+    const seasoningKeywords = [
+      'muối', 'đường', 'tiêu', 'bột ngọt', 'nước mắm', 'dầu', 'giấm', 
+      'tương', 'mè', 'mật ong', 'ớt', 'ngũ vị hương', 'quế', 'hồi', 
+      'gừng', 'sả', 'tỏi', 'hành', 'chanh', 'bột', 'hạt nêm',
+      'salt', 'sugar', 'pepper', 'oil', 'sauce', 'vinegar', 'honey',
+      'chili', 'ginger', 'garlic', 'onion', 'powder'
+    ];
+
+    // Đơn vị đo lường nhỏ không phải đơn vị mua
+    const cookingMeasurements = [
+      'muỗng canh', 'muỗng cà phê', 'muỗng', 'thìa', 'thia', 
+      'nhúm', 'chút', 'ít', 'vừa đủ', 'tép', 'miếng',
+      'tablespoon', 'teaspoon', 'spoon', 'pinch', 'dash', 'piece', 'tép'
+    ];
+
+    allItems.forEach(item => {
+      const ingredientObj = item.ingredientId 
+        ? recipes.flatMap(r => r.ingredients).find(ing => ing._id === item.ingredientId)
+        : null;
+
+      // Kiểm tra theo typeId hoặc tên
+      const isSeasoningByType = ingredientObj?.typeId && 
+        ['gia vị', 'seasoning', 'spices'].some(s => ingredientObj.typeId.toLowerCase().includes(s));
+      
+      const isSeasoningByName = seasoningKeywords.some(keyword => 
+        item.name.toLowerCase().includes(keyword.toLowerCase())
+      );
+
+      // Kiểm tra xem có phải đơn vị đo lường nhỏ không
+      const isSmallMeasurement = cookingMeasurements.some(unit => 
+        item.unit.toLowerCase().includes(unit.toLowerCase())
+      );
+
+      // Xử lý item với đơn vị nhỏ - chỉ lưu tên
+      const processedItem = isSmallMeasurement 
+        ? { ...item, quantity: 0, unit: '' }
+        : item;
+
+      if (isSeasoningByType || isSeasoningByName) {
+        seasonings.push(processedItem);
+      } else {
+        mainIngredients.push(processedItem);
+      }
+    });
+
+    return { mainIngredients, seasonings };
+  };
+
+  // Fetch detailed recipes ngay khi có meal plan (song song tất cả)
+  useEffect(() => {
+    const fetchDetailedRecipes = async () => {
+      const recipeIds = new Set<string>();
+      editingPlans.forEach(plan => {
+        if (plan.morning?.recipeId) recipeIds.add(plan.morning.recipeId);
+        if (plan.noon?.recipeId) recipeIds.add(plan.noon.recipeId);
+        if (plan.evening?.recipeId) recipeIds.add(plan.evening.recipeId);
+      });
+
+      // Lọc ra các recipe chưa có trong cache
+      const idsToFetch = Array.from(recipeIds).filter(id => !detailedRecipes.has(id));
+      
+      if (idsToFetch.length === 0) return;
+
+      // Fetch song song tất cả recipes cùng lúc
+      const fetchPromises = idsToFetch.map(recipeId => 
+        dispatch(getRecipeById(recipeId)).unwrap().catch(error => {
+          console.error(`Failed to fetch recipe ${recipeId}:`, error);
+          return null;
+        })
+      );
+
+      const results = await Promise.all(fetchPromises);
+      
+      const newDetailedRecipes = new Map(detailedRecipes);
+      results.forEach((result, index) => {
+        if (result) {
+          newDetailedRecipes.set(idsToFetch[index], result);
+        }
+      });
+
+      setDetailedRecipes(newDetailedRecipes);
+    };
+
+    if (editingPlans.length > 0) {
+      fetchDetailedRecipes();
+    }
+  }, [editingPlans, dispatch]);
 
   const getWeekStats = () => {
     let totalRecipes = 0;
@@ -724,8 +851,35 @@ const MealPlannerPage: React.FC = () => {
   };
 
   const downloadShoppingList = () => {
-    const shoppingList = generateShoppingList();
-    const text = shoppingList.map(item => `☐ ${item.name} (${item.count}x)`).join('\n');
+    const { mainIngredients, seasonings } = categorizeShoppingList();
+    
+    let text = language === 'vi' 
+      ? '📦 DANH SÁCH MUA SẮM\n\n'
+      : '📦 SHOPPING LIST\n\n';
+    
+    // Nguyên liệu chính
+    if (mainIngredients.length > 0) {
+      text += language === 'vi' 
+        ? '📦 NGUYÊN LIỆU CHÍNH:\n'
+        : '📦 MAIN INGREDIENTS:\n';
+      text += mainIngredients.map(item => `☐ ${item.name} (${item.quantity} ${item.unit})`).join('\n');
+      text += '\n\n';
+    }
+    
+    // Gia vị
+    if (seasonings.length > 0) {
+      text += language === 'vi' 
+        ? '🧂 GIA VỊ CẦN KIỂM TRA (kiểm tra tủ bếp trước khi mua):\n'
+        : '🧂 SEASONINGS TO CHECK (check kitchen before buying):\n';
+      text += seasonings.map(item => {
+        // Nếu có số lượng thì hiển thị, không thì chỉ tên
+        if (item.quantity > 0 && item.unit) {
+          return `☐ ${item.name} (${item.quantity} ${item.unit})`;
+        }
+        return `☐ ${item.name}`;
+      }).join('\n');
+    }
+    
     const blob = new Blob([text], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -1280,50 +1434,120 @@ const MealPlannerPage: React.FC = () => {
                 )}
               </div>
 
-              {generateShoppingList().length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
-                  {generateShoppingList().map((item, index) => (
-                    <div 
-                      key={index} 
-                      className={`flex items-center space-x-2 md:space-x-3 p-2.5 md:p-3 rounded-lg transition-colors duration-200 cursor-pointer ${
-                        checkedIngredients.has(item.name)
-                          ? 'bg-green-50 hover:bg-green-100'
-                          : 'bg-gray-50 hover:bg-gray-100'
-                      }`}
-                      onClick={() => toggleIngredientCheck(item.name)}
-                    >
-                      <div className={`w-4 h-4 md:w-5 md:h-5 rounded border-2 flex items-center justify-center flex-shrink-0 ${
-                        checkedIngredients.has(item.name)
-                          ? 'bg-green-500 border-green-500'
-                          : 'border-gray-300'
-                      }`}>
-                        {checkedIngredients.has(item.name) && (
-                          <CheckCircle className="h-3 w-3 md:h-4 md:w-4 text-white" />
-                        )}
+              {(() => {
+                const { mainIngredients, seasonings } = categorizeShoppingList();
+                const hasItems = mainIngredients.length > 0 || seasonings.length > 0;
+
+                return hasItems ? (
+                  <div className="space-y-6">
+                    {/* Nguyên liệu chính */}
+                    {mainIngredients.length > 0 && (
+                      <div>
+                        <div className="flex items-center space-x-2 mb-3">
+                          <ShoppingCart className="h-5 w-5 text-green-600" />
+                          <h3 className="text-lg font-bold text-gray-900">
+                            {language === 'vi' ? '📦 Nguyên Liệu Chính' : '📦 Main Ingredients'}
+                          </h3>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+                          {mainIngredients.map((item, index) => (
+                            <div 
+                              key={index} 
+                              className={`flex items-center space-x-2 md:space-x-3 p-2.5 md:p-3 rounded-lg transition-colors duration-200 cursor-pointer ${
+                                checkedIngredients.has(item.name)
+                                  ? 'bg-green-50 hover:bg-green-100'
+                                  : 'bg-gray-50 hover:bg-gray-100'
+                              }`}
+                              onClick={() => toggleIngredientCheck(item.name)}
+                            >
+                              <div className={`w-4 h-4 md:w-5 md:h-5 rounded border-2 flex items-center justify-center flex-shrink-0 ${
+                                checkedIngredients.has(item.name)
+                                  ? 'bg-green-500 border-green-500'
+                                  : 'border-gray-300'
+                              }`}>
+                                {checkedIngredients.has(item.name) && (
+                                  <CheckCircle className="h-3 w-3 md:h-4 md:w-4 text-white" />
+                                )}
+                              </div>
+                              <span className={`flex-1 text-sm md:text-base ${
+                                checkedIngredients.has(item.name) 
+                                  ? 'line-through text-gray-500' 
+                                  : 'text-gray-900'
+                              }`}>
+                                {item.name}
+                              </span>
+                              {item.quantity > 0 && item.unit && (
+                                <span className="text-xs md:text-sm text-gray-500 font-medium">
+                                  {item.quantity} {item.unit}
+                                </span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                      <span className={`flex-1 text-sm md:text-base ${
-                        checkedIngredients.has(item.name) 
-                          ? 'line-through text-gray-500' 
-                          : 'text-gray-900'
-                      }`}>
-                        {item.name}
-                      </span>
-                      <span className="text-xs md:text-sm text-gray-500">
-                        {item.count}x
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 md:py-12">
-                  <ShoppingCart className="h-12 w-12 md:h-16 md:w-16 text-gray-300 mx-auto mb-3 md:mb-4" />
-                  <p className="text-sm md:text-base text-gray-500">
-                    {language === 'vi' 
-                      ? 'Chưa có nguyên liệu nào trong kế hoạch' 
-                      : 'No ingredients in your meal plan yet'}
-                  </p>
-                </div>
-              )}
+                    )}
+
+                    {/* Gia vị cần kiểm tra */}
+                    {seasonings.length > 0 && (
+                      <div>
+                        <div className="flex items-center space-x-2 mb-3">
+                          <span className="text-lg">🧂</span>
+                          <h3 className="text-lg font-bold text-gray-900">
+                            {language === 'vi' ? 'Gia Vị Cần Kiểm Tra' : 'Seasonings to Check'}
+                          </h3>
+                          <span className="text-xs text-gray-500 italic">
+                            {language === 'vi' ? '(Kiểm tra tủ bếp trước khi mua)' : '(Check kitchen before buying)'}
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+                          {seasonings.map((item, index) => (
+                            <div 
+                              key={index} 
+                              className={`flex items-center space-x-2 md:space-x-3 p-2.5 md:p-3 rounded-lg transition-colors duration-200 cursor-pointer ${
+                                checkedIngredients.has(item.name)
+                                  ? 'bg-orange-50 hover:bg-orange-100'
+                                  : 'bg-yellow-50 hover:bg-yellow-100'
+                              }`}
+                              onClick={() => toggleIngredientCheck(item.name)}
+                            >
+                              <div className={`w-4 h-4 md:w-5 md:h-5 rounded border-2 flex items-center justify-center flex-shrink-0 ${
+                                checkedIngredients.has(item.name)
+                                  ? 'bg-orange-500 border-orange-500'
+                                  : 'border-orange-300'
+                              }`}>
+                                {checkedIngredients.has(item.name) && (
+                                  <CheckCircle className="h-3 w-3 md:h-4 md:w-4 text-white" />
+                                )}
+                              </div>
+                              <span className={`flex-1 text-sm md:text-base ${
+                                checkedIngredients.has(item.name) 
+                                  ? 'line-through text-gray-500' 
+                                  : 'text-gray-900'
+                              }`}>
+                                {item.name}
+                              </span>
+                              {item.quantity > 0 && item.unit && (
+                                <span className="text-xs md:text-sm text-gray-500 font-medium">
+                                  {item.quantity} {item.unit}
+                                </span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 md:py-12">
+                    <ShoppingCart className="h-12 w-12 md:h-16 md:w-16 text-gray-300 mx-auto mb-3 md:mb-4" />
+                    <p className="text-sm md:text-base text-gray-500">
+                      {language === 'vi' 
+                        ? 'Chưa có nguyên liệu nào trong kế hoạch' 
+                        : 'No ingredients in your meal plan yet'}
+                    </p>
+                  </div>
+                );
+              })()}
             </div>
           </div>
         )}
