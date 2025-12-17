@@ -1,12 +1,14 @@
 import React, { useEffect, useState, useRef } from "react";
 import { X, CheckSquare, Square } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import {
     fetchCategories,
     fetchCuisines,
     fetchIngredients,
     fetchTags,
 } from "../redux/slices/recipeSlice";
+import { createSubmission } from "../redux/slices/submissionSlice";
 import type { RootState, AppDispatch } from "../redux/store";
 import AddCategoryModal from "../components/AddCategoryModal";
 import AddCuisineModal from "../components/AddCuisineModal";
@@ -169,6 +171,7 @@ const TagSelectorModal: React.FC<TagSelectorModalProps> = ({
 
 const SuggestRecipe: React.FC = () => {
     const dispatch = useDispatch<AppDispatch>();
+    const navigate = useNavigate();
     const { categories, cuisines, ingredients, tags } = useSelector(
         (state: RootState) => state.recipes
     );
@@ -327,15 +330,57 @@ const SuggestRecipe: React.FC = () => {
         e.preventDefault();
         setIsSubmitting(true);
         try {
-            const recipeData = {
-                ...recipe,
-                video: "video.mp4",
+            // Validate form
+            if (!recipe.name.trim()) {
+                toast.error('Vui lòng nhập tên món ăn');
+                return;
+            }
+            if (!recipe.category || !recipe.cuisine || !recipe.difficulty) {
+                toast.error('Vui lòng chọn đầy đủ thông tin phân loại');
+                return;
+            }
+            if (recipe.ingredients.length === 0) {
+                toast.error('Vui lòng chọn ít nhất 1 nguyên liệu');
+                return;
+            }
+            if (recipe.instructions.length === 0) {
+                toast.error('Vui lòng thêm ít nhất 1 hướng dẫn');
+                return;
+            }
+
+            // Transform ingredientsWithDetails to match API format
+            const transformedIngredients = recipe.ingredientsWithDetails.map(detail => ({
+                id: detail.ingredientId,
+                quantity: detail.quantity,
+                unit: detail.unit
+            }));
+
+            const submissionData = {
+                name: recipe.name,
+                short: recipe.short,
+                difficulty: recipe.difficulty,
+                time: recipe.time,
+                size: recipe.size,
+                calories: recipe.calories,
+                image: recipe.image,
+                video: recipe.video || undefined,
+                ingredients: recipe.ingredients,
+                tags: recipe.tags,
+                cuisine: recipe.cuisine,
+                category: recipe.category,
+                ingredientsWithDetails: transformedIngredients,
+                instructions: recipe.instructions,
             };
-            // TODO: Call API to submit recipe suggestion
-            console.log('Recipe suggestion submitted:', recipeData);
-            toast.success('Đề xuất món ăn đã được gửi! Chúng tôi sẽ xem xét và phê duyệt sớm.');
+
+            await dispatch(createSubmission(submissionData)).unwrap();
+            toast.success('Đề xuất món ăn đã được gửi! Chúng tôi sẽ xem xét và phê duyệt sớm.', { duration: 4000 });
             
             handleResetForm();
+            
+            // Navigate to my submissions page
+            setTimeout(() => {
+                navigate('/my-submissions');
+            }, 1500);
         } catch (error: any) {
             const errorMessage = error?.message || error || 'Gửi đề xuất thất bại.';
             toast.error(errorMessage, { duration: 3000 });
@@ -411,7 +456,7 @@ const SuggestRecipe: React.FC = () => {
         {/* Hình ảnh & Video */}
         <div>
           <h3 className="text-md font-semibold text-gray-700 mb-2">
-            Hình ảnh & Video
+            Hình ảnh
           </h3>
           <div className="grid md:grid-cols-2 gap-4">
             <div>
@@ -925,7 +970,7 @@ const SuggestRecipe: React.FC = () => {
         <div className="flex justify-end gap-3 pb-2">
           <button
             type="button"
-            onClick={handleResetForm}
+            onClick={() => navigate('/my-submissions')}
             disabled={isSubmitting}
             className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
           >

@@ -26,6 +26,7 @@ import AllRecipes from "./pages/AllRecipes";
 import ProfilePage from "./pages/ProfilePage";
 import MyReviews from "./pages/MyReviews";
 import SuggestRecipe from "./pages/SuggestRecipe";
+import MySubmissions from "./pages/MySubmissions";
 import PendingRecipes from "./pages/PendingRecipes";
 import ProfileLayout from "./layout/ProfileLayout";
 import Settings from "./pages/Settings";
@@ -166,6 +167,7 @@ function App() {
           <Route path="my-profile" element={<ProfilePage />} />
           <Route path="my-reviews" element={<MyReviews />} />
           <Route path="my-suggest-recipe" element={<SuggestRecipe />} />
+          <Route path="my-submissions" element={<MySubmissions />} />
           <Route path="my-settings" element={<Settings />} />
           <Route path="my-favorites" element={<MyFavourite />} />
         </Route>

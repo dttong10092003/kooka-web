@@ -375,7 +375,7 @@ export default function Header() {
                     <Star className="h-4 w-4" /> {t("header.authReviews")}
                   </Link>
                   <Link
-                    to="/my-suggest-recipe"
+                    to="/my-submissions"
                     onClick={() => setShowUserDropdown(false)}
                     className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-50"
                   >
