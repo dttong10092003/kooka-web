@@ -16,7 +16,7 @@ import AddCategoryModal from './AddCategoryModal';
 import AddCuisineModal from './AddCuisineModal';
 import AddIngredientModal from './AddIngredientModal';
 import AddTagModal from './AddTagModal';
-import IngredientSelectorModal from './IngredientSelectorModal';
+import IngredientSelectorUnitModal from './IngredientSelectorUnitModal';
 
 interface EditRecipeModalProps {
     isOpen: boolean;
@@ -1001,7 +1001,7 @@ const EditRecipeModal: React.FC<EditRecipeModalProps> = ({ isOpen, onClose, reci
                     isOpen={isTagModalOpen}
                     onClose={() => setIsTagModalOpen(false)}
                 />
-                <IngredientSelectorModal
+                <IngredientSelectorUnitModal
                     isOpen={isIngredientSelectorOpen}
                     onClose={() => setIsIngredientSelectorOpen(false)}
                     onSelect={handleIngredientSelect}

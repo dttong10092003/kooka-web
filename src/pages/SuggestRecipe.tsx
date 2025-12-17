@@ -14,7 +14,7 @@ import AddCategoryModal from "../components/AddCategoryModal";
 import AddCuisineModal from "../components/AddCuisineModal";
 import AddIngredientModal from "../components/AddIngredientModal";
 import AddTagModal from "../components/AddTagModal";
-import IngredientSelectorModal from "../components/IngredientSelectorModal";
+import IngredientSelectorUnitModal from "../components/IngredientSelectorUnitModal";
 import toast from "react-hot-toast";
 
 interface Instruction {
@@ -1013,7 +1013,7 @@ const SuggestRecipe: React.FC = () => {
         isOpen={isTagModalOpen}
         onClose={() => setIsTagModalOpen(false)}
       />
-      <IngredientSelectorModal
+      <IngredientSelectorUnitModal
         isOpen={isIngredientSelectorOpen}
         onClose={() => setIsIngredientSelectorOpen(false)}
         onSelect={handleIngredientSelect}
