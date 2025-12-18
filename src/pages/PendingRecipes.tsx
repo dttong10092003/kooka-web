@@ -31,6 +31,7 @@ const PendingRecipes: React.FC = () => {
     const [filter, setFilter] = useState<"all" | "pending" | "approved" | "rejected">("pending");
     const [searchTerm, setSearchTerm] = useState("");
     const [rejectModalOpen, setRejectModalOpen] = useState(false);
+    const [approveModalOpen, setApproveModalOpen] = useState(false);
     const [detailModalOpen, setDetailModalOpen] = useState(false);
     const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
     const [rejectionReason, setRejectionReason] = useState("");
@@ -41,18 +42,27 @@ const PendingRecipes: React.FC = () => {
     }, [dispatch, filter]);
 
     const handleApprove = async (id: string) => {
-        if (window.confirm("Bạn có chắc muốn duyệt đề xuất này?")) {
-            try {
-                await dispatch(approveSubmission(id)).unwrap();
-                toast.success("✅ Đã duyệt đề xuất thành công!");
-                // Refresh submissions list
-                dispatch(fetchAllSubmissions(filter === "all" ? undefined : filter));
-                dispatch(fetchPendingCount());
-                // Refresh recipes list để hiển thị ở tab Công thức
-                dispatch(fetchRecipes());
-            } catch (error) {
-                toast.error("❌ Lỗi khi duyệt đề xuất");
-            }
+        setSelectedSubmission(
+            allSubmissions.find(sub => sub._id === id) || null
+        );
+        setApproveModalOpen(true);
+    };
+
+    const handleApproveSubmit = async () => {
+        if (!selectedSubmission) return;
+
+        try {
+            await dispatch(approveSubmission(selectedSubmission._id)).unwrap();
+            toast.success("✅ Đã duyệt đề xuất thành công!");
+            setApproveModalOpen(false);
+            setSelectedSubmission(null);
+            // Refresh submissions list
+            dispatch(fetchAllSubmissions(filter === "all" ? undefined : filter));
+            dispatch(fetchPendingCount());
+            // Refresh recipes list để hiển thị ở tab Công thức
+            dispatch(fetchRecipes());
+        } catch (error) {
+            toast.error("❌ Lỗi khi duyệt đề xuất");
         }
     };
 
@@ -385,6 +395,39 @@ const PendingRecipes: React.FC = () => {
                                 className="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
                             >
                                 Xác Nhận
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Approve Modal */}
+            {approveModalOpen && (
+                <div className="fixed inset-0 bg-gray-800/20 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-lg max-w-md w-full p-6">
+                        <h3 className="text-xl font-bold text-gray-900 mb-4">
+                            ✅ Duyệt Đề Xuất
+                        </h3>
+
+                        <p className="text-gray-600 mb-4">
+                            Bạn có chắc muốn duyệt đề xuất: <strong>{selectedSubmission?.name}</strong>?
+                        </p>
+
+                        <div className="flex gap-2 mt-6">
+                            <button
+                                onClick={() => {
+                                    setApproveModalOpen(false);
+                                    setSelectedSubmission(null);
+                                }}
+                                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors"
+                            >
+                                Hủy
+                            </button>
+                            <button
+                                onClick={handleApproveSubmit}
+                                className="flex-1 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+                            >
+                                Duyệt
                             </button>
                         </div>
                     </div>
