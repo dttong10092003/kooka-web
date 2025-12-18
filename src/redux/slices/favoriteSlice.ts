@@ -123,11 +123,11 @@ export const getFavoriteCount = createAsyncThunk<
 // Get most favorited recipes cho trang chủ
 export const fetchMostFavorited = createAsyncThunk<
   MostFavoritedRecipe[],
-  void,
+  number | undefined,
   { rejectValue: string }
->("favorite/fetchMostFavorited", async (_, { rejectWithValue }) => {
+>("favorite/fetchMostFavorited", async (limit = 10, { rejectWithValue }) => {
   try {
-    const res = await axiosInstance.get("/favorites/most-favorited")
+    const res = await axiosInstance.get(`/favorites/most-favorited?limit=${limit}`)
     return res.data || []
   } catch (err: any) {
     return rejectWithValue(err.response?.data?.error || "Failed to load most favorited recipes")

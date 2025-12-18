@@ -191,7 +191,7 @@ export default function CombinedRecipeSearch({ onSearch }: CombinedRecipeSearchP
                                 : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-300"
                             }`}
                     >
-                        Tìm theo tên món
+                        Tìm theo từ khóa
                     </button>
                     <button
                         onClick={() => setSearchMode("ingredient")}

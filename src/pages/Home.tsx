@@ -3,8 +3,8 @@ import { Heart, Info, Play, ChevronLeft, ChevronRight, Star, Clock, ChefHat, Tre
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import type { AppDispatch, RootState } from '../redux/store';
-import { fetchNewestRecipes, fetchPopularRecipes } from '../redux/slices/recipeSlice';
-import { toggleFavorite, checkMultipleRecipes } from '../redux/slices/favoriteSlice';
+import { fetchNewestRecipes, fetchPopularRecipes, fetchTrendingRecipes } from '../redux/slices/recipeSlice';
+import { toggleFavorite, checkMultipleRecipes, fetchMostFavorited } from '../redux/slices/favoriteSlice';
 import toast from 'react-hot-toast';
 import { useLanguage } from '../contexts/LanguageContext';
 
@@ -54,6 +54,7 @@ const Home = () => {
     if (hasLoadedOnce) {
       dispatch(fetchNewestRecipes(5));
       dispatch(fetchPopularRecipes(5));
+      dispatch(fetchMostFavorited(5));
       return;
     }
 
@@ -66,6 +67,8 @@ const Home = () => {
         await Promise.all([
           dispatch(fetchNewestRecipes(5)),
           dispatch(fetchPopularRecipes(5)),
+          dispatch(fetchTrendingRecipes()),
+          dispatch(fetchMostFavorited(5)),
         ]);
         
         // Đảm bảo loading hiển thị ít nhất 1.5 giây để user thấy branding
@@ -939,7 +942,10 @@ const Home = () => {
                           </div>
                         )}
                         <img src={recipe.image} alt={recipe.name} className="w-10 h-14 rounded-md object-cover flex-shrink-0" />
-                        <span className="text-gray-900 text-sm flex-1 line-clamp-2">{recipe.name}</span>
+                        <div className="flex-1 min-w-0">
+                          <span className="text-gray-900 text-sm block line-clamp-2">{recipe.name}</span>
+                          <span className="text-xs text-gray-500">{recipe.numberOfRate} đánh giá • ⭐ {recipe.rate.toFixed(1)}</span>
+                        </div>
                       </div>
                     );
                   })}
