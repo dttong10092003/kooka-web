@@ -591,16 +591,7 @@ const SuggestRecipe: React.FC = () => {
         {/* Phân loại */}
         <div className="grid md:grid-cols-2 gap-4">
           <div>
-            <div className="flex justify-between mb-1">
-              <label className="font-medium text-gray-700">Danh mục</label>
-              <button
-                type="button"
-                onClick={() => setIsCategoryModalOpen(true)}
-                className="text-orange-500 text-sm hover:underline"
-              >
-                + Thêm mới
-              </button>
-            </div>
+            <label className="font-medium text-gray-700 mb-1">Danh mục</label>
             <div className="relative">
               <select
                 name="category"
@@ -625,16 +616,7 @@ const SuggestRecipe: React.FC = () => {
           </div>
 
           <div>
-            <div className="flex justify-between mb-1">
-              <label className="font-medium text-gray-700">Ẩm thực</label>
-              <button
-                type="button"
-                onClick={() => setIsCuisineModalOpen(true)}
-                className="text-orange-500 text-sm hover:underline"
-              >
-                + Thêm mới
-              </button>
-            </div>
+            <label className="font-medium text-gray-700 mb-1">Ẩm thực</label>
             <div className="relative">
               <select
                 name="cuisine"
@@ -663,24 +645,15 @@ const SuggestRecipe: React.FC = () => {
         <div>
           <div className="flex justify-between mb-1">
             <label className="font-medium text-gray-700">Nguyên liệu</label>
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => setIsIngredientModalOpen(true)}
-                className="text-orange-500 text-sm hover:underline"
-              >
-                + Thêm mới
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setRecipe((prev) => ({ ...prev, ingredients: [], ingredientsWithDetails: [] }));
-                }}
-                className="text-sm text-gray-500 hover:underline"
-              >
-                Xóa tất cả
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setRecipe((prev) => ({ ...prev, ingredients: [], ingredientsWithDetails: [] }));
+              }}
+              className="text-sm text-gray-500 hover:underline"
+            >
+              Xóa tất cả
+            </button>
           </div>
 
           <div>
@@ -710,22 +683,13 @@ const SuggestRecipe: React.FC = () => {
         <div>
           <div className="flex justify-between mb-1">
             <label className="font-medium text-gray-700">Thẻ (Tags)</label>
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => setIsTagModalOpen(true)}
-                className="text-orange-500 text-sm hover:underline"
-              >
-                + Thêm mới
-              </button>
-              <button
-                type="button"
-                onClick={() => setRecipe((prev) => ({ ...prev, tags: [] }))}
-                className="text-sm text-gray-500 hover:underline"
-              >
-                Xóa tất cả
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={() => setRecipe((prev) => ({ ...prev, tags: [] }))}
+              className="text-sm text-gray-500 hover:underline"
+            >
+              Xóa tất cả
+            </button>
           </div>
 
           <button
@@ -1021,6 +985,12 @@ const SuggestRecipe: React.FC = () => {
           const ingredient = ingredients.find(ing => ing._id === ingredientId);
           return ingredient ? ingredient.name : '';
         }).filter(Boolean)}
+        existingIngredientDetails={
+          recipe.ingredientsWithDetails.reduce((acc, ing) => {
+            acc[ing.name] = { quantity: ing.quantity, unit: ing.unit };
+            return acc;
+          }, {} as Record<string, { quantity: number; unit: string }>)
+        }
       />
       <TagSelectorModal
         isOpen={isTagSelectorOpen}
