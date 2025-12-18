@@ -42,7 +42,7 @@ export default function IngredientSelectorUnitModal({
         }
     }, [isOpen, dispatch]);
 
-    // Reset local state when modal opens
+    // Reset local state when modal opens - CHỈ khi modal mở
     useEffect(() => {
         if (isOpen) {
             setLocalSelectedIngredients([...selectedIngredients]);
@@ -56,7 +56,7 @@ export default function IngredientSelectorUnitModal({
             });
             setIngredientQuantities(defaultQuantities);
         }
-    }, [isOpen, selectedIngredients, existingIngredientDetails]);
+    }, [isOpen]); // CHỈ phụ thuộc vào isOpen
 
     // Auto chọn category đầu tiên
     useEffect(() => {
@@ -193,12 +193,13 @@ export default function IngredientSelectorUnitModal({
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-gray-800/20 flex items-center justify-center z-50">
-            <div ref={modalRef} className="bg-white rounded-xl shadow-lg w-full max-w-2xl p-6 relative h-[600px] flex flex-col">
+        <div className="fixed inset-0 bg-gray-800/50 flex items-center justify-center" style={{ zIndex: 9999 }}>
+            <div ref={modalRef} className="bg-white rounded-xl shadow-lg w-full max-w-2xl p-6 relative h-[600px] flex flex-col"
+                 onClick={(e) => e.stopPropagation()}>
                 {/* Close Button */}
                 <button
                     onClick={handleClose}
-                    className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
+                    className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 z-10"
                 >
                     <X className="w-5 h-5" />
                 </button>
@@ -243,15 +244,20 @@ export default function IngredientSelectorUnitModal({
                                     {/* Checkbox và tên nguyên liệu */}
                                     <div className="flex items-center mb-2">
                                         <button
-                                            className="flex items-center hover:bg-gray-50 p-1 rounded"
-                                            onClick={() => handleIngredientToggle(ingredient)}
+                                            type="button"
+                                            className="flex items-center hover:bg-gray-50 p-1 rounded cursor-pointer transition-colors"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                handleIngredientToggle(ingredient);
+                                            }}
                                         >
                                             {localSelectedIngredients.includes(ingredient) ? (
-                                                <CheckSquare className="w-5 h-5 text-orange-500 mr-2" />
+                                                <CheckSquare className="w-5 h-5 text-orange-500 mr-2 flex-shrink-0" />
                                             ) : (
-                                                <Square className="w-5 h-5 text-gray-400 mr-2" />
+                                                <Square className="w-5 h-5 text-gray-400 mr-2 flex-shrink-0" />
                                             )}
-                                            <span className="font-medium">{ingredient}</span>
+                                            <span className="font-medium select-none">{ingredient}</span>
                                         </button>
                                     </div>
                                     
