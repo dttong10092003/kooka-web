@@ -60,36 +60,24 @@ const Home = () => {
 
     // Lần đầu tiên: hiện loading screen và load data
     const loadAllData = async () => {
-      const startTime = Date.now();
-      
       try {
         // Load song song tất cả data cần thiết cho toàn bộ trang Home
-        await Promise.all([
+        Promise.all([
           dispatch(fetchNewestRecipes(5)),
           dispatch(fetchPopularRecipes(5)),
           dispatch(fetchTrendingRecipes()),
           dispatch(fetchMostFavorited(5)),
         ]);
-        
-        // Đảm bảo loading hiển thị ít nhất 1.5 giây để user thấy branding
-        const elapsedTime = Date.now() - startTime;
-        const remainingTime = Math.max(0, 1500 - elapsedTime);
-        
-        setTimeout(() => {
-          setShowLoading(false);
-          hasLoadedOnce = true; // Đánh dấu đã load lần đầu (biến global)
-        }, remainingTime);
       } catch (error) {
         console.error('Error loading data:', error);
-        // Vẫn ẩn loading sau 1.5s ngay cả khi có lỗi
-        const elapsedTime = Date.now() - startTime;
-        const remainingTime = Math.max(0, 1500 - elapsedTime);
-        setTimeout(() => {
-          setShowLoading(false);
-          hasLoadedOnce = true; 
-        }, remainingTime);
       }
     };
+
+    // Luôn ẩn loading sau đúng 1.5 giây, bất kể API đã load xong hay chưa
+    setTimeout(() => {
+      setShowLoading(false);
+      hasLoadedOnce = true;
+    }, 1500);
 
     loadAllData();
   }, [dispatch]);
@@ -909,9 +897,11 @@ const Home = () => {
 
           {/* SỐI NỔI NHẤT */}
           <div className="bg-white rounded-xl p-4 sm:p-6 shadow-lg border border-gray-200">
-            <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
-              <Flame className="text-green-500" size={20} />
-              <h3 className="text-gray-900 text-lg sm:text-xl font-bold">SÔI NỔI NHẤT</h3>
+            <div className="flex items-center justify-between mb-4 sm:mb-6">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <Flame className="text-green-500" size={20} />
+                <h3 className="text-gray-900 text-lg sm:text-xl font-bold">SÔI NỔI NHẤT</h3>
+              </div>
             </div>
 
             <div className="space-y-3">
@@ -949,11 +939,12 @@ const Home = () => {
                       </div>
                     );
                   })}
-                  {trendingRecipes.length > 5 && (
-                    <button className="w-full text-center text-sm text-gray-600 hover:text-gray-900 font-medium py-2">
-                      Xem thêm
-                    </button>
-                  )}
+                  <button 
+                    onClick={() => navigate('/recipes/trending')}
+                    className="w-full text-center text-sm text-gray-600 hover:text-gray-900 font-medium py-2"
+                  >
+                    Xem thêm
+                  </button>
                 </>
               )}
             </div>
@@ -961,9 +952,11 @@ const Home = () => {
 
           {/* YÊU THÍCH NHẤT */}
           <div className="bg-white rounded-xl p-4 sm:p-6 shadow-lg border border-gray-200">
-            <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
-              <ThumbsUp className="text-blue-500" size={20} />
-              <h3 className="text-gray-900 text-lg sm:text-xl font-bold">YÊU THÍCH NHẤT</h3>
+            <div className="flex items-center justify-between mb-4 sm:mb-6">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <ThumbsUp className="text-blue-500" size={20} />
+                <h3 className="text-gray-900 text-lg sm:text-xl font-bold">YÊU THÍCH NHẤT</h3>
+              </div>
             </div>
 
             <div className="space-y-3">
@@ -1001,11 +994,11 @@ const Home = () => {
                       </div>
                     );
                   })}
-                  {mostFavorited.length > 5 && (
-                    <button className="w-full text-center text-sm text-gray-600 hover:text-gray-900 font-medium py-2">
-                      Xem thêm
-                    </button>
-                  )}
+                  <button 
+                    className="w-full text-center text-sm text-gray-600 hover:text-gray-900 font-medium py-2"
+                  >
+                    Xem thêm
+                  </button>
                 </>
               )}
             </div>
@@ -1013,9 +1006,11 @@ const Home = () => {
 
           {/* BÌNH LUẬN MỚI */}
           <div className="bg-white rounded-xl p-4 sm:p-6 shadow-lg border border-gray-200">
-            <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
-              <Sparkles className="text-purple-500" size={20} />
-              <h3 className="text-gray-900 text-lg sm:text-xl font-bold">BÌNH LUẬN MỚI</h3>
+            <div className="flex items-center justify-between mb-4 sm:mb-6">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <Sparkles className="text-purple-500" size={20} />
+                <h3 className="text-gray-900 text-lg sm:text-xl font-bold">BÌNH LUẬN MỚI</h3>
+              </div>
             </div>
 
             <div className="space-y-4">
