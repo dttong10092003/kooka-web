@@ -344,6 +344,53 @@ const AddRecipeModal: React.FC<AddRecipeModalProps> = ({ isOpen, onClose }) => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        
+        // Validation checks
+        if (recipe.calories <= 0) {
+            toast.error("Calo phải lớn hơn 0", { duration: 3000 });
+            return;
+        }
+        
+        if (recipe.time <= 0) {
+            toast.error("Thời gian nấu phải lớn hơn 0", { duration: 3000 });
+            return;
+        }
+        
+        if (!Number.isInteger(recipe.size) || recipe.size <= 0) {
+            toast.error("Khẩu phần phải là số nguyên và lớn hơn 0", { duration: 3000 });
+            return;
+        }
+        
+        if (recipe.ingredients.length === 0) {
+            toast.error("Vui lòng chọn tối thiểu 1 nguyên liệu", { duration: 3000 });
+            return;
+        }
+        
+        if (recipe.tags.length === 0) {
+            toast.error("Vui lòng chọn tối thiểu 1 thẻ", { duration: 3000 });
+            return;
+        }
+        
+        if (recipe.instructions.length === 0) {
+            toast.error("Hướng dẫn nấu ăn phải có tối thiểu 1 bước", { duration: 3000 });
+            return;
+        }
+        
+        if (!recipe.difficulty) {
+            toast.error("Vui lòng chọn độ khó", { duration: 3000 });
+            return;
+        }
+        
+        if (!recipe.category) {
+            toast.error("Vui lòng chọn danh mục", { duration: 3000 });
+            return;
+        }
+        
+        if (!recipe.cuisine) {
+            toast.error("Vui lòng chọn ẩm thực", { duration: 3000 });
+            return;
+        }
+        
         setIsSubmitting(true);
         try {
             const recipeData = {

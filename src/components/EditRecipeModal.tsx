@@ -361,6 +361,53 @@ const EditRecipeModal: React.FC<EditRecipeModalProps> = ({ isOpen, onClose, reci
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (!recipe) return;
+
+        // Validation checks
+        if (editedRecipe.calories <= 0) {
+            toast.error("Calo phải lớn hơn 0", { duration: 3000 });
+            return;
+        }
+        
+        if (editedRecipe.time <= 0) {
+            toast.error("Thời gian nấu phải lớn hơn 0", { duration: 3000 });
+            return;
+        }
+        
+        if (!Number.isInteger(editedRecipe.size) || editedRecipe.size <= 0) {
+            toast.error("Khẩu phần phải là số nguyên và lớn hơn 0", { duration: 3000 });
+            return;
+        }
+        
+        if (editedRecipe.ingredients.length === 0) {
+            toast.error("Vui lòng chọn tối thiểu 1 nguyên liệu", { duration: 3000 });
+            return;
+        }
+        
+        if (editedRecipe.tags.length === 0) {
+            toast.error("Vui lòng chọn tối thiểu 1 thẻ", { duration: 3000 });
+            return;
+        }
+        
+        if (editedRecipe.instructions.length === 0) {
+            toast.error("Hướng dẫn nấu ăn phải có tối thiểu 1 bước", { duration: 3000 });
+            return;
+        }
+        
+        if (!editedRecipe.difficulty) {
+            toast.error("Vui lòng chọn độ khó", { duration: 3000 });
+            return;
+        }
+        
+        if (!editedRecipe.category) {
+            toast.error("Vui lòng chọn danh mục", { duration: 3000 });
+            return;
+        }
+        
+        if (!editedRecipe.cuisine) {
+            toast.error("Vui lòng chọn ẩm thực", { duration: 3000 });
+            return;
+        }
+
         setUpdateConfirmOpen(true);
     };
 
